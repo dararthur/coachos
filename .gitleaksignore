@@ -1,0 +1,6 @@
+# Exception Gitleaks (v8.24.3, règles par défaut) — UNE seule empreinte exacte : commit:fichier:règle:ligne.
+# Faux positif : mot de passe de TEST fictif, en clair, dans le commit 5409361 (tests/e2e/auth-flows.spec.ts, ligne 4),
+# utilisé uniquement contre la base éphémère des tests e2e. Aucune valeur réelle n'est concernée.
+# La valeur a été remplacée dès le commit suivant par un mot de passe aléatoire généré à chaque exécution ;
+# l'historique n'est volontairement pas réécrit. Ne pas élargir cette exception à un fichier, une règle ou un commit entier.
+540936198c93a415d5f4df48a86cd1173669f760:tests/e2e/auth-flows.spec.ts:generic-api-key:4
