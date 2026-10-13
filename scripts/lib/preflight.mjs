@@ -4,6 +4,9 @@
 import { randomUUID } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { isLocalDatabaseUrl, sslViolation } from "./db-url.mjs";
+import { loadMigrations, planMigrations, readApplied } from "./migrate.mjs";
+import { assessPostgresVersion } from "./pg-version.mjs";
 
 /** @typedef {{ id: string, label: string, status: "ok" | "fail" | "warn", detail?: string }} Check */
 const ok = (id, label, detail) => ({ id, label, status: "ok", detail });
@@ -68,11 +71,16 @@ export function checkEnv(env, opts = {}) {
   if (app) {
     if (!app.user.startsWith("app_server")) out.push(fail("env.db.user", "DATABASE_URL utilise le rôle app_server", `rôle « ${app.user.split(".")[0]} » : doit être app_server (jamais postgres)`));
     else out.push(ok("env.db.user", "DATABASE_URL utilise le rôle app_server"));
-    if (!isLocalHost(app.url.hostname) && env.DATABASE_SSL === "disable") out.push(fail("env.db.ssl", "SSL de la base actif", "DATABASE_SSL=disable sur une base distante"));
+    const why = sslViolation(env.DATABASE_URL, { databaseSslDisabled: env.DATABASE_SSL === "disable" });
+    if (why) out.push(fail("env.db.ssl", "SSL exigé pour DATABASE_URL", why));
+    else out.push(ok("env.db.ssl", isLocalDatabaseUrl(env.DATABASE_URL) ? "DATABASE_URL locale (SSL non exigé)" : "DATABASE_URL exige SSL"));
   }
   if (auth) {
     if (!auth.user.startsWith("auth_runtime")) out.push(fail("env.authdb.user", "AUTH_DATABASE_URL utilise le rôle auth_runtime", `rôle « ${auth.user.split(".")[0]} » : doit être auth_runtime (jamais postgres ni app_server)`));
     else out.push(ok("env.authdb.user", "AUTH_DATABASE_URL utilise le rôle auth_runtime"));
+    const whyAuth = sslViolation(env.AUTH_DATABASE_URL, { databaseSslDisabled: env.DATABASE_SSL === "disable" });
+    if (whyAuth) out.push(fail("env.authdb.ssl", "SSL exigé pour AUTH_DATABASE_URL", whyAuth));
+    else out.push(ok("env.authdb.ssl", isLocalDatabaseUrl(env.AUTH_DATABASE_URL) ? "AUTH_DATABASE_URL locale (SSL non exigé)" : "AUTH_DATABASE_URL exige SSL"));
   }
 
   // E-mails transactionnels : jamais la boîte d'envoi de test pour un vrai pilote.
@@ -93,12 +101,18 @@ export function expectedObjects(migrationsDir) {
   const files = readdirSync(migrationsDir).filter((f) => f.endsWith(".sql")).sort();
   const tables = new Set();
   const functions = new Set();
+  const privateFunctions = new Set();
+  const authTables = new Set();
+  const authFunctions = new Set();
   for (const f of files) {
     const sql = readFileSync(path.join(migrationsDir, f), "utf8");
     for (const m of sql.matchAll(/create table (?:if not exists )?public\.(\w+)/gi)) tables.add(m[1]);
     for (const m of sql.matchAll(/create (?:or replace )?function public\.(\w+)/gi)) functions.add(m[1]);
+    for (const m of sql.matchAll(/create (?:or replace )?function app_private\.(\w+)/gi)) privateFunctions.add(m[1]);
+    for (const m of sql.matchAll(/create table (?:if not exists )?auth\.(\w+)/gi)) authTables.add(m[1]);
+    for (const m of sql.matchAll(/create (?:or replace )?function auth\.(\w+)/gi)) authFunctions.add(m[1]);
   }
-  return { files: files.map((f) => f.split("_")[0]), tables: [...tables], functions: [...functions] };
+  return { files: files.map((f) => f.split("_")[0]), tables: [...tables], functions: [...functions], privateFunctions: [...privateFunctions], authTables: [...authTables], authFunctions: [...authFunctions] };
 }
 
 /**
@@ -119,6 +133,14 @@ export async function checkDatabase(sql, opts) {
   await run("db.connect", "connexion à PostgreSQL", async () => {
     const [r] = await sql`select current_user as u, session_user as s, current_setting('server_version') as v`;
     return ok("db.connect", "connexion à PostgreSQL", `rôle de session : ${r.s}, PostgreSQL ${r.v}`);
+  });
+
+  await run("db.version", "version de PostgreSQL supportée", async () => {
+    const [r] = await sql`select current_setting('server_version_num')::int as num`;
+    const v = assessPostgresVersion(r.num);
+    if (v.level === "unsupported") return fail("db.version", "version de PostgreSQL supportée", v.message);
+    if (v.level === "untested") return warn("db.version", "version de PostgreSQL testée", v.message);
+    return ok("db.version", "version de PostgreSQL testée", v.message);
   });
 
   await run("db.role", "app_server : NOINHERIT, ni superuser ni BYPASSRLS", async () => {
@@ -191,8 +213,19 @@ export async function checkDatabase(sql, opts) {
     const exp = expectedObjects(opts.migrationsDir);
     const tables = new Set((await sql`select tablename from pg_tables where schemaname = 'public'`).map((r) => r.tablename));
     const funcs = new Set((await sql`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public'`).map((r) => r.proname));
-    const missing = [...exp.tables.filter((t) => !tables.has(t)).map((t) => `table ${t}`), ...exp.functions.filter((f) => !funcs.has(f)).map((f) => `fonction ${f}`)];
-    return missing.length ? fail("db.migrations", "toutes les migrations sont appliquées", `manquants : ${missing.join(", ")}`) : ok("db.migrations", "toutes les migrations sont appliquées (tables et fonctions attendues)", `${exp.files.length} migrations, ${exp.tables.length} tables, ${exp.functions.length} fonctions`);
+    const inSchema = async (schema) => new Set((await sql`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = ${schema}`).map((r) => r.proname));
+    const privateFuncs = await inSchema("app_private");
+    const authFuncs = await inSchema("auth");
+    const authTabs = new Set((await sql`select tablename from pg_tables where schemaname = 'auth'`).map((r) => r.tablename));
+    const missing = [
+      ...exp.tables.filter((t) => !tables.has(t)).map((t) => `table ${t}`),
+      ...exp.functions.filter((f) => !funcs.has(f)).map((f) => `fonction ${f}`),
+      ...exp.privateFunctions.filter((f) => !privateFuncs.has(f)).map((f) => `fonction app_private.${f}`),
+      ...exp.authTables.filter((t) => !authTabs.has(t)).map((t) => `table auth.${t}`),
+      ...exp.authFunctions.filter((f) => !authFuncs.has(f)).map((f) => `fonction auth.${f}`),
+    ];
+    const total = exp.tables.length + exp.functions.length + exp.privateFunctions.length + exp.authTables.length + exp.authFunctions.length;
+    return missing.length ? fail("db.migrations", "toutes les migrations sont appliquées", `manquants : ${missing.join(", ")}`) : ok("db.migrations", "toutes les migrations sont appliquées (tables et fonctions attendues)", `${exp.files.length} migrations, ${total} objets vérifiés`);
   });
 
   await run("db.ssl", "connexion chiffrée (SSL)", async () => {
@@ -209,7 +242,7 @@ export async function checkDatabase(sql, opts) {
  * Contrôles réels avec la connexion `auth_runtime` de Better Auth : droits minimaux et fermeture des tables d'authentification.
  * @param {import("postgres").Sql} sql @returns {Promise<Check[]>}
  */
-export async function checkAuthDatabase(sql) {
+export async function checkAuthDatabase(sql, opts = {}) {
   /** @type {Check[]} */
   const out = [];
   const run = async (id, label, fn) => {
@@ -254,6 +287,12 @@ export async function checkAuthDatabase(sql) {
     return ok("auth.tables", "les tables d'authentification existent et auth_runtime y accède");
   });
 
+  await run("auth.ssl", "connexion chiffrée (SSL) pour auth_runtime", async () => {
+    const rows = await sql`select ssl from pg_stat_ssl where pid = pg_backend_pid()`;
+    if (rows[0]?.ssl === true) return ok("auth.ssl", "connexion chiffrée (SSL) pour auth_runtime");
+    return opts.remote ? fail("auth.ssl", "connexion chiffrée (SSL) pour auth_runtime", "base distante sans SSL") : warn("auth.ssl", "connexion chiffrée (SSL) pour auth_runtime", "non chiffrée (acceptable uniquement en local)");
+  });
+
   await run("auth.closed", "aucun autre rôle applicatif n'a de droit sur les tables d'authentification", async () => {
     const leaks = [];
     for (const role of ["anon", "authenticated", "app_server"]) {
@@ -266,6 +305,24 @@ export async function checkAuthDatabase(sql) {
   });
 
   return out;
+}
+
+/**
+ * Suivi des migrations, lu avec la connexion ADMINISTRATEUR (MIGRATION_DATABASE_URL) : app_server ne peut pas lire le schéma de suivi.
+ * @param {import("postgres").Sql} sql @param {string} migrationsDir @returns {Promise<Check[]>}
+ */
+export async function checkMigrationTracking(sql, migrationsDir) {
+  try {
+    const files = loadMigrations(migrationsDir);
+    const applied = await readApplied(sql);
+    if (applied.length === 0) return [fail("migrations.tracking", "migrations suivies par le lanceur", "aucune migration suivie : appliquer `npm run db:migrate`")];
+    const pending = planMigrations(applied, files);
+    return pending.length
+      ? [fail("migrations.tracking", "toutes les migrations sont appliquées et inchangées", `en attente : ${pending.map((p) => p.name).join(", ")}`)]
+      : [ok("migrations.tracking", "toutes les migrations sont appliquées et inchangées (empreintes vérifiées)", `${applied.length} migrations suivies`)];
+  } catch (e) {
+    return [fail("migrations.tracking", "toutes les migrations sont appliquées et inchangées", String(e?.message ?? e).slice(0, 200))];
+  }
 }
 
 export function summarize(checks) {

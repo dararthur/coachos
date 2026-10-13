@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { sslViolation } from "./db-url";
 
 /**
  * Variables d'environnement. Validées AU DÉMARRAGE du serveur (src/instrumentation.ts), pas au premier appel métier :
@@ -34,6 +35,8 @@ const schema = z
     RESEND_API_KEY: z.string().min(8).optional(),
     MAIL_FROM: z.string().min(5).optional(),
     MAIL_OUTBOX_FILE: z.string().min(1).optional(),
+    /** `disable` : seulement pour une base locale sans SSL (interdit pour une base distante en staging/production). */
+    DATABASE_SSL: z.string().optional(),
     /** Durée de vie d'un jeton de pointage QR (secondes, 10–300 ; défaut 90). */
     CHECKIN_TOKEN_TTL_SECONDS: z.coerce.number().int().min(10).max(300).optional(),
     /** Jeton de la tâche planifiée de purge (optionnel : sans lui, la route de purge est désactivée). */
@@ -60,6 +63,13 @@ const schema = z
           /* SITE_URL invalide : déjà signalé */
         }
         if (!LOOPBACK_HOSTS.includes(host)) issue("MAIL_PROVIDER", "« outbox » exige une SITE_URL locale (localhost ou 127.0.0.1) : refusé pour une instance publique");
+      }
+    }
+    // Une base DISTANTE exige SSL dans les instances déployées (la boucle locale et les sockets Unix en sont dispensés).
+    if (v.APP_ENV === "staging" || v.APP_ENV === "production") {
+      for (const name of ["DATABASE_URL", "AUTH_DATABASE_URL"] as const) {
+        const why = sslViolation(v[name], { databaseSslDisabled: v.DATABASE_SSL === "disable" });
+        if (why) issue(name, why);
       }
     }
     let protocol = "";

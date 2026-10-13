@@ -29,7 +29,8 @@ Cette séquence prouve le comportement de l'application, de la RLS et de Better 
 | `RESEND_API_KEY`, `MAIL_FROM` | avec `resend` | clé : **oui** | clé API Resend (gestionnaire de secrets) ; expéditeur d'un domaine vérifié |
 | `CRON_SECRET` | ✅ avant données réelles | **oui** | ≥ 32 caractères ; active `POST /api/cron/purge` (rétention + sessions expirées) |
 | `APP_ENV` | ✅ | non | `staging` (puis `production`) : rôle explicite de l'instance, sans valeur par défaut ; lu **au démarrage** (refus si incohérent) et par le préflight pour refuser un contrôle accidentel de la production |
-| `DATABASE_SSL`, `DATABASE_POOL_SIZE` | non | non | `disable` uniquement pour une base locale ; taille du pool (défaut 10) |
+| `DATABASE_SSL`, `DATABASE_POOL_SIZE` | non | non | `disable` **interdit pour une base distante** (refus au démarrage) ; taille du pool (défaut 10). Une base **distante** exige `?sslmode=require` (ou `verify-ca`/`verify-full`) dans **les deux** URL, sinon le serveur refuse de démarrer ; la boucle locale et les sockets Unix en sont dispensés |
+| `MIGRATION_DATABASE_URL` | pour migrer et pour le préflight complet | **oui** | URL d'un rôle **administrateur**, utilisée **uniquement** par `npm run db:migrate` et `npm run pilot:preflight` (suivi des migrations). **Jamais** dans l'environnement du service |
 | `CHECKIN_TOKEN_TTL_SECONDS` | non | non | durée du QR (10–300 s, défaut 90) |
 
 Le gestionnaire de secrets / l'environnement du service porte ces valeurs ; elles ne figurent ni dans Git, ni dans les journaux, ni dans les captures d'écran. Aucune variable `SUPABASE_*` ni `*SERVICE_ROLE*` ne doit exister.
@@ -39,7 +40,7 @@ Le gestionnaire de secrets / l'environnement du service porte ces valeurs ; elle
 À faire par le responsable (aucune ressource n'a été créée, aucun accès au serveur n'a été pris) :
 
 1. Base PostgreSQL **dédiée** à la préproduction, en écoute locale uniquement (jamais exposée sur Internet), jamais de données de production dedans.
-2. Appliquer les migrations avec un rôle administrateur : `for f in db/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -d <base> -f "$f"; done` (8 migrations).
+2. **Pré-contrôle des rôles globaux**, puis migrations avec le lanceur et un rôle administrateur : `MIGRATION_DATABASE_URL=… npm run db:migrate -- --dry-run` (refuse si `anon`, `authenticated`, `app_server` ou `auth_runtime` existent déjà dans le cluster sans appartenir à Coach OS), puis `MIGRATION_DATABASE_URL=… npm run db:migrate` (9 migrations, suivies et vérifiées).
 3. Créer les mots de passe des deux rôles (jamais dans Git) : `alter role app_server login password '…'; alter role auth_runtime login password '…';` puis construire `DATABASE_URL` et `AUTH_DATABASE_URL`.
 4. Domaine d'envoi chez le fournisseur d'e-mails, vérifié (SPF, DKIM), DMARC progressif, **suivi des ouvertures/clics désactivé** ; DPA du fournisseur archivé (`docs/privacy-gdpr.md`).
 5. Hébergement : processus Node ≥ 22 sous un utilisateur dédié, écoute sur `127.0.0.1`, derrière un reverse proxy TLS qui **écrase** `X-Real-IP`/`X-Forwarded-For` (`ops/nginx-self-hosted.example.conf`). Planifier chaque jour `POST $SITE_URL/api/cron/purge` avec `Authorization: Bearer $CRON_SECRET`.

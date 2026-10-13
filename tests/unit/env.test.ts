@@ -114,3 +114,25 @@ describe("configuration : autres refus au démarrage", () => {
     expect(msg).not.toMatch(/postgres(ql)?:\/\//);
   });
 });
+
+describe("configuration : SSL des bases de données dans les instances déployées", () => {
+  const remote = (mode = "") => ({ DATABASE_URL: `postgresql://app_server:${rand()}@db.exemple.fr:5432/coachos${mode}`, AUTH_DATABASE_URL: `postgresql://auth_runtime:${rand()}@db.exemple.fr:5432/coachos${mode}` });
+
+  it("production et staging REFUSENT de démarrer avec une base distante sans sslmode (les DEUX URL), ou avec DATABASE_SSL=disable", () => {
+    for (const appEnv of ["production", "staging"]) {
+      const base = { ...prodConfig(), APP_ENV: appEnv };
+      expect(refusal(remote(), base), appEnv).toMatch(/DATABASE_URL.*sslmode=require/);
+      expect(refusal(remote(), base), appEnv).toMatch(/AUTH_DATABASE_URL.*sslmode=require/);
+      expect(refusal({ ...remote("?sslmode=require"), DATABASE_SSL: "disable" }, base)).toMatch(/DATABASE_SSL=disable/);
+      expect(refusal({ ...remote("?sslmode=prefer") }, base)).toMatch(/sslmode=require/);
+      expect(parseEnv({ ...base, ...remote("?sslmode=require") }).APP_ENV).toBe(appEnv);
+      expect(parseEnv({ ...base, ...remote("?sslmode=verify-full") }).APP_ENV).toBe(appEnv);
+    }
+  });
+
+  it("la boucle locale reste dispensée en production ; le développement et les tests ne sont pas contraints", () => {
+    expect(parseEnv(prodConfig()).APP_ENV).toBe("production"); // 127.0.0.1 sans sslmode
+    expect(parseEnv({ ...prodConfig(), DATABASE_SSL: "disable" }).APP_ENV).toBe("production");
+    expect(parseEnv({ ...testConfig(), ...remote() }).APP_ENV).toBe("test");
+  });
+});

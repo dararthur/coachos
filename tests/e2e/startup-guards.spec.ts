@@ -95,7 +95,7 @@ const FORBIDDEN: { name: string; env: Record<string, string>; reason: RegExp }[]
   { name: "APP_ENV absent", env: { SITE_URL: "http://127.0.0.1:3555", MAIL_PROVIDER: "outbox" }, reason: /APP_ENV/ },
   { name: "APP_ENV inconnu", env: { APP_ENV: "prod", SITE_URL: "http://127.0.0.1:3555", MAIL_PROVIDER: "outbox" }, reason: /APP_ENV/ },
   { name: "production + resend sans clé ni expéditeur", env: { APP_ENV: "production", SITE_URL: "https://coach.example.invalid", MAIL_PROVIDER: "resend" }, reason: /RESEND_API_KEY.*MAIL_FROM/ },
-  { name: "production en http", env: { APP_ENV: "production", SITE_URL: "http://coach.example.invalid", MAIL_PROVIDER: "resend", RESEND_API_KEY: "re_cle_factice_inutilisee", MAIL_FROM: "Coach OS <x@coach.example.invalid>" }, reason: /https obligatoire/ },
+  { name: "production en http", env: { APP_ENV: "production", SITE_URL: "http://coach.example.invalid", MAIL_PROVIDER: "resend", RESEND_API_KEY: "re_factice_0001", MAIL_FROM: "Coach OS <x@coach.example.invalid>" }, reason: /https obligatoire/ },
   { name: "configuration entièrement absente", env: { DATABASE_URL: "", AUTH_DATABASE_URL: "", APP_SECRET: "", BETTER_AUTH_SECRET: "" }, reason: /DATABASE_URL.*APP_SECRET|APP_SECRET.*DATABASE_URL|APP_ENV/ },
 ];
 

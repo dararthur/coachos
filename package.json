@@ -19,6 +19,7 @@
     "audit:deps": "npm audit --omit=dev --audit-level=high",
     "pilot:preflight": "node scripts/pilot-preflight.mjs",
     "audit:secrets": "node scripts/check-secrets.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
     "db:seed-demo": "node scripts/seed-demo.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run audit:secrets"
   },

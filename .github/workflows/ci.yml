@@ -60,11 +60,19 @@ jobs:
           retention-days: 7
 
   postgres-migrations:
-    name: Migrations rejouées sur PostgreSQL 17 standard (deux fois, depuis zéro)
+    # Cible : PostgreSQL 17 (bloquant). 18 : essai informatif NON bloquant (version probable d'Ubuntu 26.04, jamais testée jusqu'ici).
+    name: Lanceur de migrations sur PostgreSQL ${{ matrix.pg }} (deux bases vierges, relance, invariants)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { pg: "17", experimental: false }
+          - { pg: "18", experimental: true }
+    continue-on-error: ${{ matrix.experimental }}
     services:
       postgres:
-        image: postgres:17
+        image: postgres:${{ matrix.pg }}
         env:
           POSTGRES_PASSWORD: ci-jetable-sans-valeur
         ports: ["5432:5432"]
@@ -74,19 +82,26 @@ jobs:
       PGPASSWORD: ci-jetable-sans-valeur
     steps:
       - uses: actions/checkout@v4
-      - name: Rejouer toutes les migrations sur deux bases vierges (reproductibilité)
+      - uses: actions/setup-node@v4
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - name: Lanceur de migrations sur deux bases vierges (transactionnel, suivi, collision de rôles)
         run: |
           for db in coachos_a coachos_b; do
             psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "create database $db"
-            for f in db/migrations/*.sql; do
-              echo "== $db : $f"
-              psql -h localhost -U postgres -d "$db" -v ON_ERROR_STOP=1 -q -f "$f"
-            done
+            export MIGRATION_DATABASE_URL="postgres://postgres:${PGPASSWORD}@localhost:5432/$db"
+            node scripts/migrate.mjs --dry-run | tee "dry-$db.txt"
+            node scripts/migrate.mjs
+            # Relance : plus rien à appliquer.
+            node scripts/migrate.mjs --dry-run | grep -q "en attente : 0"
           done
-      - name: Invariants de sécurité (RLS partout, rôles sans privilège excessif, tables d'authentification fermées)
+      - name: Suivi des migrations et invariants de sécurité (RLS partout, rôles sans privilège excessif, tables d'authentification fermées)
         run: |
           q() { psql -h localhost -U postgres -d coachos_a -tAq -c "$1"; }
+          test "$(q "select count(*) from coachos_migrations.applied")" = "$(ls db/migrations/*.sql | wc -l)"
           test "$(q "select count(*) from pg_tables where schemaname = 'public' and not rowsecurity")" = "0"
           test "$(q "select count(*) from pg_roles where rolname in ('app_server','auth_runtime','anon','authenticated') and (rolsuper or rolbypassrls or rolcreaterole or rolcreatedb)")" = "0"
+          test "$(q "select count(*) from pg_roles where rolname in ('app_server','auth_runtime','anon','authenticated') and coalesce(shobj_description(oid, 'pg_authid'), '') <> 'coachos:managed'")" = "0"
           test "$(q "select count(*) from information_schema.role_table_grants where table_schema = 'auth' and grantee not in ('auth_runtime','postgres')")" = "0"
           test "$(q "select count(*) from pg_tables where schemaname = 'auth'")" = "4"
+          test "$(q "select has_schema_privilege('app_server','coachos_migrations','usage')")" = "f"

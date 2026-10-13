@@ -2,7 +2,7 @@
 // (le fichier d'environnement n'est jamais versionné ; ce script n'affiche aucune valeur secrète).
 import path from "node:path";
 import postgres from "postgres";
-import { checkAuthDatabase, checkDatabase, checkEnv, summarize } from "./lib/preflight.mjs";
+import { checkAuthDatabase, checkDatabase, checkEnv, checkMigrationTracking, summarize } from "./lib/preflight.mjs";
 
 const args = new Set(process.argv.slice(2));
 const migrationsDir = path.resolve(import.meta.dirname, "../db/migrations");
@@ -33,7 +33,9 @@ async function withDb(url, label, fn) {
 }
 
 if (process.env.DATABASE_URL) await withDb(process.env.DATABASE_URL, "DATABASE_URL", (sql, remote) => checkDatabase(sql, { migrationsDir, remote }));
-if (process.env.AUTH_DATABASE_URL) await withDb(process.env.AUTH_DATABASE_URL, "AUTH_DATABASE_URL", (sql) => checkAuthDatabase(sql));
+if (process.env.AUTH_DATABASE_URL) await withDb(process.env.AUTH_DATABASE_URL, "AUTH_DATABASE_URL", (sql, remote) => checkAuthDatabase(sql, { remote }));
+if (process.env.MIGRATION_DATABASE_URL) await withDb(process.env.MIGRATION_DATABASE_URL, "MIGRATION_DATABASE_URL", (sql) => checkMigrationTracking(sql, migrationsDir));
+else checks.push({ id: "migrations.tracking", label: "suivi des migrations vérifié", status: "warn", detail: "MIGRATION_DATABASE_URL absent : fournir l'URL administrateur (lecture seule) pour contrôler les empreintes des migrations" });
 
 for (const c of checks) console.log(`${icon[c.status]} ${c.label}${c.detail ? `\n    ${c.detail}` : ""}`);
 const s = summarize(checks);

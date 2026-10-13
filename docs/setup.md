@@ -28,11 +28,12 @@ PW_CHANNEL=chrome npm run test:e2e   # build + parcours complet dans un vrai nav
 
 ## Lancer l'application en local *(non vérifié sur un PostgreSQL externe)*
 
-1. Créer une base et appliquer les migrations **dans l'ordre** avec un rôle administrateur (la migration 0000 crée des rôles) :
+1. Créer une base, puis appliquer les migrations avec le **lanceur** (transactionnel, suivi, vérifié) et l'URL d'un rôle **administrateur** (la migration 0000 crée des rôles ; jamais `app_server` ni `auth_runtime`) :
 
 ```bash
 createdb coachos
-for f in db/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -d coachos -f "$f"; done
+MIGRATION_DATABASE_URL=postgresql://<admin>:<mot-de-passe>@127.0.0.1:5432/coachos npm run db:migrate -- --dry-run   # liste ce qui serait appliqué, n'écrit rien
+MIGRATION_DATABASE_URL=postgresql://<admin>:<mot-de-passe>@127.0.0.1:5432/coachos npm run db:migrate
 ```
 
 2. Créer les mots de passe des deux rôles de connexion — **hors Git**, une fois par base :
@@ -58,7 +59,8 @@ alter role auth_runtime login password '<autre mot de passe généré, 32+ carac
 | `MAIL_OUTBOX_FILE` | avec `outbox` : fichier recevant les liens (développement uniquement) |
 | `CRON_SECRET` | optionnel, active `POST /api/cron/purge` |
 | `CHECKIN_TOKEN_TTL_SECONDS` | optionnel, durée du QR de pointage (10–300 s, défaut 90) |
-| `DATABASE_SSL`, `DATABASE_POOL_SIZE` | `disable` uniquement pour une base locale ; taille du pool |
+| `DATABASE_SSL`, `DATABASE_POOL_SIZE` | `disable` interdit pour une base distante ; taille du pool. Base **distante** (staging/production) : `?sslmode=require` obligatoire dans `DATABASE_URL` **et** `AUTH_DATABASE_URL`, sinon refus au démarrage |
+| `MIGRATION_DATABASE_URL` | URL d'un rôle **administrateur**, réservée à `npm run db:migrate` et au préflight ; **jamais** dans l'environnement du service |
 
 4. `npm run dev`. Avec `MAIL_PROVIDER=outbox`, les liens de confirmation et de réinitialisation sont écrits dans `MAIL_OUTBOX_FILE` (une ligne JSON par message). Créez un compte sur `/signup`, ouvrez le lien trouvé dans ce fichier, connectez-vous, puis créez votre club. Données de démonstration **synthétiques** (base locale uniquement) :
 
@@ -73,7 +75,7 @@ Voir [`docs/pilot.md`](pilot.md) et `npm run pilot:preflight`. Authentification 
 
 ## Migrations
 
-- Fichiers SQL versionnés et ordonnés : `db/migrations/AAAAMMJJHHMMSS_nom.sql`, appliqués par un rôle administrateur (psql). **Ne jamais modifier une migration déjà appliquée** sur un environnement partagé : en ajouter une nouvelle. (Les migrations 0001–0006 n'ont jamais été appliquées ailleurs qu'en test ; 0007 les adapte à Better Auth.)
+- Fichiers SQL versionnés et ordonnés : `db/migrations/AAAAMMJJHHMMSS_nom.sql`, appliqués par `npm run db:migrate` (`scripts/migrate.mjs`, rôle administrateur, `MIGRATION_DATABASE_URL` jamais affichée). Le lanceur : applique **chaque fichier dans une transaction avec son suivi** (un échec n'en laisse rien ; la correction puis la relance reprennent au fichier fautif) ; enregistre version, nom et **empreinte SHA-256** dans `coachos_migrations.applied` (schéma fermé aux rôles applicatifs) ; **refuse** un fichier appliqué puis modifié, un fichier appliqué disparu et une migration en attente plus ancienne qu'une appliquée ; prend un verrou (pas de double exécution) ; **refuse une base vierge si `anon`, `authenticated`, `app_server` ou `auth_runtime` existent déjà dans le cluster sans le marqueur Coach OS** (rôles globaux d'une autre application : migration 0008 pose le marqueur) ; évalue la version de PostgreSQL (cible 17, minimum 15, 15/16/18 signalées « non testées »). **Ne jamais modifier une migration déjà appliquée** sur un environnement partagé : en ajouter une nouvelle. (Les migrations 0001–0006 n'ont jamais été appliquées ailleurs qu'en test ; 0007 les adapte à Better Auth.)
 - Chaque migration est rejouée par `npm run test:db`, et une seconde fois sur une base vierge (`tests/db/migrations-replay.test.ts`) ; la CI les rejoue aussi sur PostgreSQL 17 standard (job `postgres-migrations`). Les invariants de sécurité (RLS partout, `anon` sans privilège, fonctions `SECURITY DEFINER` à `search_path` vide, liste blanche des fonctions exposées, tables d'authentification fermées) échouent si une migration les viole.
 - Le schéma de Better Auth est versionné dans la migration 0000 ; le test `tests/db/auth-integration.test.ts` échoue si une mise à jour de Better Auth attend un schéma différent.
 

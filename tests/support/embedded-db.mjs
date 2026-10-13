@@ -7,6 +7,7 @@ import { mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { runMigrations } from "../../scripts/lib/migrate.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
@@ -42,13 +43,8 @@ export async function startEmbeddedDb(opts = {}) {
   const adminUrl = `postgres://postgres:${superPassword}@127.0.0.1:${port}/coachos`;
   const admin = postgres(adminUrl, { max: 1, onnotice: () => {} });
   try {
-    for (const m of migrationFiles()) {
-      try {
-        await admin.unsafe(m.sql);
-      } catch (e) {
-        throw new Error(`Migration ${m.name} en échec : ${e instanceof Error ? e.message : String(e)}`);
-      }
-    }
+    // Le VRAI lanceur de migrations (transactionnel, suivi, vérifié) : les tests exercent ce que la CI et l'exploitation utilisent.
+    await runMigrations({ sql: admin, dir: path.join(root, "db", "migrations") });
     await admin.unsafe(`alter role app_server login password '${appPassword}'`);
     await admin.unsafe(`alter role auth_runtime login password '${authPassword}'`);
   } finally {
