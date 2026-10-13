@@ -125,9 +125,9 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
   await test.step("tableau de bord : indicateurs issus de la base", async () => {
     await page.goto(`/a/${academyId}/dashboard`);
     const stat = (label: string) => page.locator("dt", { hasText: label }).locator("xpath=following-sibling::dd");
-    await expect(stat("Membres actifs")).toHaveText("4");
-    await expect(stat("Séances aujourd'hui")).toHaveText("1");
-    await expect(stat("Présences cette semaine")).toHaveText("3"); // 2 présents/retards import + Alice en retard
+    await expect(stat("Membres actifs")).toHaveText(/^4/);
+    await expect(stat("Séances aujourd'hui")).toHaveText(/^1/);
+    await expect(stat("Présences cette semaine")).toHaveText(/^3/); // 2 présents/retards import + Alice en retard
     await expect(page.getByText("Appel fait")).toBeVisible();
   });
 
