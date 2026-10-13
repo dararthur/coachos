@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <title>Matnexa</title>
+  <rect width="32" height="32" rx="7" fill="#16191d"/>
+  <g fill="#ffffff">
+    <rect x="7.25" y="8" width="2.5" height="16" rx="0.5"/>
+    <rect x="12.25" y="8" width="2.5" height="16" rx="0.5"/>
+    <rect x="17.25" y="8" width="2.5" height="16" rx="0.5"/>
+    <rect x="22.25" y="8" width="2.5" height="16" rx="0.5"/>
+  </g>
+  <path d="M5 22.5 27 9.5" stroke="#16191d" stroke-width="6.5"/>
+  <path d="M5 22.5 27 9.5" stroke="#ea6a2a" stroke-width="3"/>
+</svg>

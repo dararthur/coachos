@@ -4,6 +4,7 @@ import { useId, useRef, useState, type ReactNode } from "react";
 import type { ActionResult } from "@/domain/errors";
 import { buttonClasses, type ButtonVariant } from "./button-classes";
 import { ActionForm, SubmitButton } from "./form";
+import { Icon } from "./icons";
 
 type State = ActionResult<unknown> | null;
 
@@ -41,30 +42,31 @@ export function ConfirmAction({
         {trigger}
       </button>
       {message && !message.ok && (
-        <span role="alert" className="text-sm text-red-800">
+        <span role="alert" className="text-sm font-semibold text-danger">
           {message.error}
         </span>
       )}
       <dialog
         ref={dialog}
         aria-labelledby={titleId}
-        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-xl bg-white p-0 text-ink shadow-xl"
+        className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-md border border-line bg-surface p-0 text-ink shadow-overlay"
         onClose={() => setMessage(null)}
       >
         <ActionForm
           action={action}
-          className="space-y-4 p-6"
+          className="space-y-4 p-5 sm:p-6"
           onResult={(r) => {
             setMessage(r);
             if (r?.ok) dialog.current?.close();
           }}
         >
-          <h2 id={titleId} className="text-lg font-semibold">
+          <h2 id={titleId} className="flex items-start gap-2.5 text-lg font-bold">
+            {confirmVariant === "danger" && <Icon name="alert" size={22} className="text-danger" />}
             {title}
           </h2>
-          <div className="space-y-3 text-sm text-muted">{description}</div>
+          <div className="space-y-3 text-sm text-ink-soft">{description}</div>
           {children}
-          <div className="flex flex-wrap justify-end gap-2 pt-2">
+          <div className="-mx-5 -mb-5 flex flex-wrap justify-end gap-2 border-t border-line bg-canvas px-5 py-4 sm:-mx-6 sm:-mb-6 sm:px-6">
             <button type="button" className={buttonClasses({ variant: "secondary" })} onClick={() => dialog.current?.close()}>
               Annuler
             </button>

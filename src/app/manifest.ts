@@ -7,16 +7,16 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "Coach OS",
-    short_name: "Coach OS",
+    name: "Matnexa",
+    short_name: "Matnexa",
     description: "Gestion de club : membres, planning, présences.",
     lang: "fr",
     dir: "ltr",
     start_url: "/",
     scope: "/",
     display: "standalone",
-    background_color: "#f6f7f9",
-    theme_color: "#134e4a",
+    background_color: "#f4f2ee",
+    theme_color: "#16191d",
     categories: ["sports", "productivity"],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },

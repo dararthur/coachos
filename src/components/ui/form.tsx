@@ -73,12 +73,12 @@ export function FormMessage({ result }: { result: State }) {
   return (
     <div role={failed ? "alert" : "status"} aria-live={failed ? "assertive" : "polite"} className="empty:hidden">
       {failed && (
-        <p className="mb-4 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <p className="mb-4 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm font-medium text-danger-ink">
           {hasFieldErrors && result.code === "validation" ? "Certaines informations sont invalides : corrigez les champs signalés." : result.error}
         </p>
       )}
       {result?.ok && result.message && (
-        <p className="mb-4 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{result.message}</p>
+        <p className="mb-4 rounded-sm border border-success/30 bg-success-soft px-3 py-2.5 text-sm font-medium text-success-ink">{result.message}</p>
       )}
     </div>
   );
@@ -90,8 +90,8 @@ function useFieldState(name: string) {
   return { error, retained: ctx.values[name] };
 }
 
-const inputClasses =
-  "block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-ink shadow-sm placeholder:text-slate-500 disabled:bg-slate-100 aria-[invalid=true]:border-red-600";
+// Style unique des champs : classe .field (globals.css), partagée avec les filtres et recherches hors formulaire.
+const inputClasses = "field";
 
 interface BaseFieldProps {
   label: string;
@@ -104,22 +104,22 @@ interface BaseFieldProps {
 function FieldShell({ label, name, hint, required, id, error, className, children }: BaseFieldProps & { id: string; error?: string; children: ReactNode }) {
   return (
     <div className={className}>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-ink">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-ink">
         {label}
         {required && (
-          <span aria-hidden="true" className="ml-0.5 text-red-700">
+          <span aria-hidden="true" className="ml-0.5 text-danger">
             *
           </span>
         )}
       </label>
       {children}
       {hint && (
-        <p id={`${id}-hint`} className="mt-1 text-sm text-muted">
+        <p id={`${id}-hint`} className="mt-1.5 text-sm text-ink-soft">
           {hint}
         </p>
       )}
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-sm font-medium text-red-800" data-field-error={name}>
+        <p id={`${id}-error`} className="mt-1.5 text-sm font-semibold text-danger" data-field-error={name}>
           {error}
         </p>
       )}
@@ -212,19 +212,19 @@ export function CheckboxField({ label, name, hint, required, className, defaultC
           defaultChecked={retained !== undefined ? retained === value : defaultChecked}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy(id, hint, error)}
-          className="mt-1 size-5 shrink-0 rounded border-slate-400 accent-brand-600"
+          className="mt-0.5 size-5 shrink-0 accent-ink"
         />
-        <label htmlFor={id} className="text-sm text-ink">
+        <label htmlFor={id} className="min-h-11 text-sm font-medium text-ink">
           {label}
           {hint && (
-            <span id={`${id}-hint`} className="mt-0.5 block text-muted">
+            <span id={`${id}-hint`} className="mt-0.5 block font-normal text-ink-soft">
               {hint}
             </span>
           )}
         </label>
       </div>
       {error && (
-        <p id={`${id}-error`} className="mt-1 text-sm font-medium text-red-800" data-field-error={name}>
+        <p id={`${id}-error`} className="mt-1.5 text-sm font-semibold text-danger" data-field-error={name}>
           {error}
         </p>
       )}
@@ -238,17 +238,20 @@ export function CheckboxGroup({ legend, name, options, error, defaultValues = []
   const fieldError = error ?? (ctx.result && !ctx.result.ok ? ctx.result.fieldErrors?.[name] : undefined);
   return (
     <fieldset>
-      <legend className="mb-1 text-sm font-medium text-ink">{legend}</legend>
+      <legend className="mb-1.5 text-sm font-semibold text-ink">{legend}</legend>
       <div className="flex flex-wrap gap-2">
         {options.map((o) => (
-          <label key={o.value} className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm has-[:checked]:border-brand-600 has-[:checked]:bg-brand-50">
-            <input type="checkbox" name={name} value={o.value} defaultChecked={defaultValues.includes(o.value)} className="size-4 accent-brand-600" />
+          <label
+            key={o.value}
+            className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface px-3 py-2 text-sm font-medium transition-colors hover:border-ink has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-white has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
+          >
+            <input type="checkbox" name={name} value={o.value} defaultChecked={defaultValues.includes(o.value)} className="size-4 accent-accent" />
             {o.label}
           </label>
         ))}
       </div>
       {fieldError && (
-        <p className="mt-1 text-sm font-medium text-red-800" data-field-error={name}>
+        <p className="mt-1.5 text-sm font-semibold text-danger" data-field-error={name}>
           {fieldError}
         </p>
       )}
