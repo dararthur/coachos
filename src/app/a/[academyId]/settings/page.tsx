@@ -54,8 +54,22 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
   return (
     <>
       <PageHeader title="Paramètres" description="Configuration du club, des cours, de l'équipe et conformité." />
+      <nav aria-label="Sections des paramètres" className="-mt-2 mb-5 flex gap-1 overflow-x-auto border-b border-line">
+        {[
+          ["club", "Club"],
+          ["disciplines", "Disciplines"],
+          ["cours", "Types de cours"],
+          ["equipe", "Équipe"],
+          ...(can(ctx.role, "audit.read") ? [["journal", "Journal"]] : []),
+          ...(can(ctx.role, "academy.delete") ? [["suppression", "Suppression"]] : []),
+        ].map(([id, label]) => (
+          <a key={id} href={`#${id}`} className="inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold text-ink-soft no-underline hover:text-ink">
+            {label}
+          </a>
+        ))}
+      </nav>
       <div className="space-y-6">
-        <Card title="Club">
+        <Card id="club" title="Club">
           <ActionForm action={updateAcademyAction.bind(null, academyId)} className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <TextField label="Nom du club" name="name" defaultValue={ctx.academy.name} required minLength={2} maxLength={100} className="sm:col-span-2" />
             <SelectField label="Fuseau horaire" name="timezone" defaultValue={tz} required>
@@ -85,7 +99,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           </ActionForm>
         </Card>
 
-        <Card title="Disciplines" description="Les disciplines regroupent vos types de cours.">
+        <Card id="disciplines" title="Disciplines" description="Les disciplines regroupent vos types de cours.">
           <ul className="mb-4 divide-y divide-line">
             {data.disciplines.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
@@ -104,9 +118,9 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           </ActionForm>
         </Card>
 
-        <Card title="Types de cours" description="Un type de cours = un format de séance (durée et capacité par défaut).">
-          <div className="mb-4">
-            <DataTable caption="Types de cours" headers={["Cours", "Discipline", "Durée", "Capacité", ""]}>
+        <Card id="cours" title="Types de cours" description="Un type de cours = un format de séance (durée et capacité par défaut).">
+          <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
+            <DataTable bare caption="Types de cours" headers={["Cours", "Discipline", "Durée", "Capacité", ""]}>
               {data.classTypes.map((t) => (
                 <tr key={t.id}>
                   <th scope="row" className={`px-4 py-2.5 font-medium ${t.archivedAt ? "text-ink-soft line-through" : ""}`}>{t.name}</th>
@@ -135,9 +149,9 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           </ActionForm>
         </Card>
 
-        <Card title="Équipe" description="Propriétaires, administrateurs, coachs et membres connectés.">
-          <div className="mb-4">
-            <DataTable caption="Équipe et accès" headers={["Personne", "Rôle", "Depuis", ""]}>
+        <Card id="equipe" title="Équipe" description="Propriétaires, administrateurs, coachs et membres connectés.">
+          <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
+            <DataTable bare caption="Équipe et accès" headers={["Personne", "Rôle", "Depuis", ""]}>
               {data.team.map((m) => {
                 const self = m.userId === ctx.user.id;
                 const manageable = !self && canManageMember(ctx.role, m.role);
@@ -152,7 +166,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                         <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex items-center gap-2">
                           <input type="hidden" name="userId" value={m.userId} />
                           <label className="sr-only" htmlFor={`role-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
-                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="min-h-11 rounded-sm border border-line-strong bg-white px-2 py-1.5 text-sm">
+                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="field w-auto min-w-36">
                             {assignable.map((r) => (
                               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                             ))}
@@ -204,7 +218,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
         </Card>
 
         {can(ctx.role, "audit.read") && (
-          <Card title="Journal d'audit" description="Actions administratives récentes (aucune donnée personnelle n'y est stockée). Conservé 24 mois.">
+          <Card id="journal" title="Journal d'audit" description="Actions administratives récentes (aucune donnée personnelle n'y est stockée). Conservé 24 mois.">
             {data.audit.length === 0 ? (
               <p className="text-sm text-ink-soft">Aucun événement.</p>
             ) : (
@@ -223,7 +237,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
         )}
 
         {can(ctx.role, "academy.delete") && (
-          <Card title="Zone dangereuse" description="La suppression du club efface définitivement membres, séances, présences, invitations et équipe.">
+          <Card id="suppression" className="border-danger/40" title="Zone dangereuse" description="La suppression du club efface définitivement membres, séances, présences, invitations et équipe.">
             <ConfirmAction
               action={deleteAcademyAction.bind(null, academyId)}
               trigger="Supprimer le club"
