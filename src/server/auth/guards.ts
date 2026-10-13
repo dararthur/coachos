@@ -86,7 +86,7 @@ export function inAcademy<T>(ctx: { user: SessionUser }, fn: (tx: Tx) => Promise
  * Enveloppe commune des Server Actions : convertit toute erreur en résultat typé et sûr,
  * journalise sans donnée personnelle, laisse passer les redirections de Next.js.
  */
-export async function runAction<T>(name: string, fn: () => Promise<ActionResult<T>>): Promise<ActionResult<T>> {
+export async function runAction<T>(name: string, fn: () => Promise<ActionResult<T> | ActionResult<never>>): Promise<ActionResult<T>> {
   try {
     return await fn();
   } catch (error) {
