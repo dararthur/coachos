@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Alert, Card, LinkButton } from "@/components/ui/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
-import { deleteAccountAction, signOutAction, updatePasswordAction, updateProfileAction } from "@/server/actions/auth";
+import { deleteAccountAction, signOutAction, changePasswordAction, updateProfileAction } from "@/server/actions/auth";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { requireUser } from "@/server/auth/guards";
 
@@ -31,7 +31,8 @@ export default async function AccountPage() {
         </form>
       </Card>
       <Card title="Mot de passe">
-        <ActionForm action={updatePasswordAction} className="space-y-4" resetOnSuccess>
+        <ActionForm action={changePasswordAction} className="space-y-4" resetOnSuccess>
+          <TextField label="Mot de passe actuel" name="currentPassword" type="password" autoComplete="current-password" required />
           <TextField label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" minLength={12} required />
           <TextField label="Confirmation" name="confirm" type="password" autoComplete="new-password" minLength={12} required />
           <SubmitButton>Changer le mot de passe</SubmitButton>

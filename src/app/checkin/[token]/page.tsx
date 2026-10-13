@@ -5,7 +5,7 @@ import { checkinPath, isCheckinToken } from "@/domain/checkin";
 import { AppError, type ErrorCode } from "@/domain/errors";
 import { formatDateTime } from "@/domain/dates";
 import { Alert, LinkButton } from "@/components/ui/ui";
-import { getSessionUser } from "@/server/auth/supabase";
+import { getSessionUser } from "@/server/auth/session";
 import { withUser } from "@/server/db/client";
 import { hashToken } from "@/server/actions/helpers";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";

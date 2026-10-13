@@ -7,7 +7,7 @@ import { can, isRole, type Permission, type Role } from "@/domain/roles";
 import { withUser, type Tx } from "@/server/db/client";
 import { logger } from "@/server/logger";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
-import { getSessionUser, type SessionUser } from "./supabase";
+import { getSessionUser, type SessionUser } from "./session";
 
 const uuid = z.uuid();
 

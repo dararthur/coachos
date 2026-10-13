@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import postgres from "postgres";
 import { afterAll, describe, expect, it } from "vitest";
 // @ts-expect-error module .mjs sans déclaration de types
-import { checkAuthDatabase, checkDatabase, checkEnv, expectedObjects, summarize } from "../../scripts/lib/preflight.mjs";
+import { checkAuthDatabase, checkDatabase, checkEnv, expectedObjects } from "../../scripts/lib/preflight.mjs";
 import { closeAll } from "./support";
 
 type Check = { id: string; label: string; status: "ok" | "fail" | "warn"; detail?: string };

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { safeFilename } from "@/domain/csv-export";
-import { getSessionUser } from "@/server/auth/supabase";
+import { getSessionUser } from "@/server/auth/session";
 import { withUser } from "@/server/db/client";
 import { logger } from "@/server/logger";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";

@@ -11,17 +11,34 @@ export function limiterKey(scope: string, raw: string): string {
   return `${scope}:${mac}`;
 }
 
+/**
+ * Adresse IP du client, telle que posée par le reverse proxy de confiance (Nginx ÉCRASE X-Real-IP : jamais fourni par le client).
+ * Sans proxy qui écrase cet en-tête, la limite par IP est contournable : voir docs/self-hosted-auth.md.
+ */
 export async function clientIp(): Promise<string> {
-  const h = await headers();
-  const forwarded = h.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || h.get("x-real-ip") || "unknown";
+  return headersClientIp(await headers());
 }
 
-/** Fenêtre fixe, partagée entre instances (stockée en base). Échoue fermé en cas d'erreur. */
-export async function enforceRateLimit(scope: string, raw: string, max: number, windowSeconds: number): Promise<void> {
+export const CLIENT_IP_HEADER = "x-real-ip";
+
+export function headersClientIp(h: Pick<Headers, "get">): string {
+  return h.get(CLIENT_IP_HEADER)?.trim() || "unknown";
+}
+
+/** Pseudonyme HMAC (32 hex) : pour tout ce qui doit rester comparable sans stocker l'adresse (IP de session). */
+export function pseudonym(raw: string): string {
+  return createHmac("sha256", env().APP_SECRET).update(raw).digest("hex").slice(0, 32);
+}
+
+/** true si l'appel est autorisé. Échoue FERMÉ : une erreur de base remonte et la requête échoue. */
+export async function hitRateLimit(scope: string, raw: string, max: number, windowSeconds: number): Promise<boolean> {
   const key = limiterKey(scope, raw);
   const [row] = await withApp((tx) => tx<{ ok: boolean }[]>`select app_private.hit_rate_limit(${key}, ${max}, ${windowSeconds}) as ok`);
-  if (!row?.ok) throw new AppError("rate_limited");
+  return row?.ok === true;
+}
+
+export async function enforceRateLimit(scope: string, raw: string, max: number, windowSeconds: number): Promise<void> {
+  if (!(await hitRateLimit(scope, raw, max, windowSeconds))) throw new AppError("rate_limited");
 }
 
 /** Limites nommées, regroupées pour rester cohérentes et auditables. */

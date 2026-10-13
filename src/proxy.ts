@@ -1,9 +1,7 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Proxy Next.js (ex-middleware) : 1) rafraîchit la session Supabase (cookies HttpOnly),
- * 2) pose une Content-Security-Policy stricte avec nonce par requête.
+ * Proxy Next.js (ex-middleware) : pose une Content-Security-Policy stricte avec nonce par requête.
  * L'autorisation fine n'est PAS faite ici : elle l'est dans chaque page/action (src/server/auth/guards.ts) et par la RLS.
  */
 export async function proxy(request: NextRequest) {
@@ -27,27 +25,7 @@ export async function proxy(request: NextRequest) {
   requestHeaders.set("x-nonce", nonce);
   requestHeaders.set("Content-Security-Policy", csp);
 
-  let response = NextResponse.next({ request: { headers: requestHeaders } });
-
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (url && key) {
-    const supabase = createServerClient(url, key, {
-      cookieOptions: { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" },
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet, headers) => {
-          for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
-          response = NextResponse.next({ request: { headers: requestHeaders } });
-          for (const { name, value, options } of cookiesToSet) response.cookies.set(name, value, options);
-          // Les réponses qui posent des cookies d'authentification ne doivent jamais être mises en cache partagé.
-          for (const [header, value] of Object.entries(headers ?? {})) response.headers.set(header, value);
-        },
-      },
-    });
-    // Rafraîchit le jeton si nécessaire (et pose les nouveaux cookies). Ne pas insérer de code entre createServerClient et getUser.
-    await supabase.auth.getUser();
-  }
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
 
   response.headers.set("Content-Security-Policy", csp);
   // La caméra n'est autorisée que sur la page de scan ; micro, géolocalisation, paiement et USB ne le sont jamais.

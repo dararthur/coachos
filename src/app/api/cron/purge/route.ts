@@ -17,9 +17,10 @@ function authorized(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 });
   try {
-    const rows = await withApp((tx) => tx<{ r: Record<string, number> }[]>`select app_private.purge_expired_data() as r`);
-    logger.info("cron.purge", rows[0]?.r);
-    return NextResponse.json(rows[0]?.r ?? {}, { headers: { "Cache-Control": "no-store" } });
+    const rows = await withApp((tx) => tx<{ r: Record<string, number>; a: Record<string, number> }[]>`select app_private.purge_expired_data() as r, app_private.purge_expired_auth() as a`);
+    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}) };
+    logger.info("cron.purge", result);
+    return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     logger.error("cron.purge_failed", error);
     return NextResponse.json({ error: "purge_failed" }, { status: 500 });

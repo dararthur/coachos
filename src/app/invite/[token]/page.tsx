@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/ui/form";
 import { Alert } from "@/components/ui/ui";
 import { acceptInvitationAction } from "@/server/actions/team";
-import { getSessionUser } from "@/server/auth/supabase";
+import { getSessionUser } from "@/server/auth/session";
 
 export const metadata: Metadata = { title: "Invitation", robots: { index: false } };
 

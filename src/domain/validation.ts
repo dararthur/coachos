@@ -84,9 +84,18 @@ export const loginSchema = z.object({
   password: z.string({ error: "Mot de passe requis." }).min(1, "Mot de passe requis.").max(200),
 });
 export const resetRequestSchema = z.object({ email: emailField });
+const sameAsConfirm = { path: ["confirm"], message: "Les mots de passe ne correspondent pas." };
 export const newPasswordSchema = z
   .object({ password: passwordField, confirm: z.string() })
-  .refine((v) => v.password === v.confirm, { path: ["confirm"], message: "Les mots de passe ne correspondent pas." });
+  .refine((v) => v.password === v.confirm, sameAsConfirm);
+/** Changement depuis le compte connecté : exige le mot de passe actuel. */
+export const changePasswordSchema = z
+  .object({ currentPassword: z.string({ error: "Mot de passe actuel requis." }).min(1, "Mot de passe actuel requis.").max(200), password: passwordField, confirm: z.string() })
+  .refine((v) => v.password === v.confirm, sameAsConfirm);
+/** Réinitialisation par lien e-mail : le jeton vient du lien, jamais de la session. */
+export const resetPasswordSchema = z
+  .object({ token: z.string({ error: "Lien invalide." }).min(10, "Lien invalide.").max(300, "Lien invalide."), password: passwordField, confirm: z.string() })
+  .refine((v) => v.password === v.confirm, sameAsConfirm);
 
 export const profileSchema = z.object({
   displayName: z.string().trim().max(100, "100 caractères maximum.").regex(/^[^<>\u0000-\u001f]*$/, "Caractères non autorisés."),

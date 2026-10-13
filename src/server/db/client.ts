@@ -26,7 +26,7 @@ function createClient(url: string): Sql {
     max: Number(process.env.DATABASE_POOL_SIZE ?? 10),
     idle_timeout: 20,
     connect_timeout: 10,
-    // Compatible pooler transactionnel (Supabase Supavisor / pgbouncer).
+    // Compatible pooler transactionnel (PgBouncer) si on en place un ; sans effet en connexion directe.
     prepare: false,
     onnotice: () => {},
     // Les `date` restent des chaînes YYYY-MM-DD : aucune conversion de fuseau implicite.
