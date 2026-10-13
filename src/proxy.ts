@@ -50,6 +50,9 @@ export async function proxy(request: NextRequest) {
   }
 
   response.headers.set("Content-Security-Policy", csp);
+  // La caméra n'est autorisée que sur la page de scan ; micro, géolocalisation, paiement et USB ne le sont jamais.
+  const camera = request.nextUrl.pathname === "/checkin" ? "camera=(self)" : "camera=()";
+  response.headers.set("Permissions-Policy", `${camera}, microphone=(), geolocation=(), payment=(), usb=()`);
   return response;
 }
 

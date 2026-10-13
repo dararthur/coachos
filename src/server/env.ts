@@ -11,6 +11,8 @@ const schema = z.object({
   SITE_URL: z.url(),
   /** Sert à pseudonymiser les adresses IP dans les compteurs de débit. */
   APP_SECRET: z.string().min(32),
+  /** Durée de vie d'un jeton de pointage QR (secondes, 10–300 ; défaut 90). */
+  CHECKIN_TOKEN_TTL_SECONDS: z.coerce.number().int().min(10).max(300).optional(),
   /** Jeton de la tâche planifiée de purge (optionnel : sans lui, la route de purge est désactivée). */
   CRON_SECRET: z.string().min(32).optional(),
 });

@@ -272,11 +272,13 @@ language plpgsql security definer set search_path = '' as $$
 declare
   r record;
   v_status text;
+  v_tz text;
 begin
   select * into r from app_private.checkin_resolve(p_token_hash, false);
+  select a.timezone into v_tz from public.academies a where a.id = r.academy_id;
   select a.status into v_status from public.attendance a where a.session_id = r.session_id and a.person_id = r.person_id;
   return jsonb_build_object(
-    'class_name', r.class_name, 'starts_at', r.starts_at, 'ends_at', r.ends_at,
+    'class_name', r.class_name, 'starts_at', r.starts_at, 'ends_at', r.ends_at, 'timezone', v_tz,
     'already_recorded', v_status is not null, 'status', v_status
   );
 end

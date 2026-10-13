@@ -44,6 +44,10 @@ test("pages publiques et authentifiées sans violation axe (WCAG AA)", async ({ 
   await expectNoViolations(page, "feuille d'appel");
   await page.goto("/account");
   await expectNoViolations(page, "/account");
+  await page.goto("/checkin");
+  await expectNoViolations(page, "/checkin");
+  await page.goto(`/checkin/${"A".repeat(43)}`);
+  await expectNoViolations(page, "/checkin/<jeton invalide>");
 });
 
 test("navigation au clavier : lien d'évitement, formulaire de connexion et fermeture de modale par Échap", async ({ page }) => {

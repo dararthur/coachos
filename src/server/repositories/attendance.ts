@@ -7,6 +7,8 @@ export interface RosterEntry {
   firstName: string;
   lastName: string;
   status: AttendanceStatus | null;
+  /** Origine de l'enregistrement : QR (pointé par l'adhérent) ou manuel (coach) ; null = non renseigné. */
+  source: "manual" | "qr" | null;
   archived: boolean;
 }
 
@@ -15,7 +17,7 @@ export interface RosterEntry {
  */
 export async function getRoster(tx: Tx, academyId: string, sessionId: string): Promise<RosterEntry[]> {
   const rows = await tx<RosterEntry[]>`
-    select p.id as "personId", p.first_name as "firstName", p.last_name as "lastName", a.status,
+    select p.id as "personId", p.first_name as "firstName", p.last_name as "lastName", a.status, a.source,
            (p.archived_at is not null) as archived
     from public.people p
     left join public.attendance a on a.person_id = p.id and a.academy_id = p.academy_id and a.session_id = ${sessionId}

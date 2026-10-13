@@ -12,6 +12,7 @@ export function AppShell({ academy, role, userLabel, children }: { academy: { id
     role === "member" && { href: `${base}/me`, label: "Mon espace", short: "Espace", icon: "home" },
     can(role, "members.read") && { href: `${base}/members`, label: "Membres", short: "Membres", icon: "users" },
     { href: `${base}/schedule`, label: "Planning", short: "Planning", icon: "calendar" },
+    role === "member" && { href: "/checkin", label: "Pointer ma présence", short: "Pointer", icon: "qr" },
     can(role, "attendance.record") && { href: `${base}/attendance`, label: "Présences", short: "Appel", icon: "check" },
     can(role, "reports.read") && { href: `${base}/reports`, label: "Rapports", short: "Rapports", icon: "chart" },
     can(role, "academy.update") && { href: `${base}/settings`, label: "Paramètres", short: "Réglages", icon: "settings" },

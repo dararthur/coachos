@@ -24,6 +24,7 @@ const env = {
   DATABASE_SSL: "disable",
   APP_SECRET: randomBytes(32).toString("hex"),
   CRON_SECRET: randomBytes(32).toString("hex"),
+  CHECKIN_TOKEN_TTL_SECONDS: "10", // jetons très courts : permet de tester l'expiration en quelques secondes
   PORT: String(appPort),
 };
 

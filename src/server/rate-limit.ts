@@ -36,5 +36,7 @@ export const LIMITS = {
   personalExport: { max: 20, window: 60 * 60 },
   erase: { max: 30, window: 60 * 60 },
   accountDelete: { max: 3, window: 60 * 60 },
+  checkinIssue: { max: 400, window: 60 * 60 },
+  checkinScan: { max: 40, window: 10 * 60 },
   writes: { max: 600, window: 60 }, // plafond générique par utilisateur
 } as const;

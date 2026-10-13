@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { addDays, formatDateTime, localDate } from "@/domain/dates";
 import { ATTENDANCE_LABELS } from "@/domain/validation";
-import { Badge, Card, DataTable, EmptyState, PageHeader } from "@/components/ui/ui";
+import { Badge, Card, DataTable, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listSessions } from "@/server/repositories/schedule";
 
@@ -27,6 +27,9 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
     <>
       <PageHeader title="Mon espace" description={`Bienvenue dans « ${ctx.academy.name} ».`} />
       <div className="space-y-6">
+        <Card title="Pointer ma présence" description="Au début du cours, scannez le QR code affiché par le coach.">
+          <LinkButton href="/checkin">Scanner le QR code</LinkButton>
+        </Card>
         <Card title="Prochaines séances (14 jours)">
           {upcoming.length === 0 ? (
             <EmptyState title="Aucune séance prévue" />
