@@ -93,22 +93,22 @@ export function EmptyState({ title, children, action }: { title: string; childre
 }
 
 export function Stat({ label, value, hint, href }: { label: string; value: ReactNode; hint?: string; href?: string }) {
-  const body = (
-    <>
-      <dt className="text-sm text-muted">{label}</dt>
-      <dd className="mt-1 text-3xl font-semibold tabular-nums text-ink">{value}</dd>
-      {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
-    </>
-  );
+  // Structure valide d'une liste de définitions : <div><dt/><dd/></div>. Le lien étend sa zone cliquable à toute la carte.
   return (
-    <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
-      {href ? (
-        <Link href={href} className="block rounded focus-visible:outline-offset-4">
-          {body}
-        </Link>
-      ) : (
-        body
-      )}
+    <div className="relative rounded-xl border border-line bg-surface p-4 shadow-sm">
+      <dt className="text-sm text-muted">
+        {href ? (
+          <Link href={href} className="font-normal text-muted no-underline after:absolute after:inset-0 after:rounded-xl">
+            {label}
+          </Link>
+        ) : (
+          label
+        )}
+      </dt>
+      <dd className="mt-1 text-3xl font-semibold tabular-nums text-ink">
+        {value}
+        {hint && <span className="mt-1 block text-xs font-normal text-muted">{hint}</span>}
+      </dd>
     </div>
   );
 }
