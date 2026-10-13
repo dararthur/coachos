@@ -132,6 +132,8 @@ describe("préflight : configuration", () => {
     expect(byId(bad({ MAIL_FROM: undefined }), "env.mail.from")?.status).toBe("fail");
     expect(byId(bad({ MAIL_PROVIDER: "autre" }), "env.mail.provider")?.status).toBe("fail");
     expect(byId(bad({ APP_ENV: "production" }), "env.APP_ENV")?.status).toBe("fail");
+    expect(byId(bad({ APP_ENV: undefined }), "env.APP_ENV")?.status).toBe("fail"); // le serveur refuserait de démarrer
+    expect(byId(bad({ APP_ENV: "prod" }), "env.APP_ENV")?.status).toBe("fail");
     expect(byId(checkEnv({ ...good(), APP_ENV: "production" }, { allowProduction: true }), "env.APP_ENV")?.status).toBe("ok");
     expect(byId(bad({ CRON_SECRET: undefined }), "env.CRON_SECRET")?.status).toBe("warn");
   });

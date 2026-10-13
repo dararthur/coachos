@@ -53,10 +53,10 @@ alter role auth_runtime login password '<autre mot de passe généré, 32+ carac
 | `SITE_URL` | URL publique exacte (https en production) |
 | `APP_SECRET` | ≥ 32 caractères, pseudonymise IP et e-mails (compteurs, sessions) |
 | `BETTER_AUTH_SECRET` | ≥ 32 caractères, **distinct** d'`APP_SECRET`, signe les cookies de session. **Jamais avec la base ni ses sauvegardes** (`docs/self-hosted-auth.md` §4) |
-| `MAIL_PROVIDER` | `outbox` (développement/tests, aucun envoi) ou `resend` (+ `RESEND_API_KEY`, `MAIL_FROM`) |
+| `APP_ENV` | **obligatoire**, sans valeur par défaut : `development` | `test` | `staging` | `production`. Ne se déduit pas de `NODE_ENV` (les tests e2e tournent aussi en mode production) |
+| `MAIL_PROVIDER` | `resend` (+ `RESEND_API_KEY`, `MAIL_FROM`) pour `staging`/`production` ; `outbox` (aucun envoi, liens écrits **en clair** dans un fichier) **uniquement** avec `APP_ENV=development` ou `test` **et** une `SITE_URL` locale. Sinon le serveur refuse de démarrer |
 | `MAIL_OUTBOX_FILE` | avec `outbox` : fichier recevant les liens (développement uniquement) |
 | `CRON_SECRET` | optionnel, active `POST /api/cron/purge` |
-| `APP_ENV` | optionnel (`staging`), lu par `npm run pilot:preflight` |
 | `CHECKIN_TOKEN_TTL_SECONDS` | optionnel, durée du QR de pointage (10–300 s, défaut 90) |
 | `DATABASE_SSL`, `DATABASE_POOL_SIZE` | `disable` uniquement pour une base locale ; taille du pool |
 
@@ -90,7 +90,7 @@ Ne partagez **aucun** secret entre environnements. Pas de données de production
 
 ## Déploiement *(non vérifié, aucun déploiement n'a été effectué)*
 
-1. Processus Node (≥ 22) sous un utilisateur système dédié, `next start` écoutant sur `127.0.0.1` seulement.
+1. Processus Node (≥ 22) sous un utilisateur système dédié, lancé par `npm run start` (= `next start -H 127.0.0.1`, **écoute locale imposée par le script**, vérifiée par `tests/e2e/startup-guards.spec.ts` ; ne pas la contourner dans l'unité de service). Le port se fixe avec `PORT` ou `-- -p <port>`. **Au démarrage**, le serveur valide toute sa configuration (`src/instrumentation.ts`) et **s'arrête avec le code 1** si elle est absente, incohérente ou interdite (ex. `MAIL_PROVIDER=outbox` avec `APP_ENV=production`) : aucun port ne reste ouvert, le message ne cite que des noms de variables.
 2. Reverse proxy (Nginx) terminant TLS et **écrasant** `X-Real-IP` / `X-Forwarded-For` : exemple non appliqué dans `ops/nginx-self-hosted.example.conf`. Critères N1–N6 de `docs/self-hosted-auth.md` §9 à valider.
 3. PostgreSQL en écoute locale uniquement (jamais sur Internet), base et rôles dédiés ; `pg_hba.conf` restreint.
 4. Planifier chaque jour `POST $SITE_URL/api/cron/purge` (en-tête `Authorization: Bearer $CRON_SECRET`) — purge de rétention métier **et** des sessions/jetons d'authentification expirés.

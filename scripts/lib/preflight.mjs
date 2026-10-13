@@ -40,7 +40,7 @@ export function checkEnv(env, opts = {}) {
   if (!env.CRON_SECRET) out.push(warn("env.CRON_SECRET", "CRON_SECRET défini", "absent : la purge de rétention planifiée est désactivée (obligatoire avant des données réelles)"));
   else if (env.CRON_SECRET.length < 32) out.push(fail("env.CRON_SECRET.length", "CRON_SECRET fait au moins 32 caractères"));
   if (env.APP_ENV === "production" && !opts.allowProduction) out.push(fail("env.APP_ENV", "APP_ENV n'est pas « production »", "ce contrôle est destiné à la préproduction ; ajouter --production pour un contrôle délibéré de la production"));
-  else if (!env.APP_ENV) out.push(warn("env.APP_ENV", "APP_ENV identifie l'environnement", "définir APP_ENV=staging pour rendre l'environnement explicite"));
+  else if (!["development", "test", "staging", "production"].includes(env.APP_ENV ?? "")) out.push(fail("env.APP_ENV", "APP_ENV identifie explicitement l'environnement", "obligatoire : development | test | staging | production (le serveur refuse de démarrer sinon)"));
   else out.push(ok("env.APP_ENV", `APP_ENV = ${env.APP_ENV}`));
 
   if (env.SITE_URL) {

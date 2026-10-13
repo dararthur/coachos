@@ -1,10 +1,24 @@
 import "server-only";
 import { z } from "zod";
 
-/** Variables d'environnement validées au premier usage. Voir .env.example (aucune valeur secrète versionnée). */
+/**
+ * Variables d'environnement. Validées AU DÉMARRAGE du serveur (src/instrumentation.ts), pas au premier appel métier :
+ * une configuration absente, incohérente ou interdite empêche le processus de démarrer. Voir .env.example.
+ */
+
+/** Environnements d'exécution. `test` et `development` sont les seuls où la boîte d'envoi d'e-mails de test est tolérée. */
+export const APP_ENVS = ["development", "test", "staging", "production"] as const;
+
+const LOOPBACK_HOSTS = ["localhost", "127.0.0.1", "[::1]"];
+
 const schema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    /**
+     * Rôle EXPLICITE de cette instance. `NODE_ENV=production` ne suffit pas : les tests e2e tournent aussi en mode production.
+     * Ne jamais laisser une valeur par défaut : une instance dont le rôle est inconnu ne démarre pas.
+     */
+    APP_ENV: z.enum(APP_ENVS),
     /** Connexion du rôle `app_server` (données métier, RLS). */
     DATABASE_URL: z.string().min(10),
     /** Connexion du rôle `auth_runtime` (tables d'authentification de Better Auth uniquement). */
@@ -15,7 +29,7 @@ const schema = z
     APP_SECRET: z.string().min(32),
     /** Signe les cookies de session (HMAC). Distinct d'APP_SECRET ; jamais stocké avec la base ni ses sauvegardes. */
     BETTER_AUTH_SECRET: z.string().min(32),
-    /** E-mails transactionnels : `resend` (production) ou `outbox` (tests : liens écrits dans un fichier). */
+    /** E-mails transactionnels : `resend` (staging, production) ou `outbox` (développement et tests UNIQUEMENT : liens écrits dans un fichier). */
     MAIL_PROVIDER: z.enum(["resend", "outbox"]),
     RESEND_API_KEY: z.string().min(8).optional(),
     MAIL_FROM: z.string().min(5).optional(),
@@ -26,31 +40,61 @@ const schema = z
     CRON_SECRET: z.string().min(32).optional(),
   })
   .superRefine((v, ctx) => {
-    if (v.APP_SECRET === v.BETTER_AUTH_SECRET) ctx.addIssue({ code: "custom", path: ["BETTER_AUTH_SECRET"], message: "distinct d'APP_SECRET" });
+    const issue = (path: string, message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+    if (v.APP_SECRET === v.BETTER_AUTH_SECRET) issue("BETTER_AUTH_SECRET", "doit être distinct d'APP_SECRET");
     if (v.MAIL_PROVIDER === "resend") {
-      if (!v.RESEND_API_KEY) ctx.addIssue({ code: "custom", path: ["RESEND_API_KEY"], message: "requis avec MAIL_PROVIDER=resend" });
-      if (!v.MAIL_FROM) ctx.addIssue({ code: "custom", path: ["MAIL_FROM"], message: "requis avec MAIL_PROVIDER=resend" });
+      if (!v.RESEND_API_KEY) issue("RESEND_API_KEY", "requis avec MAIL_PROVIDER=resend");
+      if (!v.MAIL_FROM) issue("MAIL_FROM", "requis avec MAIL_PROVIDER=resend");
     }
-    if (v.MAIL_PROVIDER === "outbox" && !v.MAIL_OUTBOX_FILE) ctx.addIssue({ code: "custom", path: ["MAIL_OUTBOX_FILE"], message: "requis avec MAIL_PROVIDER=outbox" });
+    if (v.MAIL_PROVIDER === "outbox") {
+      if (!v.MAIL_OUTBOX_FILE) issue("MAIL_OUTBOX_FILE", "requis avec MAIL_PROVIDER=outbox");
+      // La boîte d'envoi écrit les liens de confirmation et de réinitialisation EN CLAIR dans un fichier et n'envoie rien :
+      // elle n'existe que pour le développement et les tests, sur une instance qui n'est joignable que localement.
+      if (v.APP_ENV === "staging" || v.APP_ENV === "production") {
+        issue("MAIL_PROVIDER", `« outbox » est interdit avec APP_ENV=${v.APP_ENV} (utiliser resend)`);
+      } else {
+        let host = "";
+        try {
+          host = new URL(v.SITE_URL).hostname;
+        } catch {
+          /* SITE_URL invalide : déjà signalé */
+        }
+        if (!LOOPBACK_HOSTS.includes(host)) issue("MAIL_PROVIDER", "« outbox » exige une SITE_URL locale (localhost ou 127.0.0.1) : refusé pour une instance publique");
+      }
+    }
+    let protocol = "";
+    try {
+      protocol = new URL(v.SITE_URL).protocol;
+    } catch {
+      /* SITE_URL invalide : déjà signalé par le schéma */
+    }
+    if (v.APP_ENV === "production" && protocol !== "https:") issue("SITE_URL", "https obligatoire avec APP_ENV=production");
   });
 
 export type Env = z.infer<typeof schema>;
 
-let cached: Env | undefined;
-
-export function env(): Env {
-  if (cached) return cached;
-  const parsed = schema.safeParse(process.env);
+/** Valide une configuration SANS la mémoriser (testable). Les messages ne contiennent jamais de valeur, seulement des noms de variables. */
+export function parseEnv(source: Record<string, string | undefined>): Env {
+  // Une variable vide (`NOM=` dans un fichier copié de .env.example) équivaut à une variable absente.
+  const present = Object.fromEntries(Object.entries(source).filter(([, value]) => value !== ""));
+  const parsed = schema.safeParse(present);
   if (!parsed.success) {
-    // On ne liste que les noms des variables fautives, jamais leurs valeurs.
     const names = [...new Set(parsed.error.issues.map((i) => String(i.path[0])))].join(", ");
-    throw new Error(`Configuration invalide ou incomplète : ${names}. Voir .env.example.`);
+    // Les raisons des règles croisées sont écrites par nous (aucune valeur) ; celles de zod (types, tailles) sont omises.
+    const reasons = parsed.error.issues.filter((i) => i.code === "custom").map((i) => `${String(i.path[0])} : ${i.message}`);
+    throw new Error(`Configuration invalide ou incomplète : ${names}.${reasons.length ? ` ${reasons.join(" ; ")}.` : ""} Voir .env.example.`);
   }
   const site = new URL(parsed.data.SITE_URL);
-  const loopback = site.hostname === "localhost" || site.hostname === "127.0.0.1";
+  const loopback = LOOPBACK_HOSTS.includes(site.hostname);
   if (parsed.data.NODE_ENV === "production" && site.protocol !== "https:" && !loopback) {
     throw new Error("SITE_URL doit utiliser https en production (seul le loopback est toléré, pour les tests locaux).");
   }
-  cached = parsed.data;
+  return parsed.data;
+}
+
+let cached: Env | undefined;
+
+export function env(): Env {
+  cached ??= parseEnv(process.env);
   return cached;
 }

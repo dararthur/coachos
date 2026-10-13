@@ -19,6 +19,8 @@ const db = await startEmbeddedDb();
 const env = {
   ...process.env,
   NODE_ENV: "production",
+  // Configuration de TEST explicite : seule cette valeur (avec une SITE_URL locale) autorise MAIL_PROVIDER=outbox.
+  APP_ENV: "test",
   SITE_URL: `http://127.0.0.1:${appPort}`,
   DATABASE_URL: db.appUrl,
   AUTH_DATABASE_URL: db.authUrl,

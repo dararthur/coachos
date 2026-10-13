@@ -25,10 +25,10 @@ Cette séquence prouve le comportement de l'application, de la RLS et de Better 
 | `SITE_URL` | ✅ | non | URL publique **https** exacte du pilote (liens d'e-mail, d'invitation et de pointage ; origine de confiance) |
 | `APP_SECRET` | ✅ | **oui** | ≥ 32 caractères aléatoires (`openssl rand -base64 48`) ; pseudonymise IP et e-mails |
 | `BETTER_AUTH_SECRET` | ✅ | **oui** | ≥ 32 caractères, **distinct** d'`APP_SECRET` ; signe les cookies de session ; **jamais avec la base ni ses sauvegardes** |
-| `MAIL_PROVIDER` | ✅ | non | `resend` pour un pilote (`outbox` est refusé par le préflight : réservé aux tests) |
+| `MAIL_PROVIDER` | ✅ | non | `resend` pour un pilote. `outbox` est **refusé au démarrage du serveur** avec `APP_ENV=staging`/`production` (et avec toute `SITE_URL` non locale) et par le préflight |
 | `RESEND_API_KEY`, `MAIL_FROM` | avec `resend` | clé : **oui** | clé API Resend (gestionnaire de secrets) ; expéditeur d'un domaine vérifié |
 | `CRON_SECRET` | ✅ avant données réelles | **oui** | ≥ 32 caractères ; active `POST /api/cron/purge` (rétention + sessions expirées) |
-| `APP_ENV` | conseillé | non | `staging` ; lu par le préflight pour refuser un contrôle accidentel de la production |
+| `APP_ENV` | ✅ | non | `staging` (puis `production`) : rôle explicite de l'instance, sans valeur par défaut ; lu **au démarrage** (refus si incohérent) et par le préflight pour refuser un contrôle accidentel de la production |
 | `DATABASE_SSL`, `DATABASE_POOL_SIZE` | non | non | `disable` uniquement pour une base locale ; taille du pool (défaut 10) |
 | `CHECKIN_TOKEN_TTL_SECONDS` | non | non | durée du QR (10–300 s, défaut 90) |
 

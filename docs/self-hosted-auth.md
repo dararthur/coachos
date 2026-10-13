@@ -57,7 +57,7 @@ Un hook unique s'exécute pour **tout** appel d'endpoint : requête HTTP **et** 
 ## 6. E-mails (Resend derrière une interface)
 
 `src/server/mail/types.ts` définit `Mailer.send(message)`. Aucun autre module ne connaît le fournisseur.
-- `MAIL_PROVIDER=outbox` (tests, développement) : une ligne JSON par message dans `MAIL_OUTBOX_FILE`. Refusé par le préflight pour un pilote.
+- `MAIL_PROVIDER=outbox` (développement et tests **uniquement**) : une ligne JSON par message, liens en clair, dans `MAIL_OUTBOX_FILE`. **Le serveur refuse de démarrer** avec `outbox` si `APP_ENV` est `staging` ou `production`, ou si `SITE_URL` n'est pas locale (`localhost`/`127.0.0.1`) : la dérogation des tests e2e (`APP_ENV=test`, posée par `tests/e2e/support/run-stack.mjs`) ne peut donc pas servir une instance publique. `NODE_ENV=production` ne suffit pas à distinguer : les e2e l'utilisent aussi. Le préflight le refuse aussi.
 - `MAIL_PROVIDER=resend` : `POST https://api.resend.com/emails` avec `RESEND_API_KEY` (variable d'environnement serveur uniquement) et `MAIL_FROM`. **Cet adaptateur n'a jamais été exécuté contre l'API réelle** : aucun compte n'a été créé et aucun appel n'a été émis ; la forme de la requête est figée par des tests avec un faux `fetch`. Les erreurs ne portent ni destinataire, ni contenu, ni réponse du fournisseur.
 - Envoi sans attente de la réponse (anti-timing) ; échec = événement `auth.mail_failed` sans donnée personnelle. Pas de file d'attente ni de relance automatique : l'utilisateur peut redemander un lien (limites 3 / h).
 - Contenu minimal : destinataire, lien, texte générique ; ni nom de club ni donnée métier.
