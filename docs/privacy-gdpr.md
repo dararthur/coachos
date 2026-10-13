@@ -12,7 +12,8 @@
 | Traitement | Finalité | Base légale | Données | Qui y accède | Durée |
 |---|---|---|---|---|---|
 | Fiches membres | Gérer les adhérents d'un club | Exécution du contrat d'adhésion / intérêt légitime | prénom, nom, e-mail (facultatif), date d'inscription (facultatif), identifiant d'origine (facultatif), attestation de majorité | propriétaire, admins, coachs (lecture/création) ; le membre connecté voit sa fiche | Actif ; archivé → **anonymisation automatique** après `retention_months` (défaut 24, réglable 6–120) |
-| Présences | Suivre l'assiduité, organiser les cours | idem | séance, statut présent / retard / absent, auteur | staff ; le membre voit les siennes | Suit la fiche ; conservées anonymisées après effacement |
+| Présences | Suivre l'assiduité, organiser les cours | idem | séance, statut présent / retard / absent, auteur, origine (manuelle ou QR) | staff ; le membre voit les siennes | Suit la fiche ; conservées anonymisées après effacement |
+| Jetons de pointage QR | Permettre l'auto-pointage d'une séance | Intérêt légitime / exécution du contrat | hachage SHA-256 d'un jeton aléatoire, séance, expiration (aucune donnée sur la personne) | aucun client (table interne) | 10–300 s de validité ; supprimés ≤ 24 h après expiration |
 | Comptes | Authentification | Exécution du contrat | e-mail, nom affiché, mot de passe (haché par Supabase Auth) | l'utilisateur ; staff du même club voit nom/e-mail | Jusqu'à suppression du compte |
 | Journal d'audit | Sécurité, traçabilité des actions administratives | Intérêt légitime | action, acteur, horodatage, compteurs (aucun nom/e-mail) | propriétaire, admins | **24 mois** (purge automatique) |
 | Invitations | Rattacher un compte à un club | Exécution du contrat | e-mail invité, rôle, hachage de jeton | admins | 7 jours + 30 jours après expiration/acceptation |
@@ -22,6 +23,7 @@
 
 - **Adultes uniquement** : attestation de majorité obligatoire à la création/import, horodatée par la base ; aucune date de naissance collectée. La gestion des mineurs (tuteurs, sauvegarde) exige une conception dédiée **avant** toute ouverture.
 - **Aucune donnée de santé ni de blessure**, aucun champ libre « notes » sur un membre. L'import **ignore** toute colonne non reconnue (téléphone, adresse, naissance…).
+- **Pointage QR : aucune géolocalisation, reconnaissance faciale, biométrie ni image conservée** : la caméra ne sert qu'à lire un code dans le navigateur, sans envoi ni stockage.
 - **Aucune donnée personnelle envoyée à un fournisseur d'IA** : aucune intégration IA n'est implémentée. Toute évolution (Coach Briefing assisté par IA) exige : finalité, base légale, information des personnes, contrat de sous-traitance, garanties de transfert, configuration sans rétention/entraînement — et la sélection des personnes signalées doit rester déterministe et explicable.
 
 ## Droits des personnes — procédure opérationnelle

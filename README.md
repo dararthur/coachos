@@ -8,7 +8,7 @@
 > PW_CHANNEL=chrome npm run test:e2e   # parcours complet dans un navigateur (build inclus)
 > ```
 >
-> Documentation : [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md), audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
+> Documentation : [pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md), audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
 > Le CLI de brief hebdomadaire (`v0/`) reste un moteur autonome, non branché à l'application.
 
 ---

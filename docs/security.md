@@ -23,6 +23,8 @@ Résumé des contrôles **implémentés**, de l'endroit où ils sont prouvés, e
 | Brute force de connexion | `tests/e2e/security.spec.ts` (limitation de débit) |
 | CSV malveillant, formules, binaire, doublons | `tests/unit/csv-import.test.ts`, `tests/unit/domain.test.ts`, e2e |
 | Injection SQL | requêtes paramétrées exclusivement (aucune concaténation) ; `tests/db/repositories.test.ts` |
+| Pointage QR : jetons devinés/expirés/révoqués/rejoués, double scan et concurrence, pointer pour autrui, forger `source`, oracle d'existence, isolation entre clubs | `tests/db/checkin.test.ts` (16 cas), `tests/unit/checkin.test.ts`, `tests/e2e/qr-checkin.spec.ts` ; détail dans `docs/qr-checkin.md` |
+| Configuration de préproduction (rôle, RLS, pooler, Auth) | `tests/db/preflight.test.ts` ; `npm run pilot:preflight` (jamais exécuté contre un vrai projet Supabase) |
 | Secrets versionnés | `npm run audit:secrets`, gitleaks en CI |
 
 Un bug réel a été trouvé et corrigé par ces tests : `NULL NOT IN (...)` laissait un non-membre passer la garde de `create_invitation`/`set_member_role` (corrigé par `coalesce`).
@@ -38,6 +40,7 @@ Un bug réel a été trouvé et corrigé par ces tests : `NULL NOT IN (...)` lai
 
 - **CSRF** : Server Actions (contrôle Origin/Host de Next.js) + cookies `SameSite=Lax` ; les exports GET sont en lecture seule.
 - **XSS** : React échappe par défaut ; aucune injection HTML brute ; validation stricte des noms (`<`, `>`, `=`, `@` refusés) ; **CSP** `script-src 'self' 'nonce-…' 'strict-dynamic'`, sans `unsafe-inline`/`unsafe-eval` en production.
+- **Caméra** : `Permissions-Policy: camera=(self)` uniquement sur `/checkin` (posé par `src/proxy.ts`), `camera=()` partout ailleurs ; micro, géolocalisation, paiement, USB interdits partout.
 - **En-têtes** : `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control: no-store` sur les exports.
 - **CORS** : aucune route n'émet d'en-tête CORS (même origine uniquement).
 - **Limitation de débit** : compteurs en base (valables en serverless), clés pseudonymisées par HMAC ; connexion, inscription, réinitialisation, invitations, import, exports, effacement, suppression de compte, plafond d'écritures par utilisateur. Échec **fermé** si le compteur est indisponible.

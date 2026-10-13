@@ -9,6 +9,8 @@ Hiérarchie : **propriétaire > administrateur > coach > membre**. Un compte peu
 | Créer / modifier / annuler des séances | ✅ | ✅ | — | — |
 | Enregistrer des présences | ✅ | ✅ | séances qui lui sont affectées ou sans coach | — |
 | Voir les présences | toutes | toutes | toutes | les siennes |
+| Ouvrir/fermer le pointage QR, valider la feuille d'appel | ✅ | ✅ | séances qui lui sont affectées ou sans coach | — |
+| Pointer sa propre présence par QR | — (sauf fiche liée) | — (sauf fiche liée) | — (sauf fiche liée) | ✅ (compte lié à sa fiche) |
 | Voir les fiches membres | ✅ | ✅ | ✅ | la sienne |
 | Créer un membre | ✅ | ✅ | ✅ (nouvel arrivant) | — |
 | Modifier / archiver un membre | ✅ | ✅ | — | — |

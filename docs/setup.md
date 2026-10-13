@@ -43,6 +43,8 @@ Variables (`.env.example` documente chaque valeur) :
 | `SITE_URL` | URL publique (https en production) pour les liens d'e-mail et d'invitation |
 | `APP_SECRET` | ≥ 32 caractères aléatoires, pseudonymise les clés de limitation de débit |
 | `CRON_SECRET` | optionnel, active `POST /api/cron/purge` |
+| `APP_ENV` | optionnel (`staging`), lu par `npm run pilot:preflight` |
+| `CHECKIN_TOKEN_TTL_SECONDS` | optionnel, durée du QR de pointage (10–300 s, défaut 90) |
 
 Créer le mot de passe du rôle applicatif — **hors Git**, une fois par base (SQL editor Supabase ou `psql`) :
 
@@ -62,6 +64,10 @@ Créez un compte sur `/signup` (confirmez par l'e-mail Inbucket), puis votre clu
 SEED_DATABASE_URL=postgresql://postgres:<mdp-local>@127.0.0.1:54322/postgres npm run db:seed-demo -- --academy <uuid-du-club>
 npm run db:seed-demo -- --academy <uuid> --purge     # les retirer
 ```
+
+## Pilote et préproduction
+
+Voir [`docs/pilot.md`](pilot.md) (variables, projet Supabase de préproduction, contrôles avant toute donnée réelle) et `npm run pilot:preflight`. Mobile/PWA : [`docs/pwa.md`](pwa.md). Pointage QR : [`docs/qr-checkin.md`](qr-checkin.md).
 
 ## Migrations
 
