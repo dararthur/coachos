@@ -1,4 +1,4 @@
-// Contrôles de préproduction : configuration, connexion `app_server`, RLS, rôles et Supabase Auth.
+// Contrôles de préproduction : configuration, connexions `app_server` et `auth_runtime`, RLS, rôles, authentification.
 // Ne lit jamais de donnée métier ; n'affiche jamais de valeur secrète (noms de variables et verdicts seulement).
 // Réutilisé par scripts/pilot-preflight.mjs et testé contre un vrai PostgreSQL dans tests/db/preflight.test.ts.
 import { randomUUID } from "node:crypto";
@@ -10,14 +10,15 @@ const ok = (id, label, detail) => ({ id, label, status: "ok", detail });
 const fail = (id, label, detail) => ({ id, label, status: "fail", detail });
 const warn = (id, label, detail) => ({ id, label, status: "warn", detail });
 
-export const REQUIRED_ENV = ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "DATABASE_URL", "SITE_URL", "APP_SECRET"];
-export const OPTIONAL_ENV = ["CRON_SECRET", "DATABASE_SSL", "DATABASE_POOL_SIZE", "CHECKIN_TOKEN_TTL_SECONDS", "APP_ENV"];
+export const REQUIRED_ENV = ["DATABASE_URL", "AUTH_DATABASE_URL", "SITE_URL", "APP_SECRET", "BETTER_AUTH_SECRET", "MAIL_PROVIDER"];
+export const OPTIONAL_ENV = ["CRON_SECRET", "DATABASE_SSL", "DATABASE_POOL_SIZE", "CHECKIN_TOKEN_TTL_SECONDS", "APP_ENV", "RESEND_API_KEY", "MAIL_FROM", "MAIL_OUTBOX_FILE"];
 
-function jwtRole(token) {
-  const parts = String(token).split(".");
-  if (parts.length !== 3) return null;
+const isLocalHost = (h) => ["localhost", "127.0.0.1", "::1", "[::1]"].includes(h);
+
+function dbUser(urlString) {
   try {
-    return JSON.parse(Buffer.from(parts[1], "base64url").toString()).role ?? null;
+    const url = new URL(urlString);
+    return { url, user: decodeURIComponent(url.username) };
   } catch {
     return null;
   }
@@ -32,6 +33,10 @@ export function checkEnv(env, opts = {}) {
     else out.push(ok(`env.${name}`, `${name} est défini`));
   }
   if (env.APP_SECRET && env.APP_SECRET.length < 32) out.push(fail("env.APP_SECRET.length", "APP_SECRET fait au moins 32 caractères"));
+  if (env.BETTER_AUTH_SECRET && env.BETTER_AUTH_SECRET.length < 32) out.push(fail("env.BETTER_AUTH_SECRET.length", "BETTER_AUTH_SECRET fait au moins 32 caractères"));
+  if (env.APP_SECRET && env.BETTER_AUTH_SECRET && env.APP_SECRET === env.BETTER_AUTH_SECRET) {
+    out.push(fail("env.secrets.distinct", "APP_SECRET et BETTER_AUTH_SECRET sont distincts", "un même secret ne doit pas protéger les cookies de session et pseudonymiser les compteurs"));
+  }
   if (!env.CRON_SECRET) out.push(warn("env.CRON_SECRET", "CRON_SECRET défini", "absent : la purge de rétention planifiée est désactivée (obligatoire avant des données réelles)"));
   else if (env.CRON_SECRET.length < 32) out.push(fail("env.CRON_SECRET.length", "CRON_SECRET fait au moins 32 caractères"));
   if (env.APP_ENV === "production" && !opts.allowProduction) out.push(fail("env.APP_ENV", "APP_ENV n'est pas « production »", "ce contrôle est destiné à la préproduction ; ajouter --production pour un contrôle délibéré de la production"));
@@ -41,44 +46,44 @@ export function checkEnv(env, opts = {}) {
   if (env.SITE_URL) {
     try {
       const site = new URL(env.SITE_URL);
-      const local = ["localhost", "127.0.0.1"].includes(site.hostname);
-      if (site.protocol !== "https:" && !opts.allowHttp) out.push(fail("env.SITE_URL.https", "SITE_URL utilise https", "obligatoire hors développement local"));
+      if (site.protocol !== "https:" && !opts.allowHttp) out.push(fail("env.SITE_URL.https", "SITE_URL utilise https", "obligatoire hors développement local : les cookies de session doivent être Secure"));
       else out.push(ok("env.SITE_URL.https", "SITE_URL utilise https (ou http toléré explicitement)"));
-      if (local && !opts.allowHttp) out.push(fail("env.SITE_URL.public", "SITE_URL est une adresse publique", "localhost ne convient pas à un pilote"));
+      if (isLocalHost(site.hostname) && !opts.allowHttp) out.push(fail("env.SITE_URL.public", "SITE_URL est une adresse publique", "localhost ne convient pas à un pilote"));
     } catch {
       out.push(fail("env.SITE_URL.valid", "SITE_URL est une URL valide"));
     }
   }
 
-  // La clé côté application doit être publique (anon/publishable) : jamais service_role / secrète.
-  const key = env.SUPABASE_PUBLISHABLE_KEY ?? "";
-  if (key) {
-    if (key.startsWith("sb_secret_") || jwtRole(key) === "service_role") out.push(fail("env.key.public", "SUPABASE_PUBLISHABLE_KEY est une clé publique", "clé SECRÈTE / service_role détectée : ne jamais la placer ici"));
-    else out.push(ok("env.key.public", "SUPABASE_PUBLISHABLE_KEY n'est pas une clé service_role"));
-  }
+  // Aucune trace de l'ancienne architecture : aucune clé Supabase, aucune clé service_role.
   for (const name of Object.keys(env)) {
+    if (/^SUPABASE_/i.test(name) && env[name]) out.push(warn("env.legacy_supabase", "aucune variable SUPABASE_* n'est configurée", `${name} est défini mais n'est plus utilisé : retirez-le`));
     if (/SERVICE_ROLE/i.test(name) && env[name]) out.push(fail("env.no_service_role", "aucune variable service_role n'est configurée", `${name} est défini : l'application n'en a pas besoin, retirez-le`));
   }
 
-  if (env.DATABASE_URL) {
-    try {
-      const db = new URL(env.DATABASE_URL);
-      const user = decodeURIComponent(db.username);
-      if (!user.startsWith("app_server")) out.push(fail("env.db.user", "DATABASE_URL utilise le rôle app_server", `rôle « ${user.split(".")[0]} » : doit être app_server (jamais postgres)`));
-      else out.push(ok("env.db.user", "DATABASE_URL utilise le rôle app_server"));
-      // Cohérence des projets : la référence du projet Supabase doit apparaître dans l'hôte ou l'utilisateur de la base.
-      const supa = env.SUPABASE_URL ? new URL(env.SUPABASE_URL) : null;
-      const ref = supa && supa.hostname.endsWith(".supabase.co") ? supa.hostname.split(".")[0] : null;
-      if (ref) {
-        if (db.hostname.includes(ref) || user.includes(ref)) out.push(ok("env.project_ref", "DATABASE_URL et SUPABASE_URL désignent le même projet"));
-        else out.push(fail("env.project_ref", "DATABASE_URL et SUPABASE_URL désignent le même projet", "référence de projet absente de DATABASE_URL : risque de mélanger deux projets (ex. auth de préproduction + base de production)"));
-      } else {
-        out.push(warn("env.project_ref", "cohérence des projets non vérifiable", "SUPABASE_URL n'est pas de la forme <ref>.supabase.co (instance locale ou domaine personnalisé)"));
-      }
-      if (!["localhost", "127.0.0.1"].includes(db.hostname) && env.DATABASE_SSL === "disable") out.push(fail("env.db.ssl", "SSL de la base actif", "DATABASE_SSL=disable sur une base distante"));
-    } catch {
-      out.push(fail("env.db.valid", "DATABASE_URL est une URL valide"));
-    }
+  // Deux connexions, deux rôles distincts et à privilèges minimaux.
+  const app = env.DATABASE_URL ? dbUser(env.DATABASE_URL) : null;
+  const auth = env.AUTH_DATABASE_URL ? dbUser(env.AUTH_DATABASE_URL) : null;
+  if (env.DATABASE_URL && !app) out.push(fail("env.db.valid", "DATABASE_URL est une URL valide"));
+  if (env.AUTH_DATABASE_URL && !auth) out.push(fail("env.authdb.valid", "AUTH_DATABASE_URL est une URL valide"));
+  if (app) {
+    if (!app.user.startsWith("app_server")) out.push(fail("env.db.user", "DATABASE_URL utilise le rôle app_server", `rôle « ${app.user.split(".")[0]} » : doit être app_server (jamais postgres)`));
+    else out.push(ok("env.db.user", "DATABASE_URL utilise le rôle app_server"));
+    if (!isLocalHost(app.url.hostname) && env.DATABASE_SSL === "disable") out.push(fail("env.db.ssl", "SSL de la base actif", "DATABASE_SSL=disable sur une base distante"));
+  }
+  if (auth) {
+    if (!auth.user.startsWith("auth_runtime")) out.push(fail("env.authdb.user", "AUTH_DATABASE_URL utilise le rôle auth_runtime", `rôle « ${auth.user.split(".")[0]} » : doit être auth_runtime (jamais postgres ni app_server)`));
+    else out.push(ok("env.authdb.user", "AUTH_DATABASE_URL utilise le rôle auth_runtime"));
+  }
+
+  // E-mails transactionnels : jamais la boîte d'envoi de test pour un vrai pilote.
+  if (env.MAIL_PROVIDER === "outbox") {
+    if (!opts.allowHttp) out.push(fail("env.mail.provider", "MAIL_PROVIDER est un vrai fournisseur", "« outbox » écrit les liens dans un fichier : réservé aux tests"));
+  } else if (env.MAIL_PROVIDER === "resend") {
+    if (!env.RESEND_API_KEY) out.push(fail("env.mail.key", "RESEND_API_KEY est défini", "obligatoire avec MAIL_PROVIDER=resend (valeur dans le gestionnaire de secrets, jamais dans Git)"));
+    if (!env.MAIL_FROM) out.push(fail("env.mail.from", "MAIL_FROM est défini", "adresse d'expédition d'un domaine vérifié"));
+    if (env.RESEND_API_KEY && env.MAIL_FROM) out.push(ok("env.mail.provider", "MAIL_PROVIDER=resend configuré (clé et expéditeur présents)"));
+  } else if (env.MAIL_PROVIDER) {
+    out.push(fail("env.mail.provider", "MAIL_PROVIDER est connu", "valeurs acceptées : resend | outbox"));
   }
   return out;
 }
@@ -129,8 +134,8 @@ export async function checkDatabase(sql, opts) {
 
   await run("db.no_table_privileges", "app_server n'a aucun droit direct sur les tables", async () => {
     const rows = await sql`
-      select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
-      where n.nspname = 'public' and c.relkind in ('r', 'p', 'v')
+      select n.nspname || '.' || c.relname as relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname in ('public', 'auth') and c.relkind in ('r', 'p', 'v')
         and (has_table_privilege(session_user, c.oid, 'select') or has_table_privilege(session_user, c.oid, 'insert')
           or has_table_privilege(session_user, c.oid, 'update') or has_table_privilege(session_user, c.oid, 'delete'))`;
     return rows.length ? fail("db.no_table_privileges", "app_server n'a aucun droit direct sur les tables", `droits directs sur : ${rows.map((r) => r.relname).join(", ")}`) : ok("db.no_table_privileges", "app_server n'a aucun droit direct sur les tables");
@@ -142,13 +147,13 @@ export async function checkDatabase(sql, opts) {
   });
 
   await run("db.anon_closed", "le rôle anon n'a aucun accès aux tables ni aux fonctions", async () => {
-    const t = await sql`select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'public' and c.relkind in ('r','p','v') and has_table_privilege('anon', c.oid, 'select,insert,update,delete')`;
-    const f = await sql`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('public','app_private') and has_function_privilege('anon', p.oid, 'execute')`;
+    const t = await sql`select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname in ('public', 'auth') and c.relkind in ('r','p','v') and has_table_privilege('anon', c.oid, 'select,insert,update,delete')`;
+    const f = await sql`select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname in ('public','app_private','auth') and has_function_privilege('anon', p.oid, 'execute')`;
     const problems = [...t.map((r) => `table ${r.relname}`), ...f.map((r) => `fonction ${r.proname}`)];
     return problems.length ? fail("db.anon_closed", "le rôle anon n'a aucun accès aux tables ni aux fonctions", problems.join(", ")) : ok("db.anon_closed", "le rôle anon n'a aucun accès aux tables ni aux fonctions");
   });
 
-  await run("db.set_role", "SET LOCAL ROLE authenticated + claims JWT fonctionnent (compatible pooler transactionnel)", async () => {
+  await run("db.set_role", "SET LOCAL ROLE authenticated + claims fonctionnent (compatible pooler transactionnel)", async () => {
     const uid = randomUUID();
     const r = await sql.begin(async (tx) => {
       await tx`select set_config('request.jwt.claims', ${JSON.stringify({ sub: uid, role: "authenticated" })}, true), set_config('request.jwt.claim.sub', ${uid}, true), set_config('role', 'authenticated', true)`;
@@ -156,8 +161,8 @@ export async function checkDatabase(sql, opts) {
       return row;
     });
     return r.u === "authenticated" && r.uid === uid
-      ? ok("db.set_role", "SET LOCAL ROLE authenticated + claims JWT fonctionnent (compatible pooler transactionnel)")
-      : fail("db.set_role", "SET LOCAL ROLE authenticated + claims JWT fonctionnent", `current_user=${r.u}, auth.uid()=${r.uid === uid ? "ok" : "incorrect"}`);
+      ? ok("db.set_role", "SET LOCAL ROLE authenticated + claims fonctionnent (compatible pooler transactionnel)")
+      : fail("db.set_role", "SET LOCAL ROLE authenticated + claims fonctionnent", `current_user=${r.u}, auth.uid()=${r.uid === uid ? "ok" : "incorrect"}`);
   });
 
   await run("db.rls_blocks", "un utilisateur inconnu ne lit rien et ne peut rien écrire", async () => {
@@ -200,21 +205,66 @@ export async function checkDatabase(sql, opts) {
   return out;
 }
 
-/** Réglages publics de Supabase Auth (aucune clé secrète requise). @returns {Promise<Check[]>} */
-export async function checkAuth(supabaseUrl, publishableKey, fetchImpl = fetch) {
+/**
+ * Contrôles réels avec la connexion `auth_runtime` de Better Auth : droits minimaux et fermeture des tables d'authentification.
+ * @param {import("postgres").Sql} sql @returns {Promise<Check[]>}
+ */
+export async function checkAuthDatabase(sql) {
   /** @type {Check[]} */
   const out = [];
-  try {
-    const res = await fetchImpl(new URL("/auth/v1/settings", supabaseUrl), { headers: { apikey: publishableKey }, signal: AbortSignal.timeout(10_000) });
-    if (!res.ok) return [fail("auth.reachable", "Supabase Auth répond", `HTTP ${res.status} : clé ou URL invalide ?`)];
-    const s = await res.json();
-    out.push(ok("auth.reachable", "Supabase Auth répond"));
-    out.push(s.mailer_autoconfirm === false ? ok("auth.confirm", "la confirmation d'e-mail est exigée") : fail("auth.confirm", "la confirmation d'e-mail est exigée", "mailer_autoconfirm est actif : n'importe qui peut créer un compte avec l'e-mail d'autrui et accepter ses invitations"));
-    out.push(s.external?.email === true ? ok("auth.email", "l'authentification par e-mail est activée") : fail("auth.email", "l'authentification par e-mail est activée"));
-    out.push(s.disable_signup === true ? warn("auth.signup", "inscriptions ouvertes", "les inscriptions sont désactivées : les adhérents ne pourront pas créer leur compte (inviter via Supabase) — voir docs/pilot.md") : ok("auth.signup", "les inscriptions sont ouvertes (nécessaire pour accepter une invitation)"));
-  } catch (e) {
-    out.push(fail("auth.reachable", "Supabase Auth répond", `erreur réseau : ${String(e?.message ?? e).slice(0, 120)}`));
-  }
+  const run = async (id, label, fn) => {
+    try {
+      out.push(await fn());
+    } catch (e) {
+      out.push(fail(id, label, `erreur : ${e?.code ?? ""} ${String(e?.message ?? e).slice(0, 160)}`));
+    }
+  };
+
+  await run("auth.role", "auth_runtime : ni superuser, ni BYPASSRLS, ni création de rôles/bases", async () => {
+    const [r] = await sql`select rolname, rolsuper, rolbypassrls, rolcreaterole, rolcreatedb from pg_roles where rolname = session_user`;
+    const problems = [];
+    if (r.rolname !== "auth_runtime") problems.push(`session_user = ${r.rolname} (attendu : auth_runtime)`);
+    if (r.rolsuper) problems.push("superuser");
+    if (r.rolbypassrls) problems.push("BYPASSRLS");
+    if (r.rolcreaterole || r.rolcreatedb) problems.push("peut créer des rôles/bases");
+    return problems.length ? fail("auth.role", "auth_runtime : ni superuser, ni BYPASSRLS, ni création de rôles/bases", problems.join(" ; ")) : ok("auth.role", "auth_runtime : ni superuser, ni BYPASSRLS, ni création de rôles/bases");
+  });
+
+  await run("auth.no_business_access", "auth_runtime n'a aucun droit sur les données métier (public, app_private)", async () => {
+    const rows = await sql`
+      select n.nspname || '.' || c.relname as t from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname in ('public', 'app_private') and c.relkind in ('r', 'p', 'v')
+        and (has_table_privilege(session_user, c.oid, 'select') or has_table_privilege(session_user, c.oid, 'insert')
+          or has_table_privilege(session_user, c.oid, 'update') or has_table_privilege(session_user, c.oid, 'delete'))`;
+    return rows.length ? fail("auth.no_business_access", "auth_runtime n'a aucun droit sur les données métier", `droits sur : ${rows.map((r) => r.t).join(", ")}`) : ok("auth.no_business_access", "auth_runtime n'a aucun droit sur les données métier (public, app_private)");
+  });
+
+  await run("auth.no_ddl", "auth_runtime ne peut créer aucun objet (schémas auth et public)", async () => {
+    const [r] = await sql`select has_schema_privilege(session_user, 'auth', 'create') as a, has_schema_privilege(session_user, 'public', 'create') as p`;
+    return r.a || r.p ? fail("auth.no_ddl", "auth_runtime ne peut créer aucun objet", "droit CREATE présent") : ok("auth.no_ddl", "auth_runtime ne peut créer aucun objet (schémas auth et public)");
+  });
+
+  await run("auth.tables", "les tables d'authentification existent et auth_runtime y accède", async () => {
+    const need = ["users", "sessions", "accounts", "verifications"];
+    const rows = await sql`select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace where n.nspname = 'auth' and c.relkind = 'r'`;
+    const have = new Set(rows.map((r) => r.relname));
+    const missing = need.filter((t) => !have.has(t));
+    if (missing.length) return fail("auth.tables", "les tables d'authentification existent", `manquantes : ${missing.join(", ")}`);
+    await sql`select 1 from auth.users limit 1`;
+    return ok("auth.tables", "les tables d'authentification existent et auth_runtime y accède");
+  });
+
+  await run("auth.closed", "aucun autre rôle applicatif n'a de droit sur les tables d'authentification", async () => {
+    const leaks = [];
+    for (const role of ["anon", "authenticated", "app_server"]) {
+      for (const t of ["users", "sessions", "accounts", "verifications"]) {
+        const [r] = await sql`select has_table_privilege(${role}, ${"auth." + t}, 'select,insert,update,delete') as p`;
+        if (r.p) leaks.push(`${role}:${t}`);
+      }
+    }
+    return leaks.length ? fail("auth.closed", "aucun autre rôle applicatif n'a de droit sur les tables d'authentification", leaks.join(", ")) : ok("auth.closed", "aucun autre rôle applicatif n'a de droit sur les tables d'authentification");
+  });
+
   return out;
 }
 

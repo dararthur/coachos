@@ -32,8 +32,8 @@ export interface TestUser {
 export async function createUser(label: string, confirmed = true): Promise<TestUser> {
   const email = `${label}-${randomUUID().slice(0, 8)}@example.invalid`;
   const [row] = await adminSql()<{ id: string }[]>`
-    insert into auth.users (email, email_confirmed_at, raw_user_meta_data)
-    values (${email}, ${confirmed ? new Date() : null}, ${adminSql().json({ display_name: label })})
+    insert into auth.users (name, email, email_verified)
+    values (${label}, ${email}, ${confirmed})
     returning id`;
   return { id: row!.id, email };
 }

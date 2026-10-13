@@ -1,5 +1,5 @@
 // PostgreSQL réel (binaires embarqués) pour les tests d'intégration et la pile e2e locale.
-// Ce n'est PAS Supabase : le schéma `auth` et les rôles sont imités par supabase-shim.sql.
+// PostgreSQL standard : le socle (rôles, schéma auth de Better Auth, auth.uid()) vient de la migration 0000.
 import EmbeddedPostgres from "embedded-postgres";
 import postgres from "postgres";
 import { randomBytes } from "node:crypto";
@@ -11,7 +11,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 
 export function migrationFiles() {
-  const dir = path.join(root, "supabase", "migrations");
+  const dir = path.join(root, "db", "migrations");
   return readdirSync(dir)
     .filter((f) => f.endsWith(".sql"))
     .sort()
@@ -23,6 +23,7 @@ export async function startEmbeddedDb(opts = {}) {
   const port = opts.port ?? 54000 + Math.floor(Math.random() * 900);
   const superPassword = randomBytes(18).toString("hex");
   const appPassword = randomBytes(18).toString("hex");
+  const authPassword = randomBytes(18).toString("hex");
   const databaseDir = mkdtempSync(path.join(tmpdir(), "coachos-pg-"));
 
   const pg = new EmbeddedPostgres({
@@ -41,7 +42,6 @@ export async function startEmbeddedDb(opts = {}) {
   const adminUrl = `postgres://postgres:${superPassword}@127.0.0.1:${port}/coachos`;
   const admin = postgres(adminUrl, { max: 1, onnotice: () => {} });
   try {
-    await admin.unsafe(readFileSync(path.join(root, "tests", "support", "supabase-shim.sql"), "utf8"));
     for (const m of migrationFiles()) {
       try {
         await admin.unsafe(m.sql);
@@ -50,6 +50,7 @@ export async function startEmbeddedDb(opts = {}) {
       }
     }
     await admin.unsafe(`alter role app_server login password '${appPassword}'`);
+    await admin.unsafe(`alter role auth_runtime login password '${authPassword}'`);
   } finally {
     await admin.end();
   }
@@ -58,6 +59,7 @@ export async function startEmbeddedDb(opts = {}) {
     port,
     adminUrl,
     appUrl: `postgres://app_server:${appPassword}@127.0.0.1:${port}/coachos`,
+    authUrl: `postgres://auth_runtime:${authPassword}@127.0.0.1:${port}/coachos`,
     async stop() {
       await pg.stop();
       try {

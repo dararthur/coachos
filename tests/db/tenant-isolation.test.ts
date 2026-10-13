@@ -190,7 +190,7 @@ describe("identités forgées et rôles de connexion", () => {
 
   it("le rôle authenticated ne peut pas devenir un rôle privilégié", async () => {
     // (app_server peut toujours re-sélectionner son propre rôle de session, mais il n'a aucun droit de table : cf. test précédent.)
-    for (const role of ["postgres", "service_role", "anon"]) {
+    for (const role of ["postgres", "auth_runtime", "anon"]) {
       const e = await failing(() =>
         appSql().begin(async (tx) => {
           await tx`select set_config('role', 'authenticated', true)`;

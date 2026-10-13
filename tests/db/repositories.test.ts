@@ -190,7 +190,7 @@ describe("équipe", () => {
   it("liste l'équipe et les invitations, applique rôles et retraits", async () => {
     const t = await asUser(w.alice, (tx) => team.listTeam(tx, w.academyA));
     expect(t.map((m) => m.role)).toEqual(expect.arrayContaining(["owner", "admin", "coach", "member"]));
-    const newcomer = await adminSql()<{ id: string }[]>`insert into auth.users (email, email_confirmed_at) values (${`n-${Date.now()}@example.invalid`}, now()) returning id`;
+    const newcomer = await adminSql()<{ id: string }[]>`insert into auth.users (name, email, email_verified) values ('n', ${`n-${Date.now()}@example.invalid`}, true) returning id`;
     await addMember(w.academyA, { id: newcomer[0]!.id, email: "" }, "member");
     await asUser(w.alice, (tx) => team.setMemberRole(tx, w.academyA, newcomer[0]!.id, "coach"));
     await asUser(w.alice, (tx) => team.removeMember(tx, w.academyA, newcomer[0]!.id));
