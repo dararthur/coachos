@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { can, ROLE_LABELS, type Role } from "@/domain/roles";
 import { signOutAction } from "@/server/actions/auth";
-import { MatnexaLogo, MatnexaMark } from "@/components/brand/logo";
+import { MatnexaLogo } from "@/components/brand/logo";
 import { Icon } from "@/components/ui/icons";
 import { MobileTabBar, NavLinks, type NavItem } from "./nav-links";
 
@@ -78,12 +78,12 @@ function MobileTopBar({ academy, role }: Shell) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden">
       <div className="flex items-center gap-3 px-4 py-1.5">
-        <Link href="/academies" aria-label="Mes clubs" className="inline-flex min-h-11 min-w-11 items-center no-underline">
-          <MatnexaMark size={30} />
+        <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 shrink-0 items-center no-underline">
+          <MatnexaLogo size="sm" />
         </Link>
-        <div className="min-w-0 flex-1 leading-tight">
+        <div className="min-w-0 flex-1 border-l border-line pl-3 leading-tight">
           <p className="truncate text-sm font-bold">{academy.name}</p>
-          <p className="text-xs text-ink-soft">{ROLE_LABELS[role]}</p>
+          <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}</p>
         </div>
         <Link href="/account" className="inline-flex min-h-11 items-center gap-1.5 rounded-sm px-2 text-sm font-semibold no-underline hover:bg-sunken">
           <Icon name="user" size={18} />

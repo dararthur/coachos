@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-import { ATTENDANCE_LABELS } from "@/domain/validation";
-import { formatCalendarDate, formatDateTime } from "@/domain/dates";
+import { formatCalendarDate } from "@/domain/dates";
 import { can } from "@/domain/roles";
-import { Alert, BackLink, Badge, Card, DataTable, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
+import { Alert, BackLink, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { eraseMemberAction, setMemberArchivedAction, updateMemberAction } from "@/server/actions/members";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
 import { getPerson } from "@/server/repositories/members";
-import { Assiduity, weeksAttended } from "./assiduity";
+import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
+import { AttendanceHistory } from "@/components/ui/attendance-history";
 import { EraseForm } from "./erase-form";
 
 export const metadata: Metadata = { title: "Fiche membre" };
@@ -69,17 +69,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
             {history.length === 0 ? (
               <EmptyState level={3} title="Aucune présence enregistrée">Les présences apparaîtront ici dès le prochain appel.</EmptyState>
             ) : (
-              <DataTable bare caption="Historique des présences du membre" headers={["Séance", "Cours", "Statut"]}>
-                {history.map((h) => (
-                  <tr key={h.sessionId}>
-                    <td className="px-4 py-2.5 whitespace-nowrap">{formatDateTime(h.startsAt, tz)}</td>
-                    <td className="px-4 py-2.5">{h.classTypeName}</td>
-                    <td className="px-4 py-2.5">
-                      <Badge tone={h.status === "absent" ? "danger" : h.status === "late" ? "warning" : "success"}>{ATTENDANCE_LABELS[h.status]}</Badge>
-                    </td>
-                  </tr>
-                ))}
-              </DataTable>
+              <AttendanceHistory caption="Historique des présences du membre" tz={tz} rows={history.map((h) => ({ key: h.sessionId, startsAt: h.startsAt, classTypeName: h.classTypeName, status: h.status }))} />
             )}
           </Card>
         </div>

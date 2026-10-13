@@ -86,7 +86,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
                       </p>
                     </div>
                     <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
-                      {s.status === "cancelled" ? <Badge tone="danger">Annulée</Badge> : s.recorded === 0 ? <Badge tone="warning">Appel à faire</Badge> : <Badge tone="success">Appel fait</Badge>}
+                      {s.status === "cancelled" ? <Badge tone="danger">Annulée</Badge> : s.recorded > 0 ? <Badge tone="success">Appel fait</Badge> : null}
                       {s.status === "scheduled" && (
                         <Link href={`${base}/attendance/${s.id}`} className={buttonClasses({ variant: isFocus ? "primary" : "secondary" })}>
                           {s.recorded === 0 ? "Faire l'appel" : "Ouvrir l'appel"}

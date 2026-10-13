@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { addDays, formatDateTime, localDate } from "@/domain/dates";
-import { ATTENDANCE_LABELS } from "@/domain/validation";
-import { Badge, Card, DataTable, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
+import { AttendanceHistory } from "@/components/ui/attendance-history";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listSessions } from "@/server/repositories/schedule";
 
@@ -30,6 +31,7 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
         <Card title="Pointer ma présence" description="Au début du cours, scannez le QR code affiché par le coach." className="border-bar! bg-bar! text-white [&_h2]:text-white [&_p]:text-bar-muted">
           <LinkButton href="/checkin" icon="qr" className="w-full sm:w-auto">Scanner le QR code</LinkButton>
         </Card>
+        <Assiduity weeks={weeksAttended(mine, tz)} />
         <Card title="Prochaines séances" description="14 prochains jours." flush>
           {upcoming.length === 0 ? (
             <EmptyState level={3} title="Aucune séance prévue" />
@@ -50,17 +52,7 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
           {mine.length === 0 ? (
             <EmptyState level={3} title="Aucune présence enregistrée">Vos présences apparaîtront ici après vos prochains cours.</EmptyState>
           ) : (
-            <DataTable bare caption="Mes présences" headers={["Séance", "Cours", "Statut"]}>
-              {mine.map((m) => (
-                <tr key={`${m.startsAt.toISOString()}-${m.classTypeName}`}>
-                  <td className="px-4 py-2.5">{formatDateTime(m.startsAt, tz)}</td>
-                  <td className="px-4 py-2.5">{m.classTypeName}</td>
-                  <td className="px-4 py-2.5">
-                    <Badge tone={m.status === "absent" ? "danger" : m.status === "late" ? "warning" : "success"}>{ATTENDANCE_LABELS[m.status]}</Badge>
-                  </td>
-                </tr>
-              ))}
-            </DataTable>
+            <AttendanceHistory caption="Mes présences" tz={tz} rows={mine.map((m) => ({ key: `${m.startsAt.toISOString()}-${m.classTypeName}`, startsAt: m.startsAt, classTypeName: m.classTypeName, status: m.status }))} />
           )}
         </Card>
       </div>

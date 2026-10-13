@@ -125,17 +125,23 @@ export function Alert({ children, tone = "info", title }: { children: ReactNode;
   );
 }
 
+/** Quatre traits de comptage (bâtons) : « rien de compté pour l'instant ». Décoratif. */
+export function TallyGlyph({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 28 24" width="28" height="24" aria-hidden="true" focusable="false" className={className}>
+      {[3, 9.5, 16, 22.5].map((x) => (
+        <rect key={x} x={x} y="2" width="2.5" height="20" rx="0.5" className="fill-line-strong" />
+      ))}
+    </svg>
+  );
+}
+
 /** État vide : ce qui manque, pourquoi, et l'action pour le remplir. Sans cadre en pointillé ni carte dans la carte. */
 export function EmptyState({ title, children, action, level = 2, framed = false }: { title: string; children?: ReactNode; action?: ReactNode; level?: 2 | 3; framed?: boolean }) {
   const Heading = level === 3 ? "h3" : "h2";
   return (
     <div className={`px-5 py-10 text-center ${framed ? "rounded-sm border border-line bg-surface" : ""}`}>
-      <div className="tally mb-4" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-        <span />
-      </div>
+      <TallyGlyph className="mx-auto mb-4" />
       <Heading className="text-base font-bold text-ink">{title}</Heading>
       {children && <p className="mx-auto mt-1 max-w-md text-sm text-ink-soft">{children}</p>}
       {action && <div className="mt-5 flex justify-center">{action}</div>}

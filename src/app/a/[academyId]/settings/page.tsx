@@ -120,6 +120,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
 
         <Card id="cours" title="Types de cours" description="Un type de cours = un format de séance (durée et capacité par défaut).">
           <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
+            <div className="hidden sm:block">
             <DataTable bare caption="Types de cours" headers={["Cours", "Discipline", "Durée", "Capacité", ""]}>
               {data.classTypes.map((t) => (
                 <tr key={t.id}>
@@ -133,6 +134,20 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                 </tr>
               ))}
             </DataTable>
+            </div>
+            <ul className="divide-y divide-line sm:hidden">
+              {data.classTypes.map((t) => (
+                <li key={t.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <p className={`font-semibold ${t.archivedAt ? "text-ink-soft line-through" : ""}`}>{t.name}</p>
+                    <p className="text-sm text-ink-soft">
+                      {t.disciplineName} · {t.durationMinutes} min{t.capacity ? ` · ${t.capacity} places` : ""}
+                    </p>
+                  </div>
+                  <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
+                </li>
+              ))}
+            </ul>
           </div>
           <ActionForm action={createClassTypeAction.bind(null, academyId)} className="grid gap-4 sm:grid-cols-4" resetOnSuccess>
             <SelectField label="Discipline" name="disciplineId" required className="sm:col-span-2">
@@ -151,6 +166,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
 
         <Card id="equipe" title="Équipe" description="Propriétaires, administrateurs, coachs et membres connectés.">
           <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
+            <div className="hidden sm:block">
             <DataTable bare caption="Équipe et accès" headers={["Personne", "Rôle", "Depuis", ""]}>
               {data.team.map((m) => {
                 const self = m.userId === ctx.user.id;
@@ -195,6 +211,46 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                 );
               })}
             </DataTable>
+            </div>
+            <ul className="divide-y divide-line sm:hidden">
+              {data.team.map((m) => {
+                const self = m.userId === ctx.user.id;
+                const manageable = !self && canManageMember(ctx.role, m.role);
+                return (
+                  <li key={m.userId} className="space-y-2 px-4 py-3">
+                    <p className="min-w-0 font-semibold">
+                      {m.displayName || m.email || "—"} {self && <Badge tone="brand">Vous</Badge>}
+                      {m.displayName && m.email && <span className="block truncate text-xs font-normal text-ink-soft">{m.email}</span>}
+                    </p>
+                    {manageable ? (
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex flex-1 items-center gap-2">
+                          <input type="hidden" name="userId" value={m.userId} />
+                          <label className="sr-only" htmlFor={`role-m-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
+                          <select id={`role-m-${m.userId}`} name="role" defaultValue={m.role} className="field min-w-0 flex-1">
+                            {assignable.map((r) => (
+                              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                            ))}
+                          </select>
+                          <SubmitButton variant="secondary" pendingLabel="…">Appliquer</SubmitButton>
+                        </ActionForm>
+                        <ConfirmAction
+                          action={removeMemberAction.bind(null, academyId)}
+                          trigger="Retirer"
+                          title={`Retirer ${m.displayName || m.email} ?`}
+                          description={<p>La personne perd l&apos;accès au club. Ses séances restent, sans coach assigné.</p>}
+                          confirmLabel="Retirer"
+                        >
+                          <input type="hidden" name="userId" value={m.userId} />
+                        </ConfirmAction>
+                      </div>
+                    ) : (
+                      <Badge tone="brand">{ROLE_LABELS[m.role]}</Badge>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           <h3 className="mb-2 text-sm font-semibold">Inviter quelqu&apos;un</h3>

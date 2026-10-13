@@ -176,6 +176,18 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
               </button>
             ))}
           </div>
+          {/* Action groupée en tête de liste : atteignable sans faire défiler tout l'effectif. */}
+          {rollEditable && counts.none > 0 && (
+            <ConfirmAction
+              action={markAll}
+              trigger="Marquer les non renseignés présents"
+              triggerClassName="w-full sm:w-auto"
+              title={`Marquer ${counts.none} membre${counts.none > 1 ? "s" : ""} présent${counts.none > 1 ? "s" : ""} ?`}
+              description={<p>Tous les membres non renseignés de la liste seront enregistrés présents, y compris ceux qui ne sont pas venus. Vous pourrez corriger chaque ligne ensuite.</p>}
+              confirmLabel="Marquer présents"
+              confirmVariant="primary"
+            />
+          )}
         </div>
 
         {visible.length === 0 ? (
@@ -216,21 +228,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             ))}
           </ul>
         )}
-        {rollEditable && (
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-            <p className="text-xs text-ink-soft">Touchez à nouveau le statut actif pour effacer l&apos;enregistrement. Un pointage par QR peut être corrigé à tout moment.</p>
-            {counts.none > 0 && (
-              <ConfirmAction
-                action={markAll}
-                trigger="Marquer les non renseignés présents"
-                title={`Marquer ${counts.none} membre${counts.none > 1 ? "s" : ""} présent${counts.none > 1 ? "s" : ""} ?`}
-                description={<p>Tous les membres non renseignés de la liste seront enregistrés présents, y compris ceux qui ne sont pas venus. Vous pourrez corriger chaque ligne ensuite.</p>}
-                confirmLabel="Marquer présents"
-                confirmVariant="primary"
-              />
-            )}
-          </div>
-        )}
+        {rollEditable && <p className="mt-3 text-xs text-ink-soft">Touchez à nouveau le statut actif pour effacer l&apos;enregistrement. Un pointage par QR peut être corrigé à tout moment.</p>}
         <div className="sticky bottom-[var(--tabbar-h)] z-20 -mx-4 mt-4 border-t border-line bg-canvas px-4 pb-3 pt-2.5 sm:mx-0 sm:rounded-sm sm:border sm:bg-surface sm:px-4">
           <div role="status" aria-live="polite" className="empty:hidden">
             {!sync.ok && (
@@ -354,6 +352,31 @@ function CheckinPanel({
     }
   }
 
+  // Pointage fermé : une seule ligne, pour que la liste des membres arrive tout de suite sous le titre.
+  if (!isOpen && !checkin.validatedAt) {
+    return (
+      <section aria-labelledby="checkin-title" className="rounded-sm border border-line bg-surface px-4 py-3">
+        {error && (
+          <p role="alert" className="mb-3 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2 text-sm font-medium text-danger-ink">
+            {error}
+          </p>
+        )}
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <h2 id="checkin-title" className="text-base font-bold">
+              Pointage par QR code
+            </h2>
+            <p className="text-sm text-ink-soft">Fermé : les adhérents ne peuvent pas pointer.</p>
+          </div>
+          <button type="button" className={buttonClasses({ variant: "secondary" })} disabled={working} onClick={() => run(() => openCheckinAction(academyId, sessionId))}>
+            <Icon name="qr" size={18} />
+            {working ? "Ouverture…" : "Ouvrir le pointage"}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
   const remaining = token ? remainingSeconds(token.expiresAt, now + token.offset) : 0;
   const ttl = CHECKIN_TOKEN_TTL_SECONDS;
   const live = isOpen && token !== null && remaining > 0;
@@ -373,14 +396,6 @@ function CheckinPanel({
           </p>
           <button type="button" className={buttonClasses({ variant: "secondary" })} disabled={working} onClick={() => run(() => validateRollAction(academyId, sessionId, false))}>
             Rouvrir la feuille
-          </button>
-        </div>
-      ) : !isOpen ? (
-        <div className="space-y-3">
-          <p className="text-sm text-ink-soft">Fermé. Ouvrez-le pour que les adhérents pointent eux-mêmes avec leur téléphone.</p>
-          <button type="button" className={buttonClasses({ variant: "secondary", className: "w-full" })} disabled={working} onClick={() => run(() => openCheckinAction(academyId, sessionId))}>
-            <Icon name="qr" size={18} />
-            {working ? "Ouverture…" : "Ouvrir le pointage"}
           </button>
         </div>
       ) : (
@@ -451,7 +466,9 @@ function ValidateButton({ academyId, sessionId, onSnapshot }: { academyId: strin
       }}
       trigger={
         <>
-          Valider<span className="sr-only sm:not-sr-only"> la feuille d&apos;appel</span>
+          <span>
+            Valider<span className="sr-only sm:not-sr-only"> la feuille d&apos;appel</span>
+          </span>
         </>
       }
       title="Valider la feuille d'appel ?"
