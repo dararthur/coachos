@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Card, PageHeader } from "@/components/ui/ui";
+import { Card, PageHeader, BackLink } from "@/components/ui/ui";
 import { ActionForm, CheckboxField, SubmitButton, TextField } from "@/components/ui/form";
 import { createMemberAction } from "@/server/actions/members";
 import { requireAcademy } from "@/server/auth/guards";
@@ -12,7 +11,7 @@ export default async function NewMemberPage({ params }: { params: Promise<{ acad
   await requireAcademy(academyId, "members.create");
   return (
     <>
-      <PageHeader title="Nouveau membre" actions={<Link href={`/a/${academyId}/members`}>← Membres</Link>} />
+      <PageHeader title="Nouveau membre" back={<BackLink href={`/a/${academyId}/members`}>Membres</BackLink>} />
       <Card className="max-w-xl">
         <ActionForm action={createMemberAction.bind(null, academyId)} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">

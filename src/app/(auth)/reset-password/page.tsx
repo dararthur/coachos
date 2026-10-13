@@ -24,7 +24,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   return (
     <>
       <h1 className="mb-1 text-xl font-semibold">Nouveau mot de passe</h1>
-      <p className="mb-5 text-sm text-muted">Choisissez un mot de passe d&apos;au moins 12 caractères. Vos appareils connectés seront déconnectés.</p>
+      <p className="mb-5 text-sm text-ink-soft">Choisissez un mot de passe d&apos;au moins 12 caractères. Vos appareils connectés seront déconnectés.</p>
       <ActionForm action={resetPasswordAction} className="space-y-4">
         <input type="hidden" name="token" value={token} />
         <TextField label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" required minLength={12} />

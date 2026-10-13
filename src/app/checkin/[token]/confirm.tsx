@@ -32,7 +32,7 @@ export function ConfirmCheckin({ token, className, alreadyStatus }: { token: str
   if (outcome && outcome.kind !== "error") {
     return (
       <div role="status" className="space-y-3">
-        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-3 text-sm text-emerald-950" data-testid="checkin-success">
+        <p className="rounded-sm border border-success/30 bg-success-soft px-3 py-3 text-sm text-success-ink" data-testid="checkin-success">
           {outcome.kind === "recorded"
             ? `Présence enregistrée pour « ${outcome.className} ».`
             : `Votre présence est déjà enregistrée pour « ${outcome.className} » (${ATTENDANCE_LABELS[outcome.status].toLowerCase()}).`}
@@ -47,14 +47,14 @@ export function ConfirmCheckin({ token, className, alreadyStatus }: { token: str
   return (
     <div className="space-y-3">
       {outcome?.kind === "error" && (
-        <p role="alert" className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <p role="alert" className="rounded-sm border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger-ink">
           {outcome.text}
         </p>
       )}
       <button type="button" className={buttonClasses({ className: "w-full" })} disabled={pending} onClick={confirm}>
         {pending ? "Enregistrement…" : outcome?.kind === "error" ? "Réessayer" : "Confirmer ma présence"}
       </button>
-      <p className="text-xs text-muted">Seule votre propre présence est enregistrée, au nom du compte connecté.</p>
+      <p className="text-xs text-ink-soft">Seule votre propre présence est enregistrée, au nom du compte connecté.</p>
     </div>
   );
 }

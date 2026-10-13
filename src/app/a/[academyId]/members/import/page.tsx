@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { MAX_IMPORT_BYTES, MAX_IMPORT_ROWS } from "@/domain/csv-import";
-import { Card, PageHeader } from "@/components/ui/ui";
+import { Card, PageHeader, BackLink } from "@/components/ui/ui";
 import { requireAcademy } from "@/server/auth/guards";
 import { ImportForm } from "./import-form";
 
@@ -12,7 +11,7 @@ export default async function ImportPage({ params }: { params: Promise<{ academy
   await requireAcademy(academyId, "members.import");
   return (
     <>
-      <PageHeader title="Importer des membres" description="Importez l'export CSV de votre ancien logiciel. Rien n'est enregistré avant votre confirmation." actions={<Link href={`/a/${academyId}/members`}>← Membres</Link>} />
+      <PageHeader title="Importer des membres" description="Importez l'export CSV de votre ancien logiciel. Rien n'est enregistré avant votre confirmation." back={<BackLink href={`/a/${academyId}/members`}>Membres</BackLink>} />
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <ImportForm academyId={academyId} />
         <Card title="Format attendu">

@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { formatDateTime, localParts } from "@/domain/dates";
-import { Badge, Card, LinkButton, PageHeader } from "@/components/ui/ui";
+import { Badge, Card, LinkButton, PageHeader, BackLink } from "@/components/ui/ui";
 import { ActionForm, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { InlineAction } from "@/components/ui/confirm";
@@ -36,7 +35,7 @@ export default async function SessionPage({ params }: { params: Promise<{ academ
             {formatDateTime(session.startsAt, tz)} · {session.disciplineName} {session.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
           </>
         }
-        actions={<Link href={`/a/${academyId}/schedule`}>← Planning</Link>}
+        back={<BackLink href={`/a/${academyId}/schedule`}>Planning</BackLink>}
       />
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
         <Card title="Horaire et détails">

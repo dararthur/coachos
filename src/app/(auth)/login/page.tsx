@@ -15,7 +15,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <h1 className="mb-1 text-xl font-semibold">Connexion</h1>
-      <p className="mb-5 text-sm text-muted">Accédez à votre club.</p>
+      <p className="mb-5 text-sm text-ink-soft">Accédez à votre club.</p>
       {safeNext(params.next).startsWith("/checkin/") && <Alert tone="info">Vous avez ouvert un lien de pointage. Connectez-vous : vous reviendrez à la confirmation de votre présence (si le QR code a expiré, rescannez-le).</Alert>}
       {params.verified && !params.error && <Alert tone="success">Adresse e-mail confirmée. Vous pouvez vous connecter.</Alert>}
       {params.reset && <Alert tone="success">Mot de passe mis à jour. Reconnectez-vous avec votre nouveau mot de passe.</Alert>}

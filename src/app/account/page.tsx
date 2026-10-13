@@ -41,7 +41,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </ActionForm>
       </Card>
       <Card title="Mes données personnelles" description="Droits d'accès, de portabilité et d'effacement (RGPD).">
-        <p className="mb-4 text-sm text-muted">
+        <p className="mb-4 text-sm text-ink-soft">
           Vous pouvez télécharger l&apos;ensemble des données associées à votre compte (profil, appartenances aux clubs, fiches membre vous concernant et leurs présences).
           Pour exercer vos droits auprès d&apos;un club (rectification, effacement de votre fiche membre), adressez-vous à ses responsables ; voir la <Link href="/privacy">notice de confidentialité</Link>.
         </p>

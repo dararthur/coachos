@@ -38,12 +38,12 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
 
   return (
     <main id="contenu" className="mx-auto w-full max-w-md px-4 pb-10 pt-[max(2rem,env(safe-area-inset-top))]">
-      <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">
+      <div className="rounded-sm border border-line bg-surface p-6">
         <h1 className="mb-3 text-xl font-semibold">Pointer ma présence</h1>
         {preview ? (
           <>
             <p className="mb-1 text-lg font-medium">{preview.className}</p>
-            <p className="mb-4 text-sm text-muted">{formatDateTime(preview.startsAt, preview.timezone)}</p>
+            <p className="mb-4 text-sm text-ink-soft">{formatDateTime(preview.startsAt, preview.timezone)}</p>
             <ConfirmCheckin token={token} className={preview.className} alreadyStatus={preview.alreadyRecorded ? preview.status : null} />
           </>
         ) : (

@@ -11,12 +11,12 @@ export default async function OnboardingPage() {
   await requireUser();
   return (
     <main id="contenu" className="mx-auto w-full max-w-xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-brand-700">Coach OS</p>
+      <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent-ink">Coach OS</p>
       <h1 className="text-2xl font-semibold tracking-tight">Créez votre club</h1>
-      <p className="mb-6 mt-1 text-sm text-muted">
+      <p className="mb-6 mt-1 text-sm text-ink-soft">
         Ces réglages pourront être modifiés plus tard. Trois disciplines de départ (JJB, Grappling, MMA) sont ajoutées ; vous les adapterez dans les paramètres.
       </p>
-      <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">
+      <div className="rounded-sm border border-line bg-surface p-6">
         <ActionForm action={createAcademyAction} className="space-y-4">
           <TextField label="Nom du club" name="name" required minLength={2} maxLength={100} autoComplete="organization" />
           <SelectField label="Fuseau horaire" name="timezone" defaultValue="Europe/Paris" required hint="Détermine les heures des séances et les statistiques « aujourd'hui » / « cette semaine ».">

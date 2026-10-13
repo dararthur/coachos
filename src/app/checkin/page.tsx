@@ -13,7 +13,7 @@ export default async function CheckinPage() {
         ← Retour
       </Link>
       <h1 className="mb-1 mt-2 text-2xl font-semibold tracking-tight">Pointer ma présence</h1>
-      <p className="mb-5 text-sm text-muted">Votre présence n&apos;est enregistrée qu&apos;après confirmation à l&apos;étape suivante.</p>
+      <p className="mb-5 text-sm text-ink-soft">Votre présence n&apos;est enregistrée qu&apos;après confirmation à l&apos;étape suivante.</p>
       <Scanner />
     </main>
   );

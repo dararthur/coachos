@@ -52,7 +52,7 @@ export function ImportForm({ academyId }: { academyId: string }) {
       <Card title="1. Choisir le fichier">
         <div className="space-y-3">
           <div>
-            <label htmlFor="csv-file" className="mb-1 block text-sm font-medium">
+            <label htmlFor="csv-file" className="mb-1.5 block text-sm font-semibold">
               Fichier CSV
             </label>
             <input
@@ -60,12 +60,12 @@ export function ImportForm({ academyId }: { academyId: string }) {
               ref={input}
               type="file"
               accept=".csv,text/csv,text/plain"
-              className="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-sm file:border-0 file:bg-accent file:px-4 file:py-2 file:font-semibold file:text-white"
+              className="field"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               aria-describedby={state && !state.ok ? "csv-error" : undefined}
             />
             {state && !state.ok && (
-              <p id="csv-error" role="alert" className="mt-2 text-sm font-medium text-danger-ink">
+              <p id="csv-error" role="alert" className="mt-2 text-sm font-semibold text-danger">
                 {state.fieldErrors?.file ?? state.fieldErrors?.adultConfirmed ?? state.error}
               </p>
             )}
@@ -107,8 +107,8 @@ export function ImportForm({ academyId }: { academyId: string }) {
             <IssueList title="Homonymes possibles (importés quand même)" issues={report.possibleHomonyms} tone="info" />
 
             {!committed && report.sample.length > 0 && (
-              <div className="mb-4">
-                <DataTable caption="Aperçu des premiers membres à créer" headers={["Ligne", "Prénom", "Nom", "E-mail", "Inscription", "Identifiant"]}>
+              <div className="-mx-4 mb-4 border-y border-line sm:-mx-5">
+                <DataTable bare caption="Aperçu des premiers membres à créer" headers={["Ligne", "Prénom", "Nom", "E-mail", "Inscription", "Identifiant"]}>
                   {report.sample.map((r) => (
                     <tr key={r.line}>
                       <td className="px-4 py-2">{r.line}</td>

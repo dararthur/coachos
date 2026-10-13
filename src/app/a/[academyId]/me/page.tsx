@@ -27,17 +27,17 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
     <>
       <PageHeader title="Mon espace" description={`Bienvenue dans « ${ctx.academy.name} ».`} />
       <div className="space-y-6">
-        <Card title="Pointer ma présence" description="Au début du cours, scannez le QR code affiché par le coach.">
-          <LinkButton href="/checkin">Scanner le QR code</LinkButton>
+        <Card title="Pointer ma présence" description="Au début du cours, scannez le QR code affiché par le coach." className="border-bar! bg-bar! text-white [&_h2]:text-white [&_p]:text-bar-muted">
+          <LinkButton href="/checkin" icon="qr" className="w-full sm:w-auto">Scanner le QR code</LinkButton>
         </Card>
-        <Card title="Prochaines séances (14 jours)">
+        <Card title="Prochaines séances" description="14 prochains jours." flush>
           {upcoming.length === 0 ? (
-            <EmptyState title="Aucune séance prévue" />
+            <EmptyState level={3} title="Aucune séance prévue" />
           ) : (
             <ul className="divide-y divide-line">
               {upcoming.map((s) => (
-                <li key={s.id} className="flex flex-wrap justify-between gap-2 py-2.5">
-                  <span className={s.status === "cancelled" ? "text-ink-soft line-through" : "font-medium"}>
+                <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
+                  <span className={s.status === "cancelled" ? "text-ink-soft line-through" : "font-semibold"}>
                     {formatDateTime(s.startsAt, tz)} · {s.classTypeName}
                   </span>
                   {s.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
@@ -46,11 +46,11 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
             </ul>
           )}
         </Card>
-        <Card title="Mes présences">
+        <Card title="Mes présences" flush>
           {mine.length === 0 ? (
-            <EmptyState title="Aucune présence enregistrée">Vos présences apparaîtront ici après vos prochains cours.</EmptyState>
+            <EmptyState level={3} title="Aucune présence enregistrée">Vos présences apparaîtront ici après vos prochains cours.</EmptyState>
           ) : (
-            <DataTable caption="Mes présences" headers={["Séance", "Cours", "Statut"]}>
+            <DataTable bare caption="Mes présences" headers={["Séance", "Cours", "Statut"]}>
               {mine.map((m) => (
                 <tr key={`${m.startsAt.toISOString()}-${m.classTypeName}`}>
                   <td className="px-4 py-2.5">{formatDateTime(m.startsAt, tz)}</td>

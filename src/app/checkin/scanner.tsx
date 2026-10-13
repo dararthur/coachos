@@ -114,11 +114,11 @@ export function Scanner() {
   const failed = phase === "denied" || phase === "unavailable" || phase === "error";
   return (
     <div className="space-y-5">
-      <section aria-labelledby="scan-title" className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+      <section aria-labelledby="scan-title" className="rounded-sm border border-line bg-surface p-5">
         <h2 id="scan-title" className="text-base font-semibold">
           Scanner le QR code du coach
         </h2>
-        <p className="mb-4 mt-1 text-sm text-muted">La caméra ne s&apos;active qu&apos;après votre accord. Aucune image n&apos;est envoyée ni enregistrée.</p>
+        <p className="mb-4 mt-1 text-sm text-ink-soft">La caméra ne s&apos;active qu&apos;après votre accord. Aucune image n&apos;est envoyée ni enregistrée.</p>
 
         {phase === "idle" || failed ? (
           <button type="button" className={buttonClasses({ className: "w-full sm:w-auto" })} onClick={start}>
@@ -127,17 +127,17 @@ export function Scanner() {
         ) : null}
 
         {failed && (
-          <p role="alert" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950" data-testid="camera-problem" data-phase={phase}>
+          <p role="alert" className="mt-3 rounded-sm border border-warning/35 bg-warning-soft px-3 py-2 text-sm text-warning-ink" data-testid="camera-problem" data-phase={phase}>
             {MESSAGES[phase]}
           </p>
         )}
 
         <div className={phase === "scanning" || phase === "starting" ? "mt-3" : "hidden"}>
-          <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-xl bg-slate-900">
+          <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-sm bg-ink">
             <video ref={video} className="h-full w-full object-cover" playsInline muted aria-label="Aperçu de la caméra" />
             {phase === "starting" && <p className="absolute inset-0 flex items-center justify-center text-sm text-white">Démarrage de la caméra…</p>}
           </div>
-          <p className="mt-2 text-center text-sm text-muted" aria-live="polite">
+          <p className="mt-2 text-center text-sm text-ink-soft" aria-live="polite">
             {hint ?? "Cadrez le QR code affiché par le coach."}
           </p>
           <div className="mt-3 flex justify-center">
@@ -156,11 +156,11 @@ export function Scanner() {
         </div>
       </section>
 
-      <section aria-labelledby="manual-title" className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+      <section aria-labelledby="manual-title" className="rounded-sm border border-line bg-surface p-5">
         <h2 id="manual-title" className="text-base font-semibold">
           Pas de caméra ? Saisir le lien
         </h2>
-        <p className="mb-3 mt-1 text-sm text-muted">
+        <p className="mb-3 mt-1 text-sm text-ink-soft">
           Solution de secours : scannez avec l&apos;application Appareil photo du téléphone. Le lien s&apos;ouvre dans votre navigateur (pas toujours dans l&apos;application installée) et vous devrez peut-être vous y reconnecter avant de confirmer. Ou collez ci-dessous le lien de pointage que le coach vous montre.
         </p>
         <form onSubmit={submitManual} className="space-y-3">
@@ -180,10 +180,10 @@ export function Scanner() {
               onChange={(e) => setManual(e.target.value)}
               aria-invalid={manualError ? true : undefined}
               aria-describedby={manualError ? "manual-error" : undefined}
-              className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base"
+              className="block min-h-11 w-full rounded-sm border border-line-strong bg-white px-3 py-2 text-base"
             />
             {manualError && (
-              <p id="manual-error" role="alert" className="mt-1 text-sm font-medium text-red-800">
+              <p id="manual-error" role="alert" className="mt-1 text-sm font-medium text-danger-ink">
                 {manualError}
               </p>
             )}

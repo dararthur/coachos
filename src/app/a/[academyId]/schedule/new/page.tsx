@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { localDate } from "@/domain/dates";
 import { WEEKDAY_LABELS } from "@/domain/schedule";
-import { Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { Card, EmptyState, LinkButton, PageHeader, BackLink } from "@/components/ui/ui";
 import { ActionForm, CheckboxGroup, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { createSessionsAction } from "@/server/actions/schedule";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
@@ -22,7 +21,7 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
 
   return (
     <>
-      <PageHeader title="Nouvelle séance" description="Une séance unique, ou une récurrence hebdomadaire créée en une fois." actions={<Link href={`/a/${academyId}/schedule`}>← Planning</Link>} />
+      <PageHeader title="Nouvelle séance" description="Une séance unique, ou une récurrence hebdomadaire créée en une fois." back={<BackLink href={`/a/${academyId}/schedule`}>Planning</BackLink>} />
       {types.length === 0 ? (
         <EmptyState title="Aucun type de cours" action={<LinkButton href={`/a/${academyId}/settings`}>Configurer les cours</LinkButton>}>
           Créez d&apos;abord un type de cours (par exemple « JJB — Tous niveaux ») dans les paramètres.
@@ -52,14 +51,17 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
             </div>
             <TextField label="Capacité" name="capacity" type="number" min={1} max={500} hint="Facultatif." className="max-w-xs" />
 
-            <fieldset className="space-y-4 rounded-sm border border-line p-4">
-              <legend className="px-1 text-sm font-medium">Répétition</legend>
+            {/* Jours et date de fin n'apparaissent qu'en répétition hebdomadaire (CSS :has ; sans support, tout reste visible). */}
+            <fieldset className="space-y-4 rounded-sm border border-line bg-canvas p-4 [&:has(option[value=none]:checked)_[data-repeat]]:hidden">
+              <legend className="px-1 text-sm font-semibold">Répétition</legend>
               <SelectField label="Fréquence" name="repeat" defaultValue="none">
                 <option value="none">Séance unique</option>
                 <option value="weekly">Toutes les semaines</option>
               </SelectField>
-              <CheckboxGroup legend="Jours (si répétition)" name="weekdays" options={Object.entries(WEEKDAY_LABELS).map(([value, label]) => ({ value, label }))} />
-              <TextField label="Répéter jusqu'au" name="until" type="date" hint="Maximum 6 mois et 200 séances. Les créneaux déjà existants sont ignorés." />
+              <div data-repeat className="space-y-4">
+                <CheckboxGroup legend="Jours" name="weekdays" options={Object.entries(WEEKDAY_LABELS).map(([value, label]) => ({ value, label }))} />
+                <TextField label="Répéter jusqu'au" name="until" type="date" hint="Maximum 6 mois et 200 séances. Les créneaux déjà existants sont ignorés." />
+              </div>
             </fieldset>
 
             <TextAreaField label="Note" name="notes" maxLength={500} hint="Facultatif (ex. « apportez votre gi »)." />
