@@ -5,9 +5,9 @@ import { randomUUID } from "node:crypto";
 export const randomIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`;
 
 export const test = base.extend({
-  context: async ({ context }, use) => {
+  context: async ({ context }, provide) => {
     await context.setExtraHTTPHeaders({ "x-forwarded-for": randomIp() });
-    await use(context);
+    await provide(context);
   },
 });
 export { expect };

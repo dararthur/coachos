@@ -223,7 +223,6 @@ test("séances : un membre sans club voit l'état vide, pas de données de démo
   await expect(page.getByText("Aucune présence sur cette période")).toBeVisible();
   await page.goto(`/a/${club}/attendance`);
   await expect(page.getByText("Aucune séance aujourd'hui").first()).toBeVisible();
-  void parisToday;
 });
 
 test("rôle membre : espace personnel limité, aucune page de gestion, ne voit que ses présences", async ({ browser }) => {
