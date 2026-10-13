@@ -157,7 +157,7 @@ test.describe("parcours mobiles", () => {
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
-  test("adhérent : espace personnel et navigation à deux onglets", async ({ browser }) => {
+  test("adhérent : espace personnel et navigation à trois onglets", async ({ browser }) => {
     const ctx = () => browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" });
     const ownerCtx = await ctx();
     const owner = await ownerCtx.newPage();
@@ -183,7 +183,8 @@ test.describe("parcours mobiles", () => {
     await member.getByRole("button", { name: "Accepter l'invitation" }).tap();
     await expect(member).toHaveURL(new RegExp(`/a/${club}/me`));
     const tabs = member.getByRole("navigation", { name: "Navigation principale" });
-    await expect(tabs.getByRole("link")).toHaveCount(2);
+    await expect(tabs.getByRole("link")).toHaveCount(3);
+    await expect(tabs.getByRole("link", { name: "Pointer ma présence" })).toBeVisible();
     await noHorizontalOverflow(member, "mon espace");
     expect(await smallTargets(member), "mon espace").toEqual([]);
     await tabs.getByRole("link", { name: "Planning" }).tap();

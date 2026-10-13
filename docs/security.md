@@ -23,7 +23,7 @@ Résumé des contrôles **implémentés**, de l'endroit où ils sont prouvés, e
 | Brute force de connexion | `tests/e2e/security.spec.ts` (limitation de débit) |
 | CSV malveillant, formules, binaire, doublons | `tests/unit/csv-import.test.ts`, `tests/unit/domain.test.ts`, e2e |
 | Injection SQL | requêtes paramétrées exclusivement (aucune concaténation) ; `tests/db/repositories.test.ts` |
-| Pointage QR : jetons devinés/expirés/révoqués/rejoués, double scan et concurrence, pointer pour autrui, forger `source`, oracle d'existence, isolation entre clubs | `tests/db/checkin.test.ts` (16 cas), `tests/unit/checkin.test.ts`, `tests/e2e/qr-checkin.spec.ts` ; détail dans `docs/qr-checkin.md` |
+| Pointage QR : jetons devinés/expirés/révoqués/rejoués, double scan et concurrence, pointer pour autrui, forger `source`, oracle d'existence, isolation entre clubs | `tests/db/checkin.test.ts` (17 cas), `tests/unit/checkin.test.ts`, `tests/e2e/qr-checkin.spec.ts` ; détail dans `docs/qr-checkin.md` |
 | Configuration de préproduction (rôle, RLS, pooler, Auth) | `tests/db/preflight.test.ts` ; `npm run pilot:preflight` (jamais exécuté contre un vrai projet Supabase) |
 | Secrets versionnés | `npm run audit:secrets`, gitleaks en CI |
 
