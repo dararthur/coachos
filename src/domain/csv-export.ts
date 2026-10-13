@@ -36,6 +36,7 @@ export function safeFilename(base: string, extension: string): string {
     .normalize("NFD")
     .replace(/\p{M}/gu, "")
     .replace(/[^A-Za-z0-9._-]+/g, "-")
+    .replace(/\.{2,}/g, ".")
     .replace(/^-+|-+$/g, "")
     .slice(0, 60);
   return `${cleaned || "export"}.${extension.replace(/[^a-z0-9]/gi, "")}`;

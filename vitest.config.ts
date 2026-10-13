@@ -1,7 +1,10 @@
 import { defineConfig } from "vitest/config";
 import path from "node:path";
 
-const alias = { "@": path.resolve(import.meta.dirname, "src") };
+const alias = {
+  "@": path.resolve(import.meta.dirname, "src"),
+  "server-only": path.resolve(import.meta.dirname, "tests/support/empty.ts"),
+};
 
 export default defineConfig({
   test: {
