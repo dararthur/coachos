@@ -1,0 +1,10 @@
+# DONNEES REELLES DE COACHS — ne doivent JAMAIS partir dans un depot
+v0/data/*.csv
+v0/out/
+!v0/data/template.csv
+!v0/data/demo-academy.csv
+!v0/data/weird-export.csv
+
+node_modules/
+.env
+.DS_Store

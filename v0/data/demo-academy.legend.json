@@ -1,0 +1,388 @@
+{
+  "endDate": "2026-09-05",
+  "plan": [
+    {
+      "type": "regular",
+      "n": 22,
+      "note": "viennent normalement — ne doivent PAS apparaitre"
+    },
+    {
+      "type": "casual",
+      "n": 9,
+      "note": "1x/sem irregulier — ne doivent PAS apparaitre"
+    },
+    {
+      "type": "fading",
+      "n": 3,
+      "note": "-> FADING"
+    },
+    {
+      "type": "ghost",
+      "n": 4,
+      "note": "-> GHOST"
+    },
+    {
+      "type": "new_slipping",
+      "n": 3,
+      "note": "-> NEW_SLIPPING"
+    },
+    {
+      "type": "new_active",
+      "n": 4,
+      "note": "-> NEW_UNSEEN"
+    },
+    {
+      "type": "returner",
+      "n": 2,
+      "note": "-> RETURNED"
+    },
+    {
+      "type": "streaker",
+      "n": 3,
+      "note": "-> QUIET_RELIABLE"
+    },
+    {
+      "type": "long_gone",
+      "n": 6,
+      "note": "> 60 jours : hors brief, comptes en annexe"
+    }
+  ],
+  "students": [
+    {
+      "id": "S1000",
+      "name": "Arthur Martin",
+      "archetype": "regular",
+      "classes": 70
+    },
+    {
+      "id": "S1001",
+      "name": "Thomas Moreau",
+      "archetype": "regular",
+      "classes": 71
+    },
+    {
+      "id": "S1002",
+      "name": "Julie Bertrand",
+      "archetype": "regular",
+      "classes": 68
+    },
+    {
+      "id": "S1003",
+      "name": "Marc Bernard",
+      "archetype": "regular",
+      "classes": 30
+    },
+    {
+      "id": "S1004",
+      "name": "Sofia Simon",
+      "archetype": "regular",
+      "classes": 51
+    },
+    {
+      "id": "S1005",
+      "name": "Karim Roux",
+      "archetype": "regular",
+      "classes": 64
+    },
+    {
+      "id": "S1006",
+      "name": "Elena Dubois",
+      "archetype": "regular",
+      "classes": 71
+    },
+    {
+      "id": "S1007",
+      "name": "Hugo Laurent",
+      "archetype": "regular",
+      "classes": 48
+    },
+    {
+      "id": "S1008",
+      "name": "Lea Vincent",
+      "archetype": "regular",
+      "classes": 70
+    },
+    {
+      "id": "S1009",
+      "name": "Yanis Robert",
+      "archetype": "regular",
+      "classes": 73
+    },
+    {
+      "id": "S1010",
+      "name": "Camille Lefebvre",
+      "archetype": "regular",
+      "classes": 58
+    },
+    {
+      "id": "S1011",
+      "name": "Nadia Fournier",
+      "archetype": "regular",
+      "classes": 40
+    },
+    {
+      "id": "S1012",
+      "name": "Pierre Petit",
+      "archetype": "regular",
+      "classes": 32
+    },
+    {
+      "id": "S1013",
+      "name": "Ines Michel",
+      "archetype": "regular",
+      "classes": 41
+    },
+    {
+      "id": "S1014",
+      "name": "Bastien Morel",
+      "archetype": "regular",
+      "classes": 72
+    },
+    {
+      "id": "S1015",
+      "name": "Maya Durand",
+      "archetype": "regular",
+      "classes": 37
+    },
+    {
+      "id": "S1016",
+      "name": "Oscar Garcia",
+      "archetype": "regular",
+      "classes": 60
+    },
+    {
+      "id": "S1017",
+      "name": "Rita Girard",
+      "archetype": "regular",
+      "classes": 44
+    },
+    {
+      "id": "S1018",
+      "name": "Samir Leroy",
+      "archetype": "regular",
+      "classes": 47
+    },
+    {
+      "id": "S1019",
+      "name": "Chloe David",
+      "archetype": "regular",
+      "classes": 24
+    },
+    {
+      "id": "S1020",
+      "name": "Victor Martin",
+      "archetype": "regular",
+      "classes": 51
+    },
+    {
+      "id": "S1021",
+      "name": "Amina Moreau",
+      "archetype": "regular",
+      "classes": 43
+    },
+    {
+      "id": "S1022",
+      "name": "Louis Bertrand",
+      "archetype": "casual",
+      "classes": 22
+    },
+    {
+      "id": "S1023",
+      "name": "Tess Bernard",
+      "archetype": "casual",
+      "classes": 23
+    },
+    {
+      "id": "S1024",
+      "name": "Rayan Simon",
+      "archetype": "casual",
+      "classes": 21
+    },
+    {
+      "id": "S1025",
+      "name": "Manon Roux",
+      "archetype": "casual",
+      "classes": 19
+    },
+    {
+      "id": "S1026",
+      "name": "Diego Dubois",
+      "archetype": "casual",
+      "classes": 25
+    },
+    {
+      "id": "S1027",
+      "name": "Jade Laurent",
+      "archetype": "casual",
+      "classes": 24
+    },
+    {
+      "id": "S1028",
+      "name": "Noam Vincent",
+      "archetype": "casual",
+      "classes": 23
+    },
+    {
+      "id": "S1029",
+      "name": "Alice Robert",
+      "archetype": "casual",
+      "classes": 25
+    },
+    {
+      "id": "S1030",
+      "name": "Bilal Lefebvre",
+      "archetype": "casual",
+      "classes": 22
+    },
+    {
+      "id": "S1031",
+      "name": "Clara Fournier",
+      "archetype": "fading",
+      "classes": 39
+    },
+    {
+      "id": "S1032",
+      "name": "Enzo Petit",
+      "archetype": "fading",
+      "classes": 44
+    },
+    {
+      "id": "S1033",
+      "name": "Fanny Michel",
+      "archetype": "fading",
+      "classes": 43
+    },
+    {
+      "id": "S1034",
+      "name": "Gabin Morel",
+      "archetype": "ghost",
+      "classes": 33
+    },
+    {
+      "id": "S1035",
+      "name": "Hana Durand",
+      "archetype": "ghost",
+      "classes": 37
+    },
+    {
+      "id": "S1036",
+      "name": "Ilan Garcia",
+      "archetype": "ghost",
+      "classes": 46
+    },
+    {
+      "id": "S1037",
+      "name": "Jonas Girard",
+      "archetype": "ghost",
+      "classes": 32
+    },
+    {
+      "id": "S1038",
+      "name": "Kenza Leroy",
+      "archetype": "new_slipping",
+      "classes": 6
+    },
+    {
+      "id": "S1039",
+      "name": "Liam David",
+      "archetype": "new_slipping",
+      "classes": 11
+    },
+    {
+      "id": "S1040",
+      "name": "Malik Martin",
+      "archetype": "new_slipping",
+      "classes": 8
+    },
+    {
+      "id": "S1041",
+      "name": "Nora Moreau",
+      "archetype": "new_active",
+      "classes": 10
+    },
+    {
+      "id": "S1042",
+      "name": "Otto Bertrand",
+      "archetype": "new_active",
+      "classes": 6
+    },
+    {
+      "id": "S1043",
+      "name": "Paulin Bernard",
+      "archetype": "new_active",
+      "classes": 8
+    },
+    {
+      "id": "S1044",
+      "name": "Quentin Simon",
+      "archetype": "new_active",
+      "classes": 7
+    },
+    {
+      "id": "S1045",
+      "name": "Remi Roux",
+      "archetype": "returner",
+      "classes": 57
+    },
+    {
+      "id": "S1046",
+      "name": "Sarah Dubois",
+      "archetype": "returner",
+      "classes": 53
+    },
+    {
+      "id": "S1047",
+      "name": "Tarek Laurent",
+      "archetype": "streaker",
+      "classes": 92
+    },
+    {
+      "id": "S1048",
+      "name": "Ugo Vincent",
+      "archetype": "streaker",
+      "classes": 90
+    },
+    {
+      "id": "S1049",
+      "name": "Vera Robert",
+      "archetype": "streaker",
+      "classes": 109
+    },
+    {
+      "id": "S1050",
+      "name": "Wassim Lefebvre",
+      "archetype": "long_gone",
+      "classes": 91
+    },
+    {
+      "id": "S1051",
+      "name": "Xavier Fournier",
+      "archetype": "long_gone",
+      "classes": 104
+    },
+    {
+      "id": "S1052",
+      "name": "Yasmine Petit",
+      "archetype": "long_gone",
+      "classes": 71
+    },
+    {
+      "id": "S1053",
+      "name": "Zoe Michel",
+      "archetype": "long_gone",
+      "classes": 83
+    },
+    {
+      "id": "S1054",
+      "name": "Adrien Morel",
+      "archetype": "long_gone",
+      "classes": 82
+    },
+    {
+      "id": "S1055",
+      "name": "Bella Durand",
+      "archetype": "long_gone",
+      "classes": 84
+    }
+  ]
+}
