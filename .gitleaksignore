@@ -1,6 +1,10 @@
-# Exception Gitleaks (v8.24.3, règles par défaut) — UNE seule empreinte exacte : commit:fichier:règle:ligne.
-# Faux positif : mot de passe de TEST fictif, en clair, dans le commit 5409361 (tests/e2e/auth-flows.spec.ts, ligne 4),
-# utilisé uniquement contre la base éphémère des tests e2e. Aucune valeur réelle n'est concernée.
-# La valeur a été remplacée dès le commit suivant par un mot de passe aléatoire généré à chaque exécution ;
-# l'historique n'est volontairement pas réécrit. Ne pas élargir cette exception à un fichier, une règle ou un commit entier.
+# Exceptions Gitleaks (v8.24.3, règles par défaut) — empreintes exactes commit:fichier:règle:ligne uniquement.
+# Faux positif : mot de passe de TEST fictif dans le commit 5409361 (tests/e2e/auth-flows.spec.ts, ligne 4),
+# utilisé uniquement contre la base éphémère des tests e2e. Remplacé ensuite par une valeur aléatoire ; historique conservé.
 540936198c93a415d5f4df48a86cd1173669f760:tests/e2e/auth-flows.spec.ts:generic-api-key:4
+# Faux positif : valeur de test factice dans le test de refus d'une URL distante, commit a17bb19268231d9590f61df2b32a959b1337b59d,
+# tests/db/migrate-cli.test.ts, ligne 22. Sert uniquement à vérifier que le message d'erreur n'expose pas le mot de passe.
+a17bb19268231d9590f61df2b32a959b1337b59d:tests/db/migrate-cli.test.ts:generic-api-key:22
+# Faux positif : valeur de test factice dans le contrôle des scripts d'exploitation, commit 5e0539afebe0f88c8342f70bd1df8df095a59bcf,
+# tests/unit/ops-scripts.test.ts, ligne 136. Aucun secret réel ; exception limitée à cette détection historique.
+5e0539afebe0f88c8342f70bd1df8df095a59bcf:tests/unit/ops-scripts.test.ts:generic-api-key:136
