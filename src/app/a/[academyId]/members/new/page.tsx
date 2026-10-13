@@ -24,7 +24,7 @@ export default async function NewMemberPage({ params }: { params: Promise<{ acad
             label="Je confirme que ce membre est majeur."
             name="adultConfirmed"
             required
-            hint="Coach OS est réservé aux adhérents adultes. N'enregistrez aucune donnée de santé ni de blessure."
+            hint="Matnexa est réservé aux adhérents adultes. N'enregistrez aucune donnée de santé ni de blessure."
           />
           <SubmitButton>Créer le membre</SubmitButton>
         </ActionForm>

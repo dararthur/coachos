@@ -49,7 +49,7 @@ test.describe("PWA : manifeste, icônes, métadonnées", () => {
     expect(manifestRes.status()).toBe(200);
     expect(manifestRes.headers()["content-type"]).toContain("manifest+json");
     const manifest = await manifestRes.json();
-    expect(manifest).toMatchObject({ name: "Coach OS", short_name: "Coach OS", display: "standalone", start_url: "/", scope: "/", lang: "fr", theme_color: "#134e4a" });
+    expect(manifest).toMatchObject({ name: "Matnexa", short_name: "Matnexa", display: "standalone", start_url: "/", scope: "/", lang: "fr", theme_color: "#16191d" });
 
     const purposes = new Set<string>();
     const sizes: number[] = [];
@@ -71,8 +71,8 @@ test.describe("PWA : manifeste, icônes, métadonnées", () => {
     expect(pngSize(await (await request.get(apple!)).body())).toEqual({ w: 180, h: 180 });
 
     expect(await page.locator('meta[name="apple-mobile-web-app-capable"], meta[name="mobile-web-app-capable"]').count()).toBeGreaterThan(0);
-    expect(await page.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content")).toBe("Coach OS");
-    expect(await page.locator('meta[name="theme-color"]').first().getAttribute("content")).toBe("#134e4a");
+    expect(await page.locator('meta[name="apple-mobile-web-app-title"]').getAttribute("content")).toBe("Matnexa");
+    expect(await page.locator('meta[name="theme-color"]').first().getAttribute("content")).toBe("#16191d");
     expect(await page.locator('meta[name="viewport"]').getAttribute("content")).toContain("viewport-fit=cover");
 
     // Aucun cache hors ligne de données authentifiées : pas de service worker enregistré.

@@ -16,7 +16,7 @@ export async function GET() {
     return new NextResponse(JSON.stringify(rows[0]?.data ?? {}, null, 2), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${safeFilename("coachos-mes-donnees", "json")}"`,
+        "Content-Disposition": `attachment; filename="${safeFilename("matnexa-mes-donnees", "json")}"`,
         "Cache-Control": "no-store",
         "X-Content-Type-Options": "nosniff",
       },

@@ -1,4 +1,4 @@
-# Coach OS
+# Matnexa
 
 > **Application (branche `feature/self-hosted-infra`)** — SaaS multi-tenant de gestion de club (JJB, grappling, MMA) : Next.js 16 · TypeScript strict · Tailwind · PostgreSQL standard avec RLS · Better Auth (auto-hébergé). Premier parcours utilisable de bout en bout : compte → club → membres (saisie + import CSV validé) → cours et planning → appel → tableau de bord → historique et exports → droits RGPD.
 >
@@ -15,8 +15,7 @@
 
 # CoachOS — nom de code interne
 
-> **Le nom public sera choisi quand 3 coachs utiliseront le produit.** Pas avant.
-> Candidats en attente : Senpai · Roll Call · Mat Check.
+> **Nom public : Matnexa** (depuis le 13/10/2026). `coachos` reste le nom de code interne : dépôt, rôles PostgreSQL, services et scripts.
 
 ## La thèse en une phrase
 

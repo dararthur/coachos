@@ -21,7 +21,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
       headers: {
         ...noStore,
         "Content-Type": "application/json; charset=utf-8",
-        "Content-Disposition": `attachment; filename="${safeFilename("coachos-donnees-membre", "json")}"`,
+        "Content-Disposition": `attachment; filename="${safeFilename("matnexa-donnees-membre", "json")}"`,
         "X-Content-Type-Options": "nosniff",
       },
     });

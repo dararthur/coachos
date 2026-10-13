@@ -12,7 +12,7 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 
 **Adhérent** (compte rattaché à sa fiche membre par l'invitation « fiche membre liée ») :
 1. **Recommandé : le scanner intégré** — *Mon espace → Scanner le QR code* (ou l'onglet « Pointer »). Il fonctionne dans l'application installée et garde votre session.
-   **Secours** : (a) l'application *Appareil photo* du téléphone — le lien s'ouvre dans le **navigateur par défaut** (Safari sur iOS, même si Coach OS est installé : sur iOS la session de l'app installée est séparée de celle de Safari ; sur Android, l'ouverture dans l'app installée n'est pas garantie). Il faut alors se connecter dans ce navigateur ; la connexion ramène au pointage, à condition que le QR n'ait pas expiré (sinon rescanner) ; (b) coller le lien affiché par le coach dans le scanner intégré.
+   **Secours** : (a) l'application *Appareil photo* du téléphone — le lien s'ouvre dans le **navigateur par défaut** (Safari sur iOS, même si Matnexa est installé : sur iOS la session de l'app installée est séparée de celle de Safari ; sur Android, l'ouverture dans l'app installée n'est pas garantie). Il faut alors se connecter dans ce navigateur ; la connexion ramène au pointage, à condition que le QR n'ait pas expiré (sinon rescanner) ; (b) coller le lien affiché par le coach dans le scanner intégré.
 2. La caméra n'est demandée qu'après le clic ; le décodage se fait dans le navigateur (aucune image n'est envoyée ni conservée).
 3. Un écran affiche le cours concerné ; **rien n'est enregistré avant « Confirmer ma présence »**. La confirmation « Présence enregistrée » n'apparaît qu'après la réponse du serveur confirmant l'écriture.
 
@@ -48,7 +48,7 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 
 - **Pas de preuve de présence physique** : sans géolocalisation (volontairement), un adhérent complice pourrait relayer un QR vivant à quelqu'un d'absent pendant ≤ 90 s. Atténuations : durée courte, compte lié obligatoire, liste visible et corrigeable par le coach, validation de la feuille.
 - Un adhérent **sans compte lié** ne peut pas pointer : le coach le saisit à la main.
-- Le jeton figure dans l'URL (`/checkin/<jeton>`) : visible dans l'historique du navigateur de l'adhérent et dans d'éventuels journaux d'accès du serveur/CDN pendant sa courte validité. Les journaux applicatifs de Coach OS ne l'enregistrent pas ; configurer l'hébergeur pour ne pas conserver les chemins de requête si possible.
+- Le jeton figure dans l'URL (`/checkin/<jeton>`) : visible dans l'historique du navigateur de l'adhérent et dans d'éventuels journaux d'accès du serveur/CDN pendant sa courte validité. Les journaux applicatifs de Matnexa ne l'enregistrent pas ; configurer l'hébergeur pour ne pas conserver les chemins de requête si possible.
 - Décodage par `jsQR` (JavaScript) : peut être lent sur un téléphone très ancien ; l'alternative « coller le lien » existe. Mauvaises conditions (reflets, QR trop petit) : agrandir le QR à l'écran du coach.
 - Actualisation par **interrogation toutes les 4 s** (pas de push) : un pointage apparaît chez le coach en ≤ ~5 s ; hors ligne, la liste est figée et un avertissement l'indique.
 - **Caméra et appareils** : testée par Chrome avec caméra simulée (pas de décodage d'un vrai flux) ; le décodage d'un QR réel est prouvé sur image (test unitaire jsQR). Aucun essai sur iPhone/Android physique n'a été fait.

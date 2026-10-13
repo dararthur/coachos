@@ -5,7 +5,7 @@
 ## Rôles
 
 - **Club** (association ou société) : *responsable de traitement* des fiches membres, présences, plannings.
-- **Éditeur de Coach OS** : *sous-traitant* (art. 28) pour ces données ; *responsable de traitement* pour les comptes utilisateurs et la sécurité. [Identité, contact, DPO le cas échéant]
+- **Éditeur de Matnexa** : *sous-traitant* (art. 28) pour ces données ; *responsable de traitement* pour les comptes utilisateurs et la sécurité. [Identité, contact, DPO le cas échéant]
 
 ## Registre simplifié des traitements
 
