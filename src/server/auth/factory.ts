@@ -56,12 +56,38 @@ export const RULES: Record<string, Rule> = {
   "/verify-email": { scope: "verify-link", ip: { max: 30, window: 900 } },
 };
 
-/** Surface HTTP minimale : Coach OS n'utilise ni connexion sociale, ni changement d'e-mail, ni suppression via Better Auth. */
+/**
+ * Surface HTTP de Better Auth : on ne garde que ce qui doit être joignable par un lien d'e-mail ou une sonde.
+ *   - GET /verify-email           lien de confirmation d'adresse
+ *   - GET /reset-password/:token  lien de réinitialisation (redirige vers /reset-password?token=…)
+ *   - GET /ok, /error             sonde de vie et page d'erreur
+ * TOUT le reste est refusé en 404 par le routeur HTTP. Les Server Actions appellent `auth.api.*` EN PROCESSUS, ce que
+ * `disabledPaths` n'affecte pas : les validations applicatives (zod), les limites de débit du hook et les contrôles de
+ * session restent donc la seule porte d'entrée. Sans cela, les mêmes opérations seraient joignables en HTTP direct en
+ * contournant la validation de l'application (ex. nom de 20 000 caractères ou HTML à l'inscription).
+ *
+ * ATTENTION : Better Auth compare le chemin EXACT (pas de motif ni de joker). Ne lister que des chemins concrets ;
+ * un chemin paramétré comme "/callback/:id" ne correspondrait à rien. Tests : tests/db/auth-integration.test.ts (variantes
+ * de casse, barre finale, double barre) et tests/e2e/auth-flows.spec.ts.
+ */
 export const DISABLED_PATHS = [
+  // Opérations redondantes avec les Server Actions (src/server/actions/auth.ts)
+  "/sign-up/email",
+  "/sign-in/email",
+  "/sign-out",
+  "/request-password-reset",
+  "/reset-password", // POST (jeton + nouveau mot de passe) ; le GET /reset-password/<jeton> du lien d'e-mail reste ouvert
+  "/change-password",
+  "/update-user",
+  "/send-verification-email",
+  "/list-sessions",
+  "/revoke-session",
+  "/revoke-sessions",
+  "/revoke-other-sessions",
+  // Fonctions non utilisées par Coach OS
   "/sign-in/social",
   "/link-social",
   "/unlink-account",
-  "/callback/:id",
   "/get-access-token",
   "/refresh-token",
   "/account-info",

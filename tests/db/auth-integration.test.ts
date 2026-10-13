@@ -2,8 +2,9 @@ import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import { getMigrations } from "better-auth/db/migration";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
-import { createAuth, type CoachAuth, type Limiter } from "@/server/auth/factory";
+import { createAuth, DISABLED_PATHS, type CoachAuth, type Limiter } from "@/server/auth/factory";
 import type { MailMessage, Mailer } from "@/server/mail/types";
+import { forgeToken } from "../support/forge";
 import { adminSql, appSql, asUser, closeAll, createAcademy, failing } from "./support";
 
 /**
@@ -159,7 +160,8 @@ describe("Better Auth : récupération du mot de passe et sessions", () => {
     await auth.api.requestPasswordReset({ body: { email, redirectTo: `${BASE}/reset-password` }, headers: hdr() });
     await vi.waitFor(() => expect(lastMail(email, "password_reset")).toBeTruthy());
     const token = new URL(lastMail(email, "password_reset")!.link).pathname.split("/").at(-1)!;
-    const forged = token.slice(0, -1) + (token.endsWith("A") ? "B" : "A");
+    const forged = forgeToken(token);
+    expect(forged).not.toBe(token);
     expect(await statusOf(() => auth.api.resetPassword({ body: { newPassword: `Faux-${randomBytes(9).toString("hex")}`, token: forged } }))).toBeGreaterThanOrEqual(400);
 
     const { email: e2 } = await register("resetexp");
@@ -176,7 +178,7 @@ describe("Better Auth : récupération du mot de passe et sessions", () => {
     const email = mailAddress("verif");
     await auth.api.signUpEmail({ body: { name: "V", email, password: PASSWORD }, headers: hdr() });
     const token = new URL(lastMail(email, "verification")!.link).searchParams.get("token")!;
-    expect(await statusOf(() => auth.api.verifyEmail({ query: { token: token.slice(0, -1) + (token.endsWith("A") ? "B" : "A") } }))).toBeGreaterThanOrEqual(400);
+    expect(await statusOf(() => auth.api.verifyEmail({ query: { token: forgeToken(token) } }))).toBeGreaterThanOrEqual(400);
     expect(await statusOf(() => auth.api.verifyEmail({ query: { token: "n-importe-quoi" } }))).toBeGreaterThanOrEqual(400);
     const [u0] = await adminSql()<{ email_verified: boolean }[]>`select email_verified from auth.users where email = ${email}`;
     expect(u0!.email_verified).toBe(false);
@@ -260,18 +262,112 @@ describe("Better Auth : confidentialité et limitation de débit", () => {
     expect(r).toEqual([200, 200, 200, 429, 429]);
   });
 
-  it("chemin HTTP direct (handler Next) : mêmes limites ; chemins inutilisés désactivés", async () => {
-    const post = (path: string, body: unknown, extra: Record<string, string> = {}) =>
-      auth.handler(new Request(`${BASE}/api/auth${path}`, { method: "POST", headers: { "content-type": "application/json", origin: BASE, "x-real-ip": ip(), ...extra }, body: JSON.stringify(body) }));
-    const target = mailAddress("http");
+  it("surface HTTP : les endpoints redondants avec les Server Actions sont refusés (404), sans effet de bord ni contournement par variante de chemin", async () => {
+    // Liste VOLONTAIREMENT recopiée ici : retirer une entrée de DISABLED_PATHS doit faire échouer ce test.
+    const MUST_BE_DISABLED = [
+      "/sign-up/email", "/sign-in/email", "/sign-out", "/request-password-reset", "/reset-password", "/change-password",
+      "/update-user", "/send-verification-email", "/list-sessions", "/revoke-session", "/revoke-sessions", "/revoke-other-sessions",
+      "/sign-in/social", "/change-email", "/delete-user", "/get-session",
+    ];
+    for (const p of MUST_BE_DISABLED) expect(DISABLED_PATHS, p).toContain(p);
+
+    const call = (method: string, path: string, body?: unknown, extra: Record<string, string> = {}) =>
+      auth.handler(new Request(`${BASE}/api/auth${path}`, { method, headers: { "content-type": "application/json", origin: BASE, "x-real-ip": ip(), ...extra }, body: body === undefined ? undefined : JSON.stringify(body) }));
+
+    // 1. Chaque chemin est refusé, quelle que soit la méthode.
+    for (const p of MUST_BE_DISABLED) {
+      expect((await call("POST", p, {})).status, `POST ${p}`).toBe(404);
+      expect((await call("GET", p)).status, `GET ${p}`).toBe(404);
+    }
+
+    // 2. Aucun effet de bord, avec des requêtes qui seraient valides si le chemin était ouvert.
+    const sessionsBefore = (await adminSql()<{ n: number }[]>`select count(*)::int as n from auth.sessions`)[0]!.n;
+    const fresh = mailAddress("http-signup");
+    const signup = await call("POST", "/sign-up/email", { name: "N".repeat(20_000), email: fresh, password: PASSWORD });
+    expect(signup.status).toBe(404);
+    expect(await adminSql()`select 1 from auth.users where email = ${fresh}`).toHaveLength(0);
+    const known = await register("http-known");
+    const login = await call("POST", "/sign-in/email", { email: known.email, password: PASSWORD });
+    expect(login.status).toBe(404);
+    expect(login.headers.get("set-cookie")).toBeNull();
+    const reset = await call("POST", "/request-password-reset", { email: known.email, redirectTo: `${BASE}/reset-password` });
+    expect(reset.status).toBe(404);
+    await new Promise((r) => setTimeout(r, 200));
+    expect(sent.filter((m) => m.to === known.email && m.kind === "password_reset")).toHaveLength(0);
+    // Une session légitime (créée côté serveur) ne peut pas non plus modifier son profil ni changer de mot de passe par HTTP.
+    const { cookie } = await signInCookie(known.email);
+    const sessionsDuring = (await adminSql()<{ n: number }[]>`select count(*)::int as n from auth.sessions`)[0]!.n;
+    expect(sessionsDuring).toBe(sessionsBefore + 1);
+    expect((await call("POST", "/update-user", { name: "Pirate".repeat(5000) }, { cookie })).status).toBe(404);
+    expect((await call("POST", "/change-password", { currentPassword: PASSWORD, newPassword: `Pirate-${randomBytes(9).toString("hex")}`, revokeOtherSessions: true }, { cookie })).status).toBe(404);
+    expect((await call("POST", "/sign-out", {}, { cookie })).status).toBe(404);
+    expect(await sessionOf(cookie)).not.toBeNull(); // la session existe toujours : rien n'a été traité
+    const [u] = await adminSql()<{ name: string }[]>`select name from auth.users where id = ${known.id}`;
+    expect(u!.name).toBe("http-known");
+    expect(sent.filter((m) => m.to === fresh)).toHaveLength(0); // aucun e-mail pour le compte refusé
+
+    // 3. Variantes de chemin : aucune ne contourne le refus (pas de cookie de session, pas de nouvelle session).
+    const variants = [
+      "/SIGN-IN/email", "/sign-in/EMAIL", "/sign-in/email/", "//sign-in/email", "/./sign-in/email", "/sign-in/./email",
+      "/sign-in%2Femail", "/sign-in/email%20", "/sign-in/email?x=1", "/sign-in/email#x", "/%73ign-in/email", "/sign-in/%65mail",
+    ];
+    const before = (await adminSql()<{ n: number }[]>`select count(*)::int as n from auth.sessions`)[0]!.n;
+    for (const v of variants) {
+      const res = await call("POST", v, { email: known.email, password: PASSWORD });
+      expect(res.headers.get("set-cookie"), v).toBeNull();
+      expect(res.status, v).toBeGreaterThanOrEqual(400);
+      expect(res.status, v).not.toBe(401); // 401 = « mauvais mot de passe » : l'endpoint aurait traité la requête
+      expect(res.status, v).not.toBe(429);
+    }
+    expect((await adminSql()<{ n: number }[]>`select count(*)::int as n from auth.sessions`)[0]!.n).toBe(before);
+
+    // 4. Les routes sociales dynamiques n'existent pas (aucun fournisseur) : jamais de succès ni de redirection.
+    for (const p of ["/callback/google", "/callback/github", "/oauth2/callback/x"]) {
+      const res = await call("GET", p);
+      expect(res.status, p).not.toBe(200);
+      if (res.status >= 300 && res.status < 400) expect(res.headers.get("location") ?? "", p).toMatch(/error/); // seule redirection admise : vers la page d'erreur de l'authentification
+    }
+  });
+
+  it("surface HTTP restante : liens d'e-mail et sonde fonctionnent ; redirections externes refusées ; limite par IP", async () => {
+    // Sonde de vie
+    expect((await auth.handler(new Request(`${BASE}/api/auth/ok`, { headers: { "x-real-ip": ip() } }))).status).toBe(200);
+
+    // Lien de confirmation : vérifie l'adresse puis redirige vers le chemin relatif demandé, sans ouvrir de session.
+    const email = mailAddress("http-verify");
+    await auth.api.signUpEmail({ body: { name: "V", email, password: PASSWORD, callbackURL: "/login?verified=1" }, headers: hdr() });
+    const link = lastMail(email, "verification")!.link;
+    const ok = await auth.handler(new Request(link, { headers: { "x-real-ip": ip() } }));
+    expect(ok.status).toBe(302);
+    expect(ok.headers.get("location")).toBe("/login?verified=1");
+    expect(ok.headers.get("set-cookie")).toBeNull();
+    const [v] = await adminSql()<{ email_verified: boolean }[]>`select email_verified from auth.users where email = ${email}`;
+    expect(v!.email_verified).toBe(true);
+
+    // Jeton falsifié : redirection avec erreur, compte non vérifié.
+    const email2 = mailAddress("http-verify2");
+    await auth.api.signUpEmail({ body: { name: "V", email: email2, password: PASSWORD, callbackURL: "/login?verified=1" }, headers: hdr() });
+    const bad = new URL(lastMail(email2, "verification")!.link);
+    bad.searchParams.set("token", forgeToken(bad.searchParams.get("token")!));
+    const refused = await auth.handler(new Request(bad, { headers: { "x-real-ip": ip() } }));
+    expect(refused.headers.get("location") ?? "").toMatch(/error=/);
+    expect((await adminSql()<{ email_verified: boolean }[]>`select email_verified from auth.users where email = ${email2}`)[0]!.email_verified).toBe(false);
+
+    // Lien de réinitialisation légitime : redirige vers la page de l'application avec le jeton.
+    const { email: resetEmail } = await register("http-resetuser");
+    await auth.api.requestPasswordReset({ body: { email: resetEmail, redirectTo: `${BASE}/reset-password` }, headers: hdr() });
+    await vi.waitFor(() => expect(lastMail(resetEmail, "password_reset")).toBeTruthy());
+    const good = await auth.handler(new Request(lastMail(resetEmail, "password_reset")!.link, { headers: { "x-real-ip": ip() } }));
+    expect(good.status).toBe(302);
+    expect(good.headers.get("location")).toMatch(/^http:\/\/127\.0\.0\.1:3999\/reset-password\?token=/);
+    // (Le refus des redirections externes est prouvé en e2e, serveur de production : Better Auth ne l'applique pas sous NODE_ENV=test.)
+
+    // Limite par IP sur le seul endpoint de vérification encore ouvert : 30 / 15 min, puis 429.
+    const fixed = ip();
     const codes: number[] = [];
-    for (let i = 0; i < 12; i++) codes.push((await post("/sign-in/email", { email: target, password: "mauvais-mot-de-passe-1" })).status);
-    expect(codes.slice(0, 10).every((c) => c === 401)).toBe(true);
-    expect(codes.slice(10).every((c) => c === 429)).toBe(true);
-    // Le contrôle d'origine (CSRF) est désactivé par Better Auth sous NODE_ENV=test : il est prouvé en e2e, serveur de production (tests/e2e/auth-flows.spec.ts).
-    for (const p of ["/sign-in/social", "/change-email", "/delete-user", "/forget-password", "/get-access-token"]) expect((await post(p, {})).status, p).toBe(404);
-    const get = await auth.handler(new Request(`${BASE}/api/auth/get-session`, { headers: { "x-real-ip": ip() } }));
-    expect(get.status).toBe(404);
+    for (let i = 0; i < 33; i++) codes.push((await auth.handler(new Request(`${BASE}/api/auth/verify-email?token=inconnu${i}&callbackURL=%2Flogin`, { headers: { "x-real-ip": fixed } }))).status);
+    expect(codes.slice(0, 30).every((c) => c !== 429)).toBe(true);
+    expect(codes.slice(30).every((c) => c === 429)).toBe(true);
   });
 });
 
