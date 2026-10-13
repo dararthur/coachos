@@ -42,7 +42,7 @@ begin
     raise exception 'coachos:not_authenticated' using errcode = '28000';
   end if;
   v_caller := app_private.member_role(p_academy);
-  if v_caller not in ('owner', 'admin') then
+  if coalesce(v_caller, '') not in ('owner', 'admin') then
     raise exception 'coachos:forbidden' using errcode = '42501';
   end if;
   if p_role not in ('admin', 'coach', 'member') then
@@ -131,7 +131,7 @@ begin
     raise exception 'coachos:not_authenticated' using errcode = '28000';
   end if;
   v_caller := app_private.member_role(p_academy);
-  if v_caller not in ('owner', 'admin') then
+  if coalesce(v_caller, '') not in ('owner', 'admin') then
     raise exception 'coachos:forbidden' using errcode = '42501';
   end if;
   if p_role not in ('owner', 'admin', 'coach', 'member') then
@@ -171,7 +171,7 @@ begin
     raise exception 'coachos:not_found' using errcode = 'P0002';
   end if;
   if p_user <> v_uid then
-    if v_caller not in ('owner', 'admin') or (v_caller = 'admin' and v_target in ('owner', 'admin')) then
+    if coalesce(v_caller, '') not in ('owner', 'admin') or (v_caller = 'admin' and v_target in ('owner', 'admin')) then
       raise exception 'coachos:forbidden' using errcode = '42501';
     end if;
   end if;
