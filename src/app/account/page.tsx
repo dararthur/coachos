@@ -9,8 +9,9 @@ import { requireUser } from "@/server/auth/guards";
 
 export const metadata: Metadata = { title: "Mon compte" };
 
-export default async function AccountPage() {
+export default async function AccountPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
+  const params = await searchParams;
   return (
     <main id="contenu" className="mx-auto w-full max-w-2xl space-y-6 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -31,6 +32,7 @@ export default async function AccountPage() {
         </form>
       </Card>
       <Card title="Mot de passe">
+        {params.updated === "password" && <Alert tone="success">Mot de passe mis à jour. Vos autres appareils ont été déconnectés.</Alert>}
         <ActionForm action={changePasswordAction} className="space-y-4" resetOnSuccess>
           <TextField label="Mot de passe actuel" name="currentPassword" type="password" autoComplete="current-password" required />
           <TextField label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" minLength={12} required />

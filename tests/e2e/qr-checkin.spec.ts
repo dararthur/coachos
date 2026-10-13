@@ -16,7 +16,7 @@ interface Actor {
 const MOBILE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" } as const;
 
 async function newActor(browser: Browser, label: string, mobile = false): Promise<Actor> {
-  const context = await browser.newContext({ ...(mobile ? MOBILE : { locale: "fr-FR", timezoneId: "Europe/Paris" }), extraHTTPHeaders: { "x-forwarded-for": randomIp() } });
+  const context = await browser.newContext({ ...(mobile ? MOBILE : { locale: "fr-FR", timezoneId: "Europe/Paris" }), extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const page = await context.newPage();
   const email = uniqueEmail(label);
   await signUp(page, email, label);
@@ -201,7 +201,7 @@ test.describe("pointage par QR code", () => {
     await test.step("non connecté : redirection vers la connexion, puis retour au pointage", async () => {
       await c.getByRole("button", { name: "Ouvrir le pointage" }).click();
       const livePath = new URL(await currentLink(c)).pathname;
-      const anonymous = await browser.newContext({ ...MOBILE, extraHTTPHeaders: { "x-forwarded-for": randomIp() } });
+      const anonymous = await browser.newContext({ ...MOBILE, extraHTTPHeaders: { "x-real-ip": randomIp() } });
       const page = await anonymous.newPage();
       await page.goto(livePath);
       await expect(page).toHaveURL(/\/login\?next=%2Fcheckin%2F/);

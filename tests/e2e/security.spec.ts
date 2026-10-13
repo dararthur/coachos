@@ -2,7 +2,7 @@ import type { Browser } from "@playwright/test";
 import { PASSWORD, createClub, logIn, parisToday, signUp, uniqueEmail, expect, randomIp, test } from "./support/helpers";
 
 async function newUser(browser: Browser, label: string) {
-  const context = await browser.newContext({ locale: "fr-FR", timezoneId: "Europe/Paris", extraHTTPHeaders: { "x-forwarded-for": randomIp() } });
+  const context = await browser.newContext({ locale: "fr-FR", timezoneId: "Europe/Paris", extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const page = await context.newPage();
   const email = uniqueEmail(label);
   await signUp(page, email, label);
@@ -169,13 +169,13 @@ test.describe("authentification et en-têtes de sécurité", () => {
     expect(nonceA).not.toBe(nonceB); // nonce différent à chaque requête
 
     await signUp(page, uniqueEmail("cookie"), "Cookie");
-    const cookies = (await context.cookies()).filter((c) => c.name.startsWith("sb-"));
+    const cookies = (await context.cookies()).filter((c) => c.name.includes("better-auth"));
     expect(cookies.length).toBeGreaterThan(0);
     for (const c of cookies) {
       expect(c.httpOnly, c.name).toBe(true);
       expect(c.sameSite, c.name).toBe("Lax");
     }
-    expect(await page.evaluate(() => document.cookie)).not.toContain("sb-");
+    expect(await page.evaluate(() => document.cookie)).not.toContain("better-auth");
   });
 
   test("aucune erreur console ni de violation CSP sur les pages principales", async ({ page }) => {
@@ -205,7 +205,11 @@ test.describe("authentification et en-têtes de sécurité", () => {
     for (let i = 0; i < 14 && !limited; i++) {
       await page.getByLabel("Adresse e-mail").fill(email);
       await page.getByLabel("Mot de passe").fill(`${PASSWORD}-faux-${i}`);
-      await page.getByRole("button", { name: "Se connecter" }).click();
+      // Attend la réponse de l'action serveur de CETTE tentative (sinon l'alerte de la précédente donne un faux résultat).
+      await Promise.all([
+        page.waitForResponse((r) => r.request().method() === "POST" && new URL(r.url()).pathname === "/login"),
+        page.getByRole("button", { name: "Se connecter" }).click(),
+      ]);
       const alert = page.getByRole("alert").filter({ hasText: /./ });
       await expect(alert.first()).toBeVisible();
       limited = await page.getByText("Trop de tentatives").isVisible();

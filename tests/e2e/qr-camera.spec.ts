@@ -5,7 +5,7 @@ test.use({ launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-
 const MOBILE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" } as const;
 
 test("la caméra démarre après le clic, affiche l'aperçu et s'éteint à l'arrêt ; un QR étranger ne mène nulle part", async ({ browser }) => {
-  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-forwarded-for": randomIp() } });
+  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const page = await context.newPage();
   await signUp(page, uniqueEmail("cam"), "Cam");
   await createClub(page, "Club Cam");

@@ -1,26 +1,30 @@
 // Pile locale pour les tests e2e SANS Docker : PostgreSQL embarqué (migrations réelles, RLS réelle)
-// + faux GoTrue + serveur Next.js de production (`next start`). Lancée par playwright.config.ts.
+// + vrai Better Auth (boîte d'envoi d'e-mails dans un fichier, aucun réseau) + serveur Next.js de production (`next start`).
+// Lancée par playwright.config.ts.
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
+import { rmSync, writeFileSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { startEmbeddedDb } from "../../support/embedded-db.mjs";
-import { startMockAuth } from "./mock-auth.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const appPort = Number(process.env.E2E_PORT ?? 3100);
-const authPort = appPort + 1;
+const outbox = path.join(os.tmpdir(), `coachos-e2e-outbox-${appPort}.jsonl`);
+writeFileSync(outbox, "");
 
 const db = await startEmbeddedDb();
-const auth = await startMockAuth({ port: authPort, adminUrl: db.adminUrl });
 
 const env = {
   ...process.env,
   NODE_ENV: "production",
   SITE_URL: `http://127.0.0.1:${appPort}`,
-  SUPABASE_URL: auth.url,
-  SUPABASE_PUBLISHABLE_KEY: randomBytes(24).toString("hex"),
   DATABASE_URL: db.appUrl,
+  AUTH_DATABASE_URL: db.authUrl,
+  BETTER_AUTH_SECRET: randomBytes(32).toString("hex"),
+  MAIL_PROVIDER: "outbox",
+  MAIL_OUTBOX_FILE: outbox,
   DATABASE_SSL: "disable",
   APP_SECRET: randomBytes(32).toString("hex"),
   CRON_SECRET: randomBytes(32).toString("hex"),
@@ -39,11 +43,11 @@ async function shutdown(code = 0) {
   if (stopping) return;
   stopping = true;
   next.kill();
-  await auth.stop().catch(() => {});
+  rmSync(outbox, { force: true });
   await db.stop().catch(() => {});
   process.exit(code);
 }
 process.on("SIGINT", () => shutdown(0));
 process.on("SIGTERM", () => shutdown(0));
 next.on("exit", (code) => shutdown(code ?? 0));
-console.log(`[e2e-stack] prête : app http://127.0.0.1:${appPort}, auth ${auth.url}, pg :${db.port}`);
+console.log(`[e2e-stack] prête : app http://127.0.0.1:${appPort}, pg :${db.port}`);

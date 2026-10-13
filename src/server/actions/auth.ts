@@ -118,7 +118,8 @@ export async function changePasswordAction(_prev: FormState, formData: FormData)
       logger.warn("auth.change_password_failed", { status: api.status, code: api.code });
       return failure("internal");
     }
-    return { ok: true, data: null, message: "Mot de passe mis à jour. Vos autres appareils ont été déconnectés." };
+    // Better Auth remplace la session de l'appareil courant : on recharge la page avec le nouveau cookie.
+    redirect("/account?updated=password");
   });
 }
 

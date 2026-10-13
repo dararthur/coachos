@@ -161,12 +161,12 @@ test.describe("parcours mobiles", () => {
     const ctx = () => browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" });
     const ownerCtx = await ctx();
     const owner = await ownerCtx.newPage();
-    await ownerCtx.setExtraHTTPHeaders({ "x-forwarded-for": "10.9.9.1" });
+    await ownerCtx.setExtraHTTPHeaders({ "x-real-ip": "10.9.9.1" });
     await signUp(owner, uniqueEmail("mob-proprio"), "Proprio");
     const club = await createClub(owner, "Club Adhérent");
 
     const memberCtx = await ctx();
-    await memberCtx.setExtraHTTPHeaders({ "x-forwarded-for": "10.9.9.2" });
+    await memberCtx.setExtraHTTPHeaders({ "x-real-ip": "10.9.9.2" });
     const member = await memberCtx.newPage();
     const memberEmail = uniqueEmail("mob-membre");
     await signUp(member, memberEmail, "Adhérent");
