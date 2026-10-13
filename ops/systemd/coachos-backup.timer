@@ -1,0 +1,11 @@
+# EXEMPLE NON INSTALLÉ. Une sauvegarde par nuit (heure à valider selon l'activité des clubs). Persistent=true rattrape une machine éteinte.
+[Unit]
+Description=Coach OS - sauvegarde quotidienne
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+RandomizedDelaySec=10min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

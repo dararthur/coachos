@@ -1,0 +1,136 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "product/**", "feature/**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "24"
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  quality:
+    name: Types, lint, tests unitaires, secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run test:unit
+      - run: npm run audit:secrets
+
+  database:
+    name: Tests de base de données (RLS, isolation, RGPD) sur PostgreSQL réel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npm run test:db
+
+  e2e:
+    name: Tests end-to-end (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
+  postgres-migrations:
+    # Cible : PostgreSQL 17 (bloquant). 18 : essai informatif NON bloquant (version probable d'Ubuntu 26.04, jamais testée jusqu'ici).
+    name: Lanceur de migrations sur PostgreSQL ${{ matrix.pg }} (deux bases vierges, relance, invariants)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { pg: "17", experimental: false }
+          - { pg: "18", experimental: true }
+    continue-on-error: ${{ matrix.experimental }}
+    services:
+      postgres:
+        image: postgres:${{ matrix.pg }}
+        env:
+          POSTGRES_PASSWORD: ci-jetable-sans-valeur
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGPASSWORD: ci-jetable-sans-valeur
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
+      - run: npm ci
+      - name: Lanceur de migrations sur deux bases vierges (transactionnel, suivi, collision de rôles)
+        run: |
+          for db in coachos_a coachos_b; do
+            psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "create database $db"
+            export MIGRATION_DATABASE_URL="postgres://postgres:${PGPASSWORD}@localhost:5432/$db"
+            node scripts/migrate.mjs --dry-run | tee "dry-$db.txt"
+            node scripts/migrate.mjs
+            # Relance : plus rien à appliquer.
+            node scripts/migrate.mjs --dry-run | grep -q "en attente : 0"
+          done
+      - name: Suivi des migrations et invariants de sécurité (RLS partout, rôles sans privilège excessif, tables d'authentification fermées)
+        run: |
+          q() { psql -h localhost -U postgres -d coachos_a -tAq -c "$1"; }
+          test "$(q "select count(*) from coachos_migrations.applied")" = "$(ls db/migrations/*.sql | wc -l)"
+          test "$(q "select count(*) from pg_tables where schemaname = 'public' and not rowsecurity")" = "0"
+          test "$(q "select count(*) from pg_roles where rolname in ('app_server','auth_runtime','anon','authenticated') and (rolsuper or rolbypassrls or rolcreaterole or rolcreatedb)")" = "0"
+          test "$(q "select count(*) from pg_roles where rolname in ('app_server','auth_runtime','anon','authenticated') and coalesce(shobj_description(oid, 'pg_authid'), '') <> 'coachos:managed'")" = "0"
+          test "$(q "select count(*) from information_schema.role_table_grants where table_schema = 'auth' and grantee not in ('auth_runtime','postgres')")" = "0"
+          test "$(q "select count(*) from pg_tables where schemaname = 'auth'")" = "4"
+          test "$(q "select has_schema_privilege('app_server','coachos_migrations','usage')")" = "f"
+
+  nginx-syntax:
+    # Valide la SYNTAXE de ops/nginx/ avec un vrai Nginx (certificat jetable généré ici, domaine fictif). Ne prouve ni le comportement
+    # en production ni la compatibilité avec la configuration du serveur réel : voir docs/nginx.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: nginx -t sur la configuration d'exemple
+        run: |
+          set -e
+          work="$(mktemp -d)"
+          mkdir -p "$work/coachos" "$work/certs" "$work/certbot"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=coachos.example.invalid" \
+            -keyout "$work/certs/privkey.pem" -out "$work/certs/fullchain.pem"
+          sed -e "s#/etc/letsencrypt/live/coachos.example.invalid#/certs#" \
+              -e "s#/var/log/nginx/coachos#/tmp/coachos#" ops/nginx/coachos.conf > "$work/coachos.conf"
+          cp ops/nginx/proxy.inc "$work/coachos/proxy.inc"
+          cat > "$work/nginx.conf" <<CONF
+          events {}
+          http {
+            include /etc/nginx/coachos.conf;
+          }
+          CONF
+          docker run --rm \
+            -v "$work/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$work/coachos.conf:/etc/nginx/coachos.conf:ro" \
+            -v "$work/coachos:/etc/nginx/coachos:ro" \
+            -v "$work/certs:/certs:ro" \
+            nginx:stable nginx -t

@@ -1,0 +1,61 @@
+name: Security
+
+on:
+  push:
+    branches: [main, "product/**", "feature/**"]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependencies:
+    name: Audit des dépendances de production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: "24", cache: npm }
+      - run: npm ci --ignore-scripts
+      - run: npm run audit:deps
+
+  dependency-review:
+    name: Revue des dépendances (PR)
+    # Cette action nécessite un dépôt public ou GitHub Advanced Security sur un dépôt privé.
+    # Le dépôt privé actuel n'y a pas accès ; npm audit reste exécuté sur push et pull_request ci-dessus.
+    # Pour activer la revue différentielle, fournir la fonctionnalité nécessaire puis définir ENABLE_DEPENDENCY_REVIEW=true.
+    if: github.event_name == 'pull_request' && vars.ENABLE_DEPENDENCY_REVIEW == 'true'
+    runs-on: ubuntu-latest
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/dependency-review-action@v4
+        with: { fail-on-severity: high }
+
+  secrets:
+    name: Détection de secrets (historique complet)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: Analyse statique CodeQL
+    # Nécessite GitHub Code Scanning (dépôt public, ou GitHub Advanced Security sur un dépôt privé). Sans cela l'envoi des
+    # résultats échoue (« Resource not accessible by integration »). Activer avec la variable de dépôt ENABLE_CODEQL=true.
+    if: vars.ENABLE_CODEQL == 'true'
+    runs-on: ubuntu-latest
+    permissions: { contents: read, security-events: write }
+    steps:
+      - uses: actions/checkout@v7
+      - uses: github/codeql-action/init@v4
+        with: { languages: javascript-typescript }
+      - uses: github/codeql-action/analyze@v4

@@ -1,0 +1,20 @@
+# EXEMPLE NON INSTALLÉ ET NON VALIDÉ sur un serveur réel. Unité de l'application.
+# CONTRAT avec ops/release/activate.sh : WorkingDirectory pointe sur le lien « current » ; le répertoire courant du processus (résolu par
+# le noyau) est alors le dossier de la version en cours, ce qui permet à activate.sh de PROUVER quelle version tourne.
+[Unit]
+Description=Coach OS
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=coachos
+WorkingDirectory=/srv/coachos/current
+EnvironmentFile=/etc/coachos/app.env
+# `npm start` impose l'écoute locale (-H 127.0.0.1). Le port est un PLACEHOLDER à choisir après inventaire (docs/nginx.md).
+ExecStart=/usr/bin/npm run start -- -p 3100
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
