@@ -8,3 +8,19 @@ v0/out/
 node_modules/
 .env
 .DS_Store
+
+# Next / build / tests
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/
+.tmp/
+
+# Secrets : seuls les exemples sans valeur sont versionnés
+.env*
+!.env.example
+!.env.test.example
+*.pem
+*.key
