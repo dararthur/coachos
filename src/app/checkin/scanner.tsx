@@ -99,7 +99,7 @@ export function Scanner() {
       const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
       if (code && !go(code.data) && t - lastHint > 2500) {
         lastHint = t;
-        setHint("Ce QR code n'est pas un code de pointage Coach OS.");
+        setHint("Ce QR code n'est pas un code de pointage Matnexa.");
       }
     };
     frame.current = requestAnimationFrame(loop);
@@ -161,7 +161,7 @@ export function Scanner() {
           Pas de caméra ? Saisir le lien
         </h2>
         <p className="mb-3 mt-1 text-sm text-ink-soft">
-          Solution de secours : scannez avec l&apos;application Appareil photo du téléphone. Le lien s&apos;ouvre dans votre navigateur (pas toujours dans l&apos;application installée) et vous devrez peut-être vous y reconnecter avant de confirmer. Ou collez ci-dessous le lien de pointage que le coach vous montre.
+          Scannez le QR code avec l&apos;appareil photo du téléphone : le lien s&apos;ouvre dans le navigateur, où il faudra peut-être vous reconnecter. Ou collez ci-dessous le lien affiché par le coach.
         </p>
         <form onSubmit={submitManual} className="space-y-3">
           <div>

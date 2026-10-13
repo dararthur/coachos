@@ -10,6 +10,7 @@ import { withUser } from "@/server/db/client";
 import { hashToken } from "@/server/actions/helpers";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import { peekCheckin, type CheckinPreview } from "@/server/repositories/checkin";
+import { StandaloneFrame } from "@/components/layout/standalone";
 import { ConfirmCheckin } from "./confirm";
 
 export const metadata: Metadata = { title: "Pointage", robots: { index: false }, referrer: "no-referrer" };
@@ -37,12 +38,12 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
   }
 
   return (
-    <main id="contenu" className="mx-auto w-full max-w-md px-4 pb-10 pt-[max(2rem,env(safe-area-inset-top))]">
+    <StandaloneFrame width="sm">
       <div className="rounded-sm border border-line bg-surface p-6">
-        <h1 className="mb-3 text-xl font-semibold">Pointer ma présence</h1>
+        <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
         {preview ? (
           <>
-            <p className="mb-1 text-lg font-medium">{preview.className}</p>
+            <p className="mb-1 text-xl font-bold">{preview.className}</p>
             <p className="mb-4 text-sm text-ink-soft">{formatDateTime(preview.startsAt, preview.timezone)}</p>
             <ConfirmCheckin token={token} className={preview.className} alreadyStatus={preview.alreadyRecorded ? preview.status : null} />
           </>
@@ -64,6 +65,6 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
           </>
         )}
       </div>
-    </main>
+    </StandaloneFrame>
   );
 }

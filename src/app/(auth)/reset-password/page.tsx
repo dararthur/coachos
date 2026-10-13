@@ -13,7 +13,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   if (!token || params.error) {
     return (
       <>
-        <h1 className="mb-1 text-xl font-semibold">Lien invalide</h1>
+        <h1 className="mb-1 text-title font-bold font-stretch-[80%]">Lien invalide</h1>
         <Alert tone="danger">Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau.</Alert>
         <p className="mt-5 text-sm">
           <Link href="/forgot-password">Mot de passe oublié</Link>
@@ -23,7 +23,7 @@ export default async function ResetPasswordPage({ searchParams }: { searchParams
   }
   return (
     <>
-      <h1 className="mb-1 text-xl font-semibold">Nouveau mot de passe</h1>
+      <h1 className="mb-1 text-title font-bold font-stretch-[80%]">Nouveau mot de passe</h1>
       <p className="mb-5 text-sm text-ink-soft">Choisissez un mot de passe d&apos;au moins 12 caractères. Vos appareils connectés seront déconnectés.</p>
       <ActionForm action={resetPasswordAction} className="space-y-4">
         <input type="hidden" name="token" value={token} />

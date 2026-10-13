@@ -9,7 +9,7 @@ export default async function ForbiddenPage({ params }: { params: Promise<{ acad
   const { academyId } = await params;
   const ctx = await requireAcademy(academyId);
   return (
-    <EmptyState title="Accès refusé" action={<LinkButton href={`/a/${academyId}/${can(ctx.role, "dashboard.read") ? "dashboard" : "me"}`}>Retour à l&apos;accueil</LinkButton>}>
+    <EmptyState framed title="Accès refusé" action={<LinkButton href={`/a/${academyId}/${can(ctx.role, "dashboard.read") ? "dashboard" : "me"}`}>Retour à l&apos;accueil</LinkButton>}>
       Votre rôle dans ce club ne vous permet pas d&apos;ouvrir cette page. Demandez à un administrateur si vous pensez que c&apos;est une erreur.
     </EmptyState>
   );

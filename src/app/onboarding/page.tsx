@@ -3,6 +3,7 @@ import { CURRENCIES } from "@/domain/validation";
 import { CURRENCY_LABELS, TIMEZONE_OPTIONS } from "@/domain/options";
 import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { createAcademyAction } from "@/server/actions/academy";
+import { StandaloneFrame } from "@/components/layout/standalone";
 import { requireUser } from "@/server/auth/guards";
 
 export const metadata: Metadata = { title: "Créer votre club" };
@@ -10,9 +11,8 @@ export const metadata: Metadata = { title: "Créer votre club" };
 export default async function OnboardingPage() {
   await requireUser();
   return (
-    <main id="contenu" className="mx-auto w-full max-w-xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <p className="mb-2 text-sm font-semibold uppercase tracking-widest text-accent-ink">Coach OS</p>
-      <h1 className="text-2xl font-semibold tracking-tight">Créez votre club</h1>
+    <StandaloneFrame width="md">
+      <h1 className="text-title font-bold font-stretch-[80%]">Créez votre club</h1>
       <p className="mb-6 mt-1 text-sm text-ink-soft">
         Ces réglages pourront être modifiés plus tard. Trois disciplines de départ (JJB, Grappling, MMA) sont ajoutées ; vous les adapterez dans les paramètres.
       </p>
@@ -36,6 +36,6 @@ export default async function OnboardingPage() {
           <SubmitButton pendingLabel="Création…">Créer le club</SubmitButton>
         </ActionForm>
       </div>
-    </main>
+    </StandaloneFrame>
   );
 }

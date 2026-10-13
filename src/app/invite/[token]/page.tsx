@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ActionForm, SubmitButton } from "@/components/ui/form";
 import { Alert } from "@/components/ui/ui";
 import { acceptInvitationAction } from "@/server/actions/team";
+import { StandaloneFrame } from "@/components/layout/standalone";
 import { getSessionUser } from "@/server/auth/session";
 
 export const metadata: Metadata = { title: "Invitation", robots: { index: false } };
@@ -12,9 +13,9 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   const user = await getSessionUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/invite/${token}`)}`);
   return (
-    <main id="contenu" className="mx-auto w-full max-w-md px-4 pb-12 pt-[max(3rem,env(safe-area-inset-top))]">
+    <StandaloneFrame width="sm">
       <div className="rounded-sm border border-line bg-surface p-6">
-        <h1 className="mb-2 text-xl font-semibold">Rejoindre un club</h1>
+        <h1 className="mb-2 text-title font-bold font-stretch-[80%]">Rejoindre un club</h1>
         <p className="mb-4 text-sm text-ink-soft">
           Vous êtes connecté en tant que <strong>{user.email}</strong>. L&apos;invitation n&apos;est valable que pour l&apos;adresse e-mail à laquelle elle a été envoyée.
         </p>
@@ -23,6 +24,6 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
           <SubmitButton pendingLabel="Validation…">Accepter l&apos;invitation</SubmitButton>
         </ActionForm>
       </div>
-    </main>
+    </StandaloneFrame>
   );
 }

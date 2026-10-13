@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Alert } from "@/components/ui/ui";
+import { Alert, BackLink, PageHeader } from "@/components/ui/ui";
+import { StandaloneFrame } from "@/components/layout/standalone";
 
 export const metadata: Metadata = { title: "Confidentialité" };
 
@@ -10,23 +11,23 @@ export const metadata: Metadata = { title: "Confidentialité" };
  */
 export default function PrivacyPage() {
   return (
-    <main id="contenu" className="mx-auto w-full max-w-3xl space-y-5 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-sm leading-6">
-      <Link href="/">← Retour</Link>
-      <h1 className="text-2xl font-semibold tracking-tight">Confidentialité et données personnelles</h1>
+    <StandaloneFrame width="xl">
+      <PageHeader title="Confidentialité et données personnelles" back={<BackLink href="/">Retour</BackLink>} />
+      <div className="max-w-[68ch] space-y-6 text-base leading-7 [&_h2]:mb-1.5 [&_h2]:text-lg [&_h2]:font-bold">
       <Alert tone="warning" title="Document de travail">
-        Ce texte est un projet de notice d&apos;information. Il doit être complété et validé juridiquement avant l&apos;utilisation de Coach OS avec des données réelles.
+        Ce texte est un projet de notice d&apos;information. Il doit être complété et validé juridiquement avant l&apos;utilisation de Matnexa avec des données réelles.
       </Alert>
 
       <section>
-        <h2 className="text-lg font-semibold">Qui est responsable de vos données ?</h2>
+        <h2>Qui est responsable de vos données ?</h2>
         <p>
-          Pour les fiches membres, le <strong>club</strong> qui vous a inscrit est responsable du traitement ; l&apos;éditeur de Coach OS agit comme son sous-traitant (art. 28 RGPD).
-          Pour les comptes utilisateurs (connexion), l&apos;éditeur de Coach OS est responsable du traitement. [Identité et coordonnées de l&apos;éditeur, contact protection des données : à compléter.]
+          Pour les fiches membres, le <strong>club</strong> qui vous a inscrit est responsable du traitement ; l&apos;éditeur de Matnexa agit comme son sous-traitant (art. 28 RGPD).
+          Pour les comptes utilisateurs (connexion), l&apos;éditeur de Matnexa est responsable du traitement. [Identité et coordonnées de l&apos;éditeur, contact protection des données : à compléter.]
         </p>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">Quelles données, pour quoi faire ?</h2>
+        <h2>Quelles données, pour quoi faire ?</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>
             <strong>Compte</strong> (adresse e-mail, nom affiché, mot de passe haché par le service d&apos;authentification) : se connecter et sécuriser l&apos;accès. Base légale : exécution du contrat.
@@ -44,11 +45,11 @@ export default function PrivacyPage() {
             <strong>Compteurs anti-abus</strong> (empreintes irréversibles d&apos;adresse IP/e-mail) : limiter les tentatives répétées. Conservés moins de 24 h.
           </li>
         </ul>
-        <p className="mt-2">Coach OS ne collecte <strong>aucune donnée de santé, de blessure ou d&apos;état civil sensible</strong>, et n&apos;est ouvert qu&apos;aux <strong>membres majeurs</strong>.</p>
+        <p className="mt-2">Matnexa ne collecte <strong>aucune donnée de santé, de blessure ou d&apos;état civil sensible</strong>, et n&apos;est ouvert qu&apos;aux <strong>membres majeurs</strong>.</p>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">Combien de temps ?</h2>
+        <h2>Combien de temps ?</h2>
         <p>
           Les fiches des membres archivés sont automatiquement anonymisées au bout d&apos;un délai configuré par le club (24 mois par défaut). Les invitations sont supprimées 30 jours après leur
           expiration ou acceptation. À la suppression d&apos;un club ou d&apos;un compte, les données associées sont supprimées.
@@ -56,7 +57,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">Vos droits</h2>
+        <h2>Vos droits</h2>
         <p>
           Vous pouvez demander l&apos;accès, la rectification, l&apos;effacement, la limitation, la portabilité et vous opposer à un traitement. Depuis <Link href="/account">Mon compte</Link>, vous pouvez
           télécharger vos données et supprimer votre compte. Pour votre fiche membre, adressez-vous aux responsables de votre club, qui disposent d&apos;outils d&apos;export et d&apos;effacement. Vous pouvez aussi saisir la CNIL.
@@ -64,9 +65,10 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold">Hébergement et sous-traitants</h2>
+        <h2>Hébergement et sous-traitants</h2>
         <p>[Hébergeur de l&apos;application, base de données PostgreSQL et authentification auto-hébergées, fournisseur d&apos;e-mails transactionnels (stockage aux États-Unis, conservation de 30 jours du contenu des e-mails), région d&apos;hébergement UE, éventuels transferts hors UE et garanties : à compléter.] Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;IA.</p>
       </section>
-    </main>
+      </div>
+    </StandaloneFrame>
   );
 }

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { can, ROLE_LABELS } from "@/domain/roles";
-import { Badge, Card, EmptyState, LinkButton } from "@/components/ui/ui";
+import { EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { StandaloneFrame } from "@/components/layout/standalone";
 import { signOutAction } from "@/server/actions/auth";
 import { requireUser } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
@@ -14,42 +15,47 @@ export default async function AcademiesPage() {
   const user = await requireUser();
   const academies = await withUser(user, (tx) => listAcademiesForUser(tx, user.id));
   return (
-    <main id="contenu" className="mx-auto w-full max-w-2xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Mes clubs</h1>
-        <div className="flex gap-2">
-          <LinkButton href="/onboarding" variant="secondary">
-            Créer un club
-          </LinkButton>
-          <Link href="/account" className={buttonClasses({ variant: "ghost" })}>
+    <StandaloneFrame
+      aside={
+        <div className="flex">
+          <Link href="/account" className={buttonClasses({ variant: "ghost", className: "px-3" })}>
             Mon compte
           </Link>
           <form action={signOutAction}>
-            <button type="submit" className={buttonClasses({ variant: "ghost" })}>
+            <button type="submit" className={buttonClasses({ variant: "ghost", className: "px-3" })}>
               Déconnexion
             </button>
           </form>
         </div>
-      </div>
+      }
+    >
+      <PageHeader
+        title="Mes clubs"
+        actions={
+          <LinkButton href="/onboarding" variant="secondary" icon="plus">
+            Créer un club
+          </LinkButton>
+        }
+      />
       {academies.length === 0 ? (
-        <EmptyState title="Aucun club pour le moment" action={<LinkButton href="/onboarding">Créer mon club</LinkButton>}>
+        <EmptyState framed title="Aucun club pour le moment" action={<LinkButton href="/onboarding">Créer mon club</LinkButton>}>
           Créez votre club, ou demandez une invitation au propriétaire de votre club.
         </EmptyState>
       ) : (
-        <ul className="space-y-3">
+        <ul className="divide-y divide-line rounded-sm border border-line bg-surface">
           {academies.map((a) => (
-            <li key={a.id}>
-              <Card as="div" className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold">{a.name}</p>
-                  <Badge tone="brand">{ROLE_LABELS[a.role]}</Badge>
-                </div>
-                <LinkButton href={can(a.role, "dashboard.read") ? `/a/${a.id}/dashboard` : `/a/${a.id}/me`}>Ouvrir</LinkButton>
-              </Card>
+            <li key={a.id} className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5">
+              <div className="min-w-0">
+                <p className="truncate font-bold">{a.name}</p>
+                <p className="text-sm text-ink-soft">{ROLE_LABELS[a.role]}</p>
+              </div>
+              <LinkButton href={can(a.role, "dashboard.read") ? `/a/${a.id}/dashboard` : `/a/${a.id}/me`} variant="secondary">
+                Ouvrir<span className="sr-only"> {a.name}</span>
+              </LinkButton>
             </li>
           ))}
         </ul>
       )}
-    </main>
+    </StandaloneFrame>
   );
 }

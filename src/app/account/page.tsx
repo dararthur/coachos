@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Alert, Card, LinkButton } from "@/components/ui/ui";
+import { Alert, BackLink, Card, LinkButton, PageHeader } from "@/components/ui/ui";
+import { StandaloneFrame } from "@/components/layout/standalone";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { deleteAccountAction, signOutAction, changePasswordAction, updateProfileAction } from "@/server/actions/auth";
@@ -13,11 +14,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const user = await requireUser();
   const params = await searchParams;
   return (
-    <main id="contenu" className="mx-auto w-full max-w-2xl space-y-6 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">Mon compte</h1>
-        <Link href="/academies">← Mes clubs</Link>
-      </div>
+    <StandaloneFrame>
+      <PageHeader title="Mon compte" back={<BackLink href="/academies">Mes clubs</BackLink>} />
+      <div className="space-y-6">
       <Card title="Profil" description={`Connecté en tant que ${user.email ?? ""}`}>
         <ActionForm action={updateProfileAction} className="space-y-4">
           <TextField label="Nom affiché" name="displayName" defaultValue={user.displayName} maxLength={100} hint="Visible par l'équipe des clubs dont vous faites partie." />
@@ -49,7 +48,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Télécharger mes données (JSON)
         </LinkButton>
       </Card>
-      <Card title="Supprimer mon compte">
+      <Card title="Supprimer mon compte" className="border-danger/40">
         <Alert tone="warning">
           Action définitive. Si vous êtes le seul propriétaire d&apos;un club, vous devez d&apos;abord nommer un autre propriétaire ou supprimer le club.
         </Alert>
@@ -68,6 +67,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <TextField label="Adresse e-mail" name="confirm" type="email" required autoComplete="off" />
         </ConfirmAction>
       </Card>
-    </main>
+      </div>
+    </StandaloneFrame>
   );
 }

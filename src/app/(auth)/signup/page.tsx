@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Créer un compte" };
 export default function SignupPage() {
   return (
     <>
-      <h1 className="mb-1 text-xl font-semibold">Créer un compte</h1>
+      <h1 className="mb-1 text-title font-bold font-stretch-[80%]">Créer un compte</h1>
       <p className="mb-5 text-sm text-ink-soft">Vous pourrez ensuite créer votre club ou rejoindre celui qui vous invite.</p>
       <ActionForm action={signUpAction} className="space-y-4">
         <TextField label="Nom affiché" name="displayName" autoComplete="name" hint="Visible par l'équipe de votre club." />
