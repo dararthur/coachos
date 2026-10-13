@@ -16,10 +16,9 @@
     "test:unit": "vitest run --project unit",
     "test:db": "vitest run --project db",
     "test:e2e": "next build && playwright test",
-    "test:v0": "node --test v0",
     "audit:deps": "npm audit --omit=dev --audit-level=high",
     "audit:secrets": "node scripts/check-secrets.mjs",
-    "db:seed-demo": "node --experimental-strip-types scripts/seed-demo.ts",
+    "db:seed-demo": "node scripts/seed-demo.mjs",
     "check": "npm run typecheck && npm run lint && npm run test && npm run audit:secrets"
   },
   "dependencies": {

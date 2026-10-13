@@ -1,0 +1,2 @@
+-- Volontairement vide : aucune donnée, aucun compte, aucun mot de passe n'est versionné.
+-- Données de démonstration synthétiques : `npm run db:seed-demo` (voir docs/setup.md).

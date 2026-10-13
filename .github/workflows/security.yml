@@ -1,0 +1,52 @@
+name: Security
+
+on:
+  push:
+    branches: [main, "product/**", "feature/**"]
+  pull_request:
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependencies:
+    name: Audit des dépendances de production
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "24", cache: npm }
+      - run: npm ci --ignore-scripts
+      - run: npm run audit:deps
+
+  dependency-review:
+    name: Revue des dépendances (PR)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions: { contents: read, pull-requests: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with: { fail-on-severity: high }
+
+  secrets:
+    name: Détection de secrets (historique complet)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  codeql:
+    name: Analyse statique CodeQL
+    runs-on: ubuntu-latest
+    permissions: { contents: read, security-events: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with: { languages: javascript-typescript }
+      - uses: github/codeql-action/analyze@v3
