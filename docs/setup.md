@@ -104,3 +104,18 @@ Ne partagez **aucun** secret entre environnements. Pas de données de production
 - `permission denied for table …` côté app : normal si une requête n'est pas passée par `withUser()` (voir `src/server/db/client.ts`) — c'est le garde-fou voulu.
 - Les liens de confirmation n'arrivent pas : avec `MAIL_PROVIDER=outbox`, ouvrir `MAIL_OUTBOX_FILE` ; avec `resend`, voir les journaux (`auth.mail_failed`, sans donnée personnelle) et le tableau de bord du fournisseur.
 - `embedded-postgres` refuse de démarrer en administrateur : lancer les tests avec un utilisateur normal.
+
+## Sondes : vivacité et disponibilité
+
+| Route | Signifie | Réponse |
+|---|---|---|
+| `/api/live` | Le **processus** tourne. Aucune base, aucune configuration lue. | `200 {"status":"alive"}` |
+| `/api/health` | Le **service est prêt** : configuration valide, base applicative (`app_server` → `authenticated`, lecture réelle d'une table métier) et base d'authentification (`auth_runtime`, tables `auth.*`) répondent avec les droits attendus. | `200 {"status":"ok"}` ou `503 {"status":"unavailable"}` |
+
+- Utiliser `/api/live` pour un redémarrage automatique du processus (superviseur) et `/api/health` pour décider si du trafic peut être servi
+  ou pour une supervision externe : une base arrêtée ne doit **pas** provoquer de redémarrages en boucle de l'application.
+- Délai de 3 s par contrôle ; résultat mémorisé 3 s (une rafale de sondes n'ouvre pas de connexions supplémentaires).
+- Le corps du 503 ne contient jamais la cause. Le journal applicatif écrit `health.unavailable` avec les NOMS des contrôles en échec
+  (`config`, `app_db`, `auth_db`), sans hôte ni message d'erreur.
+- La validation de configuration au démarrage (refus de démarrer, `process.exit(1)`) reste inchangée ; `/api/health` ne la remplace pas.
+- Non couvert ici : latence, réplication, espace disque, expiration de certificat (supervision externe, voir `docs/operations.md`).

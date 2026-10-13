@@ -6,13 +6,23 @@ import { env } from "@/server/env";
 import { hitRateLimit, pseudonym } from "@/server/rate-limit";
 import { createAuth, type CoachAuth } from "./factory";
 
-const globalForAuth = globalThis as unknown as { __coachosAuth?: CoachAuth };
+const globalForAuth = globalThis as unknown as { __coachosAuth?: CoachAuth; __coachosAuthPool?: Pool };
+
+/** Pool unique du rôle `auth_runtime` (partagé par Better Auth et la sonde de disponibilité). */
+export function getAuthPool(): Pool {
+  if (globalForAuth.__coachosAuthPool) return globalForAuth.__coachosAuthPool;
+  const pool = new Pool({ connectionString: env().AUTH_DATABASE_URL, options: "-c search_path=auth", max: 5, idleTimeoutMillis: 20_000, connectionTimeoutMillis: 10_000 });
+  // Une erreur sur une connexion inactive (base redémarrée) ne doit jamais arrêter le processus.
+  pool.on("error", () => {});
+  globalForAuth.__coachosAuthPool = pool;
+  return pool;
+}
 
 /** Instance unique de Better Auth (rôle PostgreSQL `auth_runtime` : DML sur auth.* uniquement). */
 export function getAuth(): CoachAuth {
   if (globalForAuth.__coachosAuth) return globalForAuth.__coachosAuth;
   const e = env();
-  const pool = new Pool({ connectionString: e.AUTH_DATABASE_URL, options: "-c search_path=auth", max: 5, idleTimeoutMillis: 20_000, connectionTimeoutMillis: 10_000 });
+  const pool = getAuthPool();
   globalForAuth.__coachosAuth = createAuth({
     pool,
     mailer: getMailer(),

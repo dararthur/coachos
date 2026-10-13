@@ -192,3 +192,44 @@ test.describe("HSTS : émetteur unique (l'application), prudent, lu dans l'envir
     expect(await hstsOf({ APP_ENV: "test", SITE_URL: "http://127.0.0.1:3999", MAIL_PROVIDER: "outbox" })).toBeNull();
   });
 });
+
+test.describe("vivacité et disponibilité : processus vivant ≠ service sain", () => {
+  test("base de données injoignable : /api/live répond 200, /api/health répond 503 sans révéler la cause", async () => {
+    test.setTimeout(120_000);
+    const port = await freePort();
+    const deadPort = await freePort(); // port libéré : la connexion est refusée
+    const outbox = path.join(os.tmpdir(), `coachos-startup-${rand().slice(0, 8)}.jsonl`);
+    const dbPassword = rand();
+    const env = configEnv(
+      {
+        APP_ENV: "test",
+        SITE_URL: `http://127.0.0.1:${port}`,
+        MAIL_PROVIDER: "outbox",
+        DATABASE_URL: `postgresql://app_server:${dbPassword}@127.0.0.1:${deadPort}/coachos`,
+        AUTH_DATABASE_URL: `postgresql://auth_runtime:${dbPassword}@127.0.0.1:${deadPort}/coachos`,
+      },
+      outbox,
+    );
+    const child = spawn(process.execPath, [nextBin, "start", "-H", "127.0.0.1", "-p", String(port)], { cwd: root, env });
+    let output = "";
+    child.stdout?.on("data", (d) => (output += d));
+    child.stderr?.on("data", (d) => (output += d));
+    try {
+      expect(await waitForHealth(port), "le processus doit être vivant même sans base").toBe(true);
+      const live = await fetch(`http://127.0.0.1:${port}/api/live`);
+      expect(live.status).toBe(200);
+      expect(await live.json()).toEqual({ status: "alive" });
+      const health = await fetch(`http://127.0.0.1:${port}/api/health`);
+      expect(health.status).toBe(503);
+      expect(await health.json()).toEqual({ status: "unavailable" });
+      expect(health.headers.get("cache-control")).toBe("no-store");
+      expect(output).toMatch(/health\.unavailable/);
+      for (const leak of [dbPassword, String(deadPort), "ECONNREFUSED"]) {
+        expect(output.includes(leak), `${leak} ne doit pas apparaître dans les journaux de santé`).toBe(false);
+      }
+    } finally {
+      killTree(child);
+      rmSync(outbox, { force: true });
+    }
+  });
+});
