@@ -85,9 +85,9 @@ function MobileTopBar({ academy, role }: Shell) {
           <p className="truncate text-sm font-bold">{academy.name}</p>
           <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}</p>
         </div>
-        <Link href="/account" className="inline-flex min-h-11 items-center gap-1.5 rounded-sm px-2 text-sm font-semibold no-underline hover:bg-sunken">
-          <Icon name="user" size={18} />
-          Mon compte
+        <Link href="/account" className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm font-semibold no-underline hover:bg-sunken">
+          <Icon name="user" size={20} />
+          <span className="sr-only min-[30rem]:not-sr-only">Mon compte</span>
         </Link>
       </div>
     </header>

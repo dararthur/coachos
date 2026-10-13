@@ -355,22 +355,28 @@ function CheckinPanel({
   // Pointage fermé : une seule ligne, pour que la liste des membres arrive tout de suite sous le titre.
   if (!isOpen && !checkin.validatedAt) {
     return (
-      <section aria-labelledby="checkin-title" className="rounded-sm border border-line bg-surface px-4 py-3">
+      <section aria-labelledby="checkin-title" className="rounded-sm border border-line bg-surface px-3 py-1.5 sm:px-4 sm:py-3">
         {error && (
           <p role="alert" className="mb-3 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2 text-sm font-medium text-danger-ink">
             {error}
           </p>
         )}
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex items-center justify-between gap-x-4">
           <div className="min-w-0">
-            <h2 id="checkin-title" className="text-base font-bold">
+            <h2 id="checkin-title" className="text-sm font-bold sm:text-base">
               Pointage par QR code
             </h2>
-            <p className="text-sm text-ink-soft">Fermé : les adhérents ne peuvent pas pointer.</p>
+            <p className="hidden text-sm text-ink-soft sm:block">Fermé : les adhérents ne peuvent pas pointer.</p>
           </div>
-          <button type="button" className={buttonClasses({ variant: "secondary" })} disabled={working} onClick={() => run(() => openCheckinAction(academyId, sessionId))}>
+          <button type="button" className={buttonClasses({ variant: "secondary", className: "shrink-0" })} disabled={working} onClick={() => run(() => openCheckinAction(academyId, sessionId))}>
             <Icon name="qr" size={18} />
-            {working ? "Ouverture…" : "Ouvrir le pointage"}
+            {working ? (
+              "Ouverture…"
+            ) : (
+              <span>
+                Ouvrir<span className="sr-only sm:not-sr-only"> le pointage</span>
+              </span>
+            )}
           </button>
         </div>
       </section>
