@@ -89,7 +89,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           <ul className="mb-4 divide-y divide-line">
             {data.disciplines.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                <span className={d.archivedAt ? "text-muted line-through" : "font-medium"}>{d.name}</span>
+                <span className={d.archivedAt ? "text-ink-soft line-through" : "font-medium"}>{d.name}</span>
                 <InlineAction
                   action={toggleDisciplineArchivedAction.bind(null, academyId, !d.archivedAt)}
                   hidden={{ id: d.id }}
@@ -109,7 +109,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
             <DataTable caption="Types de cours" headers={["Cours", "Discipline", "Durée", "Capacité", ""]}>
               {data.classTypes.map((t) => (
                 <tr key={t.id}>
-                  <th scope="row" className={`px-4 py-2.5 font-medium ${t.archivedAt ? "text-muted line-through" : ""}`}>{t.name}</th>
+                  <th scope="row" className={`px-4 py-2.5 font-medium ${t.archivedAt ? "text-ink-soft line-through" : ""}`}>{t.name}</th>
                   <td className="px-4 py-2.5">{t.disciplineName}</td>
                   <td className="px-4 py-2.5">{t.durationMinutes} min</td>
                   <td className="px-4 py-2.5">{t.capacity ?? "—"}</td>
@@ -145,14 +145,14 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                   <tr key={m.userId}>
                     <th scope="row" className="px-4 py-2.5 font-medium">
                       {m.displayName || m.email || "—"} {self && <Badge tone="brand">Vous</Badge>}
-                      {m.displayName && m.email && <span className="block text-xs font-normal text-muted">{m.email}</span>}
+                      {m.displayName && m.email && <span className="block text-xs font-normal text-ink-soft">{m.email}</span>}
                     </th>
                     <td className="px-4 py-2.5">
                       {manageable ? (
                         <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex items-center gap-2">
                           <input type="hidden" name="userId" value={m.userId} />
                           <label className="sr-only" htmlFor={`role-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
-                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="min-h-11 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm">
+                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="min-h-11 rounded-sm border border-line-strong bg-white px-2 py-1.5 text-sm">
                             {assignable.map((r) => (
                               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                             ))}
@@ -163,7 +163,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                         <Badge tone="brand">{ROLE_LABELS[m.role]}</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-muted">{formatDateTime(m.joinedAt, tz)}</td>
+                    <td className="px-4 py-2.5 text-ink-soft">{formatDateTime(m.joinedAt, tz)}</td>
                     <td className="px-4 py-2.5 text-right">
                       {manageable && (
                         <ConfirmAction
@@ -206,13 +206,13 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
         {can(ctx.role, "audit.read") && (
           <Card title="Journal d'audit" description="Actions administratives récentes (aucune donnée personnelle n'y est stockée). Conservé 24 mois.">
             {data.audit.length === 0 ? (
-              <p className="text-sm text-muted">Aucun événement.</p>
+              <p className="text-sm text-ink-soft">Aucun événement.</p>
             ) : (
               <ul className="divide-y divide-line text-sm">
                 {data.audit.map((e) => (
                   <li key={e.id} className="flex flex-wrap justify-between gap-2 py-2">
                     <span>{AUDIT_LABELS[e.action] ?? e.action}</span>
-                    <span className="text-muted">
+                    <span className="text-ink-soft">
                       {e.actorName ?? "Système"} · {formatDateTime(e.createdAt, tz)}
                     </span>
                   </li>

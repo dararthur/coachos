@@ -61,7 +61,7 @@ export default async function SessionPage({ params }: { params: Promise<{ academ
         </Card>
         <div className="space-y-6">
           <Card title="Présences">
-            <p className="mb-3 text-sm text-muted">
+            <p className="mb-3 text-sm text-ink-soft">
               {session.recorded} enregistrement(s), dont {session.attended} présent(s) ou en retard.
             </p>
             {session.status === "scheduled" && <LinkButton href={`/a/${academyId}/attendance/${sessionId}`}>Faire l&apos;appel</LinkButton>}
@@ -88,7 +88,7 @@ export default async function SessionPage({ params }: { params: Promise<{ academ
                   confirmLabel="Supprimer"
                 />
               ) : (
-                <p className="text-sm text-muted">Une séance avec des présences ne peut pas être supprimée : annulez-la.</p>
+                <p className="text-sm text-ink-soft">Une séance avec des présences ne peut pas être supprimée : annulez-la.</p>
               )}
             </div>
           </Card>

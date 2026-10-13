@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { formatCalendarDate, formatDateTime } from "@/domain/dates";
 import { can } from "@/domain/roles";
-import { Badge, DataTable, EmptyState, LinkButton, Notice, PageHeader, Pagination } from "@/components/ui/ui";
+import { buttonClasses } from "@/components/ui/button-classes";
+import { Icon } from "@/components/ui/icons";
+import { Badge, DataTable, EmptyState, LinkButton, Notice, PageHeader, Pagination, TabNav } from "@/components/ui/ui";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listPeople, PAGE_SIZE, type MemberStatus } from "@/server/repositories/members";
 
@@ -24,6 +26,8 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
 
   const { rows, total } = await inAcademy(ctx, (tx) => listPeople(tx, academyId, { q, status, page }));
   const tz = ctx.academy.timezone;
+  // Sous le filtre « Actifs », le statut est le même pour toutes les lignes : la colonne n'apporte rien.
+  const showStatus = status !== "active";
   const hrefFor = (p: number, s: MemberStatus = status) => {
     const u = new URLSearchParams();
     if (q) u.set("q", q);
@@ -41,53 +45,50 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
         actions={
           <>
             {can(ctx.role, "members.import") && (
-              <LinkButton href={`/a/${academyId}/members/import`} variant="secondary">
+              <LinkButton href={`/a/${academyId}/members/import`} variant="secondary" icon="upload">
                 Importer un CSV
               </LinkButton>
             )}
             {can(ctx.role, "reports.export") && (
-              <LinkButton href={`/a/${academyId}/members/export`} variant="secondary" download>
+              <LinkButton href={`/a/${academyId}/members/export`} variant="secondary" icon="download" download>
                 Exporter (CSV)
               </LinkButton>
             )}
-            {can(ctx.role, "members.create") && <LinkButton href={`/a/${academyId}/members/new`}>Nouveau membre</LinkButton>}
+            {can(ctx.role, "members.create") && (
+              <LinkButton href={`/a/${academyId}/members/new`} icon="plus">
+                Nouveau membre
+              </LinkButton>
+            )}
           </>
         }
       />
       <Notice searchParams={sp} />
 
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <form method="get" action={`/a/${academyId}/members`} role="search" className="flex flex-wrap items-end gap-2">
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b border-line">
+        <form method="get" action={`/a/${academyId}/members`} role="search" className="mb-3 flex w-full max-w-md items-end gap-2">
           {status !== "active" && <input type="hidden" name="status" value={status} />}
-          <div>
-            <label htmlFor="q" className="mb-1 block text-sm font-medium">
+          <div className="min-w-0 flex-1">
+            <label htmlFor="q" className="mb-1.5 block text-sm font-semibold">
               Rechercher
             </label>
-            <input id="q" name="q" type="search" defaultValue={q} placeholder="Nom, prénom ou e-mail" maxLength={100} className="block min-h-11 w-64 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="q" name="q" type="search" defaultValue={q} placeholder="Nom, prénom ou e-mail" maxLength={100} className="field" />
           </div>
-          <button type="submit" className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold hover:bg-slate-50">
-            Rechercher
+          <button type="submit" className={buttonClasses({ variant: "secondary" })}>
+            <Icon name="search" size={18} />
+            <span className="sr-only sm:not-sr-only">Rechercher</span>
           </button>
         </form>
-        <nav aria-label="Filtrer par statut" className="flex gap-1">
-          {STATUS_TABS.map((t) => (
-            <Link
-              key={t.value}
-              href={hrefFor(1, t.value)}
-              aria-current={t.value === status ? "page" : undefined}
-              className={`inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium no-underline ${t.value === status ? "bg-brand-600 text-white" : "bg-white text-ink ring-1 ring-slate-300 hover:bg-slate-50"}`}
-            >
-              {t.label}
-            </Link>
-          ))}
-        </nav>
+        <TabNav label="Filtrer par statut" items={STATUS_TABS.map((t) => ({ href: hrefFor(1, t.value), label: t.label, current: t.value === status }))} />
       </div>
 
       {rows.length === 0 ? (
         q || status !== "active" ? (
-          <EmptyState title="Aucun résultat">Aucun membre ne correspond à ces critères.</EmptyState>
+          <EmptyState framed title="Aucun résultat" action={<LinkButton href={`/a/${academyId}/members`} variant="secondary">Effacer les filtres</LinkButton>}>
+            Aucun membre ne correspond à ces critères.
+          </EmptyState>
         ) : (
           <EmptyState
+            framed
             title="Aucun membre pour le moment"
             action={
               <div className="flex flex-wrap gap-2">
@@ -105,21 +106,38 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
         )
       ) : (
         <>
-          <DataTable caption="Liste des membres" headers={["Nom", "E-mail", "Inscription", "Dernière présence", "Statut"]}>
+          <div className="hidden md:block">
+            <DataTable caption="Liste des membres" headers={["Nom", "Dernière présence", "Inscription", "E-mail", ...(showStatus ? ["Statut"] : [])]}>
+              {rows.map((p) => (
+                <tr key={p.id}>
+                  <th scope="row" className="px-4 py-1 font-semibold">
+                    <Link href={`/a/${academyId}/members/${p.id}`} className="flex min-h-11 items-center no-underline hover:underline">
+                      {p.lastName.toUpperCase()} {p.firstName}
+                    </Link>
+                  </th>
+                  <td className="px-4 py-1">{p.lastAttendedAt ? formatDateTime(p.lastAttendedAt, tz) : <span className="text-ink-soft">Jamais</span>}</td>
+                  <td className="px-4 py-1 text-ink-soft">{p.joinedOn ? formatCalendarDate(p.joinedOn) : "—"}</td>
+                  <td className="max-w-64 truncate px-4 py-1 text-ink-soft">{p.email ?? "—"}</td>
+                  {showStatus && <td className="px-4 py-1">{p.archivedAt ? <Badge>Archivé</Badge> : <Badge tone="success">Actif</Badge>}</td>}
+                </tr>
+              ))}
+            </DataTable>
+          </div>
+          <ul className="divide-y divide-line rounded-sm border border-line bg-surface md:hidden">
             {rows.map((p) => (
-              <tr key={p.id}>
-                <th scope="row" className="px-4 py-3 font-medium">
-                  <Link href={`/a/${academyId}/members/${p.id}`} className="-my-3 flex min-h-11 items-center py-3">
-                    {p.lastName.toUpperCase()} {p.firstName}
-                  </Link>
-                </th>
-                <td className="px-4 py-3 text-muted">{p.email ?? "—"}</td>
-                <td className="px-4 py-3 text-muted">{p.joinedOn ? formatCalendarDate(p.joinedOn) : "—"}</td>
-                <td className="px-4 py-3 text-muted">{p.lastAttendedAt ? formatDateTime(p.lastAttendedAt, tz) : "—"}</td>
-                <td className="px-4 py-3">{p.archivedAt ? <Badge>Archivé</Badge> : <Badge tone="success">Actif</Badge>}</td>
-              </tr>
+              <li key={p.id}>
+                <Link href={`/a/${academyId}/members/${p.id}`} className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 no-underline">
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">
+                      {p.lastName.toUpperCase()} {p.firstName}
+                    </span>
+                    <span className="block text-xs text-ink-soft">{p.lastAttendedAt ? `Dernière venue : ${formatDateTime(p.lastAttendedAt, tz)}` : "Jamais venu(e)"}</span>
+                  </span>
+                  {p.archivedAt ? <Badge>Archivé</Badge> : <Icon name="next" size={18} className="text-ink-soft" />}
+                </Link>
+              </li>
             ))}
-          </DataTable>
+          </ul>
           <Pagination page={page} total={total} pageSize={PAGE_SIZE} hrefFor={(p) => hrefFor(p)} />
         </>
       )}

@@ -16,7 +16,7 @@ export default async function ImportPage({ params }: { params: Promise<{ academy
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <ImportForm academyId={academyId} />
         <Card title="Format attendu">
-          <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted">
+          <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink-soft">
             <li>Fichier CSV UTF-8, {Math.round(MAX_IMPORT_BYTES / 1000)} Ko et {MAX_IMPORT_ROWS} lignes maximum.</li>
             <li>Séparateur virgule, point-virgule ou tabulation détecté automatiquement ; première ligne = en-têtes.</li>
             <li>

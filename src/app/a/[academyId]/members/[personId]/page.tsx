@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { ATTENDANCE_LABELS } from "@/domain/validation";
 import { formatCalendarDate, formatDateTime } from "@/domain/dates";
 import { can } from "@/domain/roles";
-import { Alert, Badge, Card, DataTable, EmptyState, LinkButton, PageHeader, Stat } from "@/components/ui/ui";
+import { Alert, BackLink, Badge, Card, DataTable, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { eraseMemberAction, setMemberArchivedAction, updateMemberAction } from "@/server/actions/members";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
 import { getPerson } from "@/server/repositories/members";
+import { Assiduity, weeksAttended } from "./assiduity";
 import { EraseForm } from "./erase-form";
 
 export const metadata: Metadata = { title: "Fiche membre" };
@@ -36,32 +36,43 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
     <>
       <PageHeader
         title={`${person.firstName} ${person.lastName}`}
+        back={<BackLink href={`/a/${academyId}/members`}>Membres</BackLink>}
         description={
           <>
             {person.archivedAt ? <Badge>Archivé</Badge> : <Badge tone="success">Actif</Badge>}
             {person.anonymizedAt && <Badge tone="warning">Anonymisé</Badge>}
+            {person.joinedOn && <span>Inscrit(e) le {formatCalendarDate(person.joinedOn)}</span>}
           </>
         }
-        actions={<Link href={`/a/${academyId}/members`}>← Membres</Link>}
+        actions={
+          person.email && !person.anonymizedAt ? (
+            <LinkButton href={`mailto:${person.email}`} variant="secondary" icon="mail">
+              Écrire
+            </LinkButton>
+          ) : undefined
+        }
       />
       {sp.created && <Alert tone="success">Membre créé.</Alert>}
 
-      <dl className="mb-6 grid grid-cols-3 gap-3">
-        <Stat label="Présences" value={totals.attended} />
-        <Stat label="30 derniers jours" value={totals.last30} />
-        <Stat label="Absences notées" value={totals.absent} />
-      </dl>
+      <div className="mb-6 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <StatGrid cols={3}>
+          <Stat label="Présences" value={totals.attended} />
+          <Stat label="30 derniers jours" value={totals.last30} />
+          <Stat label="Absences notées" value={totals.absent} />
+        </StatGrid>
+        <Assiduity weeks={weeksAttended(history, tz)} />
+      </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
-        <div className="space-y-6">
-          <Card title="Historique des présences">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="min-w-0 space-y-6">
+          <Card title="Historique des présences" flush>
             {history.length === 0 ? (
-              <EmptyState title="Aucune présence enregistrée">Les présences apparaîtront ici dès le prochain appel.</EmptyState>
+              <EmptyState level={3} title="Aucune présence enregistrée">Les présences apparaîtront ici dès le prochain appel.</EmptyState>
             ) : (
-              <DataTable caption="Historique des présences du membre" headers={["Séance", "Cours", "Statut"]}>
+              <DataTable bare caption="Historique des présences du membre" headers={["Séance", "Cours", "Statut"]}>
                 {history.map((h) => (
                   <tr key={h.sessionId}>
-                    <td className="px-4 py-2.5">{formatDateTime(h.startsAt, tz)}</td>
+                    <td className="px-4 py-2.5 whitespace-nowrap">{formatDateTime(h.startsAt, tz)}</td>
                     <td className="px-4 py-2.5">{h.classTypeName}</td>
                     <td className="px-4 py-2.5">
                       <Badge tone={h.status === "absent" ? "danger" : h.status === "late" ? "warning" : "success"}>{ATTENDANCE_LABELS[h.status]}</Badge>
@@ -86,11 +97,11 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
             ) : (
               <dl className="space-y-2 text-sm">
                 <div>
-                  <dt className="text-muted">E-mail</dt>
+                  <dt className="text-ink-soft">E-mail</dt>
                   <dd>{person.email ?? "—"}</dd>
                 </div>
                 <div>
-                  <dt className="text-muted">Inscription</dt>
+                  <dt className="text-ink-soft">Inscription</dt>
                   <dd>{person.joinedOn ? formatCalendarDate(person.joinedOn) : "—"}</dd>
                 </div>
               </dl>
@@ -129,7 +140,12 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                 action={eraseMemberAction.bind(null, academyId, personId)}
                 trigger="Anonymiser ou supprimer…"
                 title="Effacer les données de ce membre"
-                description={<p>Cette action est définitive. Choisissez le mode d&apos;effacement.</p>}
+                description={
+                  <p>
+                    Membre concerné : <strong className="text-ink">{person.firstName} {person.lastName}</strong>
+                    {person.email ? ` (${person.email})` : ""}. Cette action est définitive. Choisissez le mode d&apos;effacement.
+                  </p>
+                }
                 confirmLabel="Effacer définitivement"
               >
                 <EraseForm />

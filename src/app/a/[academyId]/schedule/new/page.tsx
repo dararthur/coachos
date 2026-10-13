@@ -52,7 +52,7 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
             </div>
             <TextField label="Capacité" name="capacity" type="number" min={1} max={500} hint="Facultatif." className="max-w-xs" />
 
-            <fieldset className="space-y-4 rounded-lg border border-line p-4">
+            <fieldset className="space-y-4 rounded-sm border border-line p-4">
               <legend className="px-1 text-sm font-medium">Répétition</legend>
               <SelectField label="Fréquence" name="repeat" defaultValue="none">
                 <option value="none">Séance unique</option>

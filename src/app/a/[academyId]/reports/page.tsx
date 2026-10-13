@@ -48,15 +48,15 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
         <form method="get" action={base} role="search" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <label htmlFor="from" className="mb-1 block text-sm font-medium">Du</label>
-            <input id="from" name="from" type="date" defaultValue={filters.from} required className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="from" name="from" type="date" defaultValue={filters.from} required className="block min-h-11 w-full rounded-sm border border-line-strong bg-white px-3 py-2" />
           </div>
           <div>
             <label htmlFor="to" className="mb-1 block text-sm font-medium">Au</label>
-            <input id="to" name="to" type="date" defaultValue={filters.to} required className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="to" name="to" type="date" defaultValue={filters.to} required className="block min-h-11 w-full rounded-sm border border-line-strong bg-white px-3 py-2" />
           </div>
           <div>
             <label htmlFor="classTypeId" className="mb-1 block text-sm font-medium">Cours</label>
-            <select id="classTypeId" name="classTypeId" defaultValue={filters.classTypeId ?? ""} className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            <select id="classTypeId" name="classTypeId" defaultValue={filters.classTypeId ?? ""} className="block min-h-11 w-full rounded-sm border border-line-strong bg-white px-3 py-2">
               <option value="">Tous les cours</option>
               {classTypes.map((t) => (
                 <option key={t.id} value={t.id}>{t.disciplineName} — {t.name}</option>
@@ -65,7 +65,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
           </div>
           <div>
             <label htmlFor="personId" className="mb-1 block text-sm font-medium">Membre</label>
-            <select id="personId" name="personId" defaultValue={filters.personId ?? ""} className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            <select id="personId" name="personId" defaultValue={filters.personId ?? ""} className="block min-h-11 w-full rounded-sm border border-line-strong bg-white px-3 py-2">
               <option value="">Tous les membres</option>
               {people.map((p) => (
                 <option key={p.id} value={p.id}>{p.lastName} {p.firstName}</option>
@@ -73,10 +73,10 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
             </select>
           </div>
           <div className="flex items-end">
-            <button type="submit" className="min-h-11 w-full rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white hover:bg-brand-700">Appliquer</button>
+            <button type="submit" className="min-h-11 w-full rounded-sm bg-accent px-4 text-sm font-semibold text-white hover:bg-accent-strong">Appliquer</button>
           </div>
         </form>
-        {!parsed.ok && <p role="alert" className="mt-3 text-sm font-medium text-red-800">Filtres invalides ({Object.values(parsed.fieldErrors).join(" ")}) : période par défaut affichée.</p>}
+        {!parsed.ok && <p role="alert" className="mt-3 text-sm font-medium text-danger-ink">Filtres invalides ({Object.values(parsed.fieldErrors).join(" ")}) : période par défaut affichée.</p>}
       </Card>
 
       <dl className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -96,7 +96,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
               <tr key={r.attendanceId}>
                 <td className="px-4 py-2.5">{formatDateTime(r.startsAt, tz)}</td>
                 <td className="px-4 py-2.5">{r.classTypeName}</td>
-                <td className="px-4 py-2.5">{r.anonymized ? <span className="text-muted">Membre anonymisé</span> : `${r.lastName.toUpperCase()} ${r.firstName}`}</td>
+                <td className="px-4 py-2.5">{r.anonymized ? <span className="text-ink-soft">Membre anonymisé</span> : `${r.lastName.toUpperCase()} ${r.firstName}`}</td>
                 <td className="px-4 py-2.5">
                   <Badge tone={r.status === "absent" ? "danger" : r.status === "late" ? "warning" : "success"}>{ATTENDANCE_LABELS[r.status]}</Badge>
                 </td>

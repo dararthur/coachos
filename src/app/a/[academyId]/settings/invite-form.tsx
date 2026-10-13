@@ -36,11 +36,11 @@ export function InviteForm({ academyId, roles, members }: { academyId: string; r
         </div>
       </ActionForm>
       {created && (
-        <div role="status" className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-950">
+        <div role="status" className="rounded-sm border border-success/30 bg-success-soft p-4 text-sm text-success-ink">
           <p className="font-semibold">Invitation créée pour {created.email}</p>
           <p className="mt-1">Transmettez ce lien à la personne. Il n&apos;est affiché qu&apos;une seule fois, expire dans 7 jours et ne fonctionne qu&apos;avec cette adresse e-mail.</p>
           <label htmlFor="invite-link" className="mt-2 block font-medium">Lien d&apos;invitation</label>
-          <input id="invite-link" readOnly value={created.link} onFocus={(e) => e.currentTarget.select()} className="mt-1 block w-full rounded-lg border border-emerald-400 bg-white px-3 py-2 font-mono text-xs" />
+          <input id="invite-link" readOnly value={created.link} onFocus={(e) => e.currentTarget.select()} className="mt-1 block w-full rounded-sm border border-success/30 bg-white px-3 py-2 font-mono text-xs" />
         </div>
       )}
     </div>

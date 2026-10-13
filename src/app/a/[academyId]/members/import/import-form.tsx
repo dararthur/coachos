@@ -60,12 +60,12 @@ export function ImportForm({ academyId }: { academyId: string }) {
               ref={input}
               type="file"
               accept=".csv,text/csv,text/plain"
-              className="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-lg file:border-0 file:bg-brand-600 file:px-4 file:py-2 file:font-semibold file:text-white"
+              className="block w-full text-sm file:mr-3 file:min-h-11 file:rounded-sm file:border-0 file:bg-accent file:px-4 file:py-2 file:font-semibold file:text-white"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               aria-describedby={state && !state.ok ? "csv-error" : undefined}
             />
             {state && !state.ok && (
-              <p id="csv-error" role="alert" className="mt-2 text-sm font-medium text-red-800">
+              <p id="csv-error" role="alert" className="mt-2 text-sm font-medium text-danger-ink">
                 {state.fieldErrors?.file ?? state.fieldErrors?.adultConfirmed ?? state.error}
               </p>
             )}
@@ -126,7 +126,7 @@ export function ImportForm({ academyId }: { academyId: string }) {
             {canCommit && (
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
-                  <input id="adult" type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-1 size-5 accent-brand-600" aria-describedby={state?.ok === false ? "adult-error" : undefined} />
+                  <input id="adult" type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-1 size-5 accent-ink" aria-describedby={state?.ok === false ? "adult-error" : undefined} />
                   <label htmlFor="adult" className="text-sm">
                     Je certifie que tous les membres de ce fichier sont majeurs et que le club est en droit de traiter leurs données.
                   </label>

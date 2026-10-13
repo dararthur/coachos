@@ -144,8 +144,9 @@ export function EmptyState({ title, children, action, level = 2, framed = false 
 }
 
 /** Bande de compteurs : un seul panneau divisé par des filets (et non une rangée de cartes). */
-export function StatGrid({ children, className }: { children: ReactNode; className?: string }) {
-  return <dl className={`grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-line bg-line lg:auto-cols-fr lg:grid-flow-col lg:grid-cols-none ${className ?? ""}`}>{children}</dl>;
+export function StatGrid({ children, className, cols = 4 }: { children: ReactNode; className?: string; cols?: 3 | 4 }) {
+  const grid = cols === 3 ? "grid-cols-3" : "grid-cols-2 lg:grid-cols-4";
+  return <dl className={`grid gap-px overflow-hidden rounded-sm border border-line bg-line ${grid} ${className ?? ""}`}>{children}</dl>;
 }
 
 export function Stat({ label, value, hint, href }: { label: string; value: ReactNode; hint?: string; href?: string }) {

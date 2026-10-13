@@ -37,7 +37,7 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
             <ul className="divide-y divide-line">
               {upcoming.map((s) => (
                 <li key={s.id} className="flex flex-wrap justify-between gap-2 py-2.5">
-                  <span className={s.status === "cancelled" ? "text-muted line-through" : "font-medium"}>
+                  <span className={s.status === "cancelled" ? "text-ink-soft line-through" : "font-medium"}>
                     {formatDateTime(s.startsAt, tz)} · {s.classTypeName}
                   </span>
                   {s.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
