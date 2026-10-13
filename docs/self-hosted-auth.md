@@ -78,7 +78,7 @@ Voir le compte rendu de livraison et `docs/security.md`. En résumé : tests uni
 
 | ID | Critère |
 |---|---|
-| N1 | Derrière **Nginx réel** : `X-Real-IP` / `X-Forwarded-For` falsifiés écrasés (exemple non appliqué : `ops/nginx-self-hosted.example.conf`) |
+| N1 | Derrière **Nginx réel** : `X-Real-IP` / `X-Forwarded-For` falsifiés écrasés (exemple non appliqué : `ops/nginx/coachos.conf`) |
 | N2 | HTTPS public : cookies `__Secure-…; Secure`, HSTS, redirection 80→443, `SITE_URL` = URL publique exacte |
 | N3 | PostgreSQL et l'application joignables uniquement en local/pare-feu |
 | N4 | Journaux d'accès Nginx **sans jeton** (réinitialisation, vérification, invitation, pointage voyagent dans l'URL) |

@@ -43,7 +43,7 @@ Le gestionnaire de secrets / l'environnement du service porte ces valeurs ; elle
 2. **Pré-contrôle des rôles globaux**, puis migrations avec le lanceur et un rôle administrateur : `MIGRATION_DATABASE_URL=… npm run db:migrate -- --dry-run` (refuse si `anon`, `authenticated`, `app_server` ou `auth_runtime` existent déjà dans le cluster sans appartenir à Coach OS), puis `MIGRATION_DATABASE_URL=… npm run db:migrate` (9 migrations, suivies et vérifiées).
 3. Créer les mots de passe des deux rôles (jamais dans Git) : `alter role app_server login password '…'; alter role auth_runtime login password '…';` puis construire `DATABASE_URL` et `AUTH_DATABASE_URL`.
 4. Domaine d'envoi chez le fournisseur d'e-mails, vérifié (SPF, DKIM), DMARC progressif, **suivi des ouvertures/clics désactivé** ; DPA du fournisseur archivé (`docs/privacy-gdpr.md`).
-5. Hébergement : processus Node ≥ 22 sous un utilisateur dédié, écoute sur `127.0.0.1`, derrière un reverse proxy TLS qui **écrase** `X-Real-IP`/`X-Forwarded-For` (`ops/nginx-self-hosted.example.conf`). Planifier chaque jour `POST $SITE_URL/api/cron/purge` avec `Authorization: Bearer $CRON_SECRET`.
+5. Hébergement : processus Node ≥ 22 sous un utilisateur dédié, écoute sur `127.0.0.1`, derrière un reverse proxy TLS qui **écrase** `X-Real-IP`/`X-Forwarded-For` (`ops/nginx/coachos.conf`). Planifier chaque jour `POST $SITE_URL/api/cron/purge` avec `Authorization: Bearer $CRON_SECRET`.
 6. **Sauvegardes** chiffrées hors du serveur, avec une clé et un secret de session séparés ; **tester une restauration** sur une base jetable (D5).
 
 ## 4. Contrôles indispensables avant toute donnée réelle

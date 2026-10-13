@@ -28,11 +28,11 @@ describe("démarrage de production : écoute locale imposée", () => {
     }
   });
 
-  it("la configuration d'exemple de Nginx impose l'écrasement de X-Real-IP et ne propage pas X-Forwarded-For", () => {
-    const nginx = read("ops/nginx-self-hosted.example.conf");
-    expect(nginx).toMatch(/X-Real-IP\s+\$remote_addr/);
-    expect(nginx).toMatch(/X-Forwarded-For\s+\$remote_addr/);
-    expect(nginx).not.toMatch(/X-Forwarded-For\s+\$proxy_add_x_forwarded_for/); // la valeur qui AJOUTE l'IP fournie par le client
+  it("la configuration d'exemple de Nginx impose l'écrasement de X-Real-IP et ne propage pas X-Forwarded-For (détail : tests/unit/nginx-config.test.ts)", () => {
+    const proxy = read("ops/nginx/proxy.inc");
+    expect(proxy).toMatch(/^\s*proxy_set_header\s+X-Real-IP\s+\$remote_addr;/m);
+    expect(proxy).toMatch(/^\s*proxy_set_header\s+X-Forwarded-For\s+\$remote_addr;/m);
+    expect(proxy).not.toMatch(/^\s*proxy_set_header\s+X-Forwarded-For\s+\$proxy_add_x_forwarded_for/m);
   });
 });
 

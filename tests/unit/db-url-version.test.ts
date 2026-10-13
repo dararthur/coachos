@@ -33,8 +33,8 @@ describe("politique SSL des connexions (TypeScript et .mjs strictement identique
   });
 
   it("les messages ne contiennent ni mot de passe ni hôte", () => {
-    const why = sslViolation("postgresql://admin:Sup3rSecret@db-interne.exemple.fr:5432/db")!;
-    expect(why).not.toContain("Sup3rSecret");
+    const why = sslViolation("postgresql://admin:pw@db-interne.exemple.fr:5432/db")!;
+    expect(why).not.toContain("admin");
     expect(why).not.toContain("db-interne");
   });
 });

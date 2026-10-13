@@ -105,3 +105,32 @@ jobs:
           test "$(q "select count(*) from information_schema.role_table_grants where table_schema = 'auth' and grantee not in ('auth_runtime','postgres')")" = "0"
           test "$(q "select count(*) from pg_tables where schemaname = 'auth'")" = "4"
           test "$(q "select has_schema_privilege('app_server','coachos_migrations','usage')")" = "f"
+
+  nginx-syntax:
+    # Valide la SYNTAXE de ops/nginx/ avec un vrai Nginx (certificat jetable généré ici, domaine fictif). Ne prouve ni le comportement
+    # en production ni la compatibilité avec la configuration du serveur réel : voir docs/nginx.md.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: nginx -t sur la configuration d'exemple
+        run: |
+          set -e
+          work="$(mktemp -d)"
+          mkdir -p "$work/coachos" "$work/certs" "$work/certbot"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 1 -subj "/CN=coachos.example.invalid" \
+            -keyout "$work/certs/privkey.pem" -out "$work/certs/fullchain.pem"
+          sed -e "s#/etc/letsencrypt/live/coachos.example.invalid#/certs#" \
+              -e "s#/var/log/nginx/coachos#/tmp/coachos#" ops/nginx/coachos.conf > "$work/coachos.conf"
+          cp ops/nginx/proxy.inc "$work/coachos/proxy.inc"
+          cat > "$work/nginx.conf" <<CONF
+          events {}
+          http {
+            include /etc/nginx/coachos.conf;
+          }
+          CONF
+          docker run --rm \
+            -v "$work/nginx.conf:/etc/nginx/nginx.conf:ro" \
+            -v "$work/coachos.conf:/etc/nginx/coachos.conf:ro" \
+            -v "$work/coachos:/etc/nginx/coachos:ro" \
+            -v "$work/certs:/certs:ro" \
+            nginx:stable nginx -t

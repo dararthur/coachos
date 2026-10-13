@@ -1,11 +1,11 @@
 "use server";
 
-import { APIError } from "better-auth/api";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { changePasswordSchema, loginSchema, profileSchema, resetPasswordSchema, resetRequestSchema, signupSchema } from "@/domain/validation";
 import { getAuth } from "@/server/auth/auth";
+import { apiErrorInfo } from "@/server/auth/api-error";
 import { authorizeUser, runAction } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { env } from "@/server/env";
@@ -16,11 +16,7 @@ import { parseForm, safeNext } from "./helpers";
 type FormState = ActionResult<unknown> | null;
 
 /** Les limites de débit (inscription, connexion, réinitialisation) sont appliquées dans Better Auth (hook), pour tout chemin. */
-function apiStatus(error: unknown): { status: number; code: string | undefined } | null {
-  if (!(error instanceof APIError)) return null;
-  const body = error.body as { code?: unknown } | undefined;
-  return { status: error.statusCode, code: typeof body?.code === "string" ? body.code : undefined };
-}
+const apiStatus = apiErrorInfo; // lecture par la forme de l'erreur : voir src/server/auth/api-error.ts
 
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("signUp", async () => {

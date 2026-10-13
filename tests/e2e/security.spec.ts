@@ -154,7 +154,9 @@ test.describe("authentification et en-têtes de sécurité", () => {
     expect(h["x-frame-options"]).toBe("DENY");
     expect(h["x-content-type-options"]).toBe("nosniff");
     expect(h["referrer-policy"]).toBe("strict-origin-when-cross-origin");
-    expect(h["strict-transport-security"]).toContain("max-age=");
+    // HSTS : émis par UN seul composant (src/proxy.ts), uniquement pour une instance déployée en https. La pile e2e (APP_ENV=test, http) n'en émet pas ;
+    // l'émission (valeur exacte, sans includeSubDomains ni preload) est prouvée sur un vrai processus par tests/e2e/startup-guards.spec.ts.
+    expect(h["strict-transport-security"]).toBeUndefined();
     expect(h["permissions-policy"]).toContain("camera=()");
     expect(h["x-powered-by"]).toBeUndefined();
     const csp = h["content-security-policy"] ?? "";

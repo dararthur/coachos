@@ -7,7 +7,7 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Permissions-Policy : posé par src/proxy.ts (la caméra n'est autorisée que sur /checkin).
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
+  // Strict-Transport-Security : émis par src/proxy.ts (instance déployée en https seulement, sans includeSubDomains ni preload).
 ];
 
 const nextConfig: NextConfig = {

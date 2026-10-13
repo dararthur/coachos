@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { hstsHeader } from "@/server/security-headers";
 
 /**
  * Proxy Next.js (ex-middleware) : pose une Content-Security-Policy stricte avec nonce par requête.
@@ -31,6 +32,9 @@ export async function proxy(request: NextRequest) {
   // La caméra n'est autorisée que sur la page de scan ; micro, géolocalisation, paiement et USB ne le sont jamais.
   const camera = request.nextUrl.pathname === "/checkin" ? "camera=(self)" : "camera=()";
   response.headers.set("Permissions-Policy", `${camera}, microphone=(), geolocation=(), payment=(), usb=()`);
+  // HSTS : émetteur unique (jamais Nginx). Lu à CHAQUE requête dans l'environnement d'exécution du service.
+  const hsts = hstsHeader({ appEnv: process.env.APP_ENV, siteUrl: process.env.SITE_URL, maxAge: process.env.HSTS_MAX_AGE_SECONDS });
+  if (hsts) response.headers.set("Strict-Transport-Security", hsts);
   return response;
 }
 

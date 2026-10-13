@@ -66,7 +66,7 @@ async function waitForHealth(port: number, ms = 45_000): Promise<boolean> {
   const end = Date.now() + ms;
   while (Date.now() < end) {
     try {
-      if ((await fetch(`http://127.0.0.1:${port}/api/health`)).ok) return true;
+      if ((await fetch(`http://127.0.0.1:${port}/api/live`)).ok) return true;
     } catch {
       /* pas encore prêt */
     }
@@ -157,5 +157,38 @@ test.describe("démarrage de production : écoute locale uniquement", () => {
       killTree(child);
       rmSync(outbox, { force: true });
     }
+  });
+});
+
+test.describe("HSTS : émetteur unique (l'application), prudent, lu dans l'environnement d'EXÉCUTION", () => {
+  async function hstsOf(over: Record<string, string>): Promise<string | null> {
+    const port = await freePort();
+    const outbox = path.join(os.tmpdir(), `coachos-startup-${rand().slice(0, 8)}.jsonl`);
+    const resend = { MAIL_PROVIDER: "resend", RESEND_API_KEY: "re_factice_0001", MAIL_FROM: "Coach OS <x@coach.example.invalid>" };
+    const child = spawn(process.execPath, [nextBin, "start", "-H", "127.0.0.1", "-p", String(port)], { cwd: root, env: configEnv({ ...resend, ...over }, outbox) });
+    try {
+      expect(await waitForHealth(port), "le serveur doit démarrer avec cette configuration").toBe(true);
+      const res = await fetch(`http://127.0.0.1:${port}/api/live`);
+      return res.headers.get("strict-transport-security");
+    } finally {
+      killTree(child);
+      rmSync(outbox, { force: true });
+    }
+  }
+  const site = { SITE_URL: "https://coach.example.invalid" };
+
+  test("production : max-age=86400 par défaut ; HSTS_MAX_AGE_SECONDS pour monter en charge ; 0 pour revenir en arrière", async () => {
+    test.setTimeout(120_000);
+    expect(await hstsOf({ APP_ENV: "production", ...site })).toBe("max-age=86400");
+    expect(await hstsOf({ APP_ENV: "production", ...site, HSTS_MAX_AGE_SECONDS: "31536000" })).toBe("max-age=31536000");
+    expect(await hstsOf({ APP_ENV: "production", ...site, HSTS_MAX_AGE_SECONDS: "0" })).toBeNull();
+  });
+
+  test("staging : max-age=300 ; la configuration de test (http, APP_ENV=test) : aucun HSTS ; jamais includeSubDomains ni preload", async () => {
+    test.setTimeout(120_000);
+    const staging = await hstsOf({ APP_ENV: "staging", ...site });
+    expect(staging).toBe("max-age=300");
+    expect(staging).not.toMatch(/includeSubDomains|preload/i);
+    expect(await hstsOf({ APP_ENV: "test", SITE_URL: "http://127.0.0.1:3999", MAIL_PROVIDER: "outbox" })).toBeNull();
   });
 });

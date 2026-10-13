@@ -47,7 +47,7 @@ Détail, risques et limites : [`docs/self-hosted-auth.md`](self-hosted-auth.md).
 - **CSRF** : Server Actions (contrôle Origin/Host de Next.js) + cookies `SameSite=Lax` ; les exports GET sont en lecture seule.
 - **XSS** : React échappe par défaut ; aucune injection HTML brute ; validation stricte des noms (`<`, `>`, `=`, `@` refusés) ; **CSP** `script-src 'self' 'nonce-…' 'strict-dynamic'`, sans `unsafe-inline`/`unsafe-eval` en production.
 - **Caméra** : `Permissions-Policy: camera=(self)` uniquement sur `/checkin` (posé par `src/proxy.ts`), `camera=()` partout ailleurs ; micro, géolocalisation, paiement, USB interdits partout.
-- **En-têtes** : `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control: no-store` sur les exports.
+- **En-têtes** : `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control: no-store` sur les exports et sur `/api/auth/*` ; HSTS émis par l'application seule (docs/nginx.md).
 - **CORS** : aucune route n'émet d'en-tête CORS (même origine uniquement).
 - **Limitation de débit** : compteurs atomiques en base, clés pseudonymisées par HMAC (aucune IP ni e-mail en clair) ; connexion, inscription, réinitialisation, vérification (hook Better Auth : HTTP **et** appels serveur `auth.api`), invitations, import, exports, effacement, suppression de compte, plafond d'écritures par utilisateur. Échec **fermé** si le compteur est indisponible.
 - **Erreurs** : jamais de SQL ni de message interne vers l'UI (`AppError` + codes stables) ; journaux JSON redactés (`src/server/logger.ts`) sans mot de passe, jeton, e-mail ni nom.

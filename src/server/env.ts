@@ -35,6 +35,8 @@ const schema = z
     RESEND_API_KEY: z.string().min(8).optional(),
     MAIL_FROM: z.string().min(5).optional(),
     MAIL_OUTBOX_FILE: z.string().min(1).optional(),
+    /** Durée HSTS en secondes (0–31 536 000). Défaut : staging 300, production 86 400. Voir docs/nginx.md. */
+    HSTS_MAX_AGE_SECONDS: z.coerce.number().int().min(0).max(31_536_000).optional(),
     /** `disable` : seulement pour une base locale sans SSL (interdit pour une base distante en staging/production). */
     DATABASE_SSL: z.string().optional(),
     /** Durée de vie d'un jeton de pointage QR (secondes, 10–300 ; défaut 90). */
