@@ -1,4 +1,6 @@
-# EXEMPLE NON INSTALLÉ. Sauvegarde chiffrée hors machine (voir docs/operations.md). Les variables viennent d'un fichier root:root 0600.
+# EXEMPLE NON INSTALLÉ. Sauvegarde chiffrée hors machine (voir docs/operations.md).
+# /etc/coachos/backup.env : variables SANS secret (BACKUP_PGHOST, BACKUP_PGDATABASE, BACKUP_PGUSER, BACKUP_PGPASSFILE, BACKUP_REMOTE, …).
+# Le mot de passe est dans le fichier désigné par BACKUP_PGPASSFILE : propriété de coachos-backup, mode 0600 (le script refuse sinon).
 [Unit]
 Description=Coach OS - sauvegarde chiffrée de la base
 Wants=network-online.target
