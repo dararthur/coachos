@@ -14,7 +14,7 @@ export default async function AcademiesPage() {
   const user = await requireUser();
   const academies = await withUser(user, (tx) => listAcademiesForUser(tx, user.id));
   return (
-    <main id="contenu" className="mx-auto w-full max-w-2xl px-4 py-10">
+    <main id="contenu" className="mx-auto w-full max-w-2xl px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Mes clubs</h1>
         <div className="flex gap-2">

@@ -20,10 +20,16 @@
     -webkit-text-size-adjust: 100%;
   }
   body {
+    /* Zones de sécurité (encoche, barre d'accueil iOS) en mode plein écran. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
     background: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
     line-height: 1.5;
+  }
+  button, a, input, select, textarea, summary, label {
+    touch-action: manipulation; /* pas de délai de double-tap */
   }
   :focus-visible {
     outline: 3px solid #2563eb;

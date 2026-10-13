@@ -48,15 +48,15 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
         <form method="get" action={base} role="search" className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div>
             <label htmlFor="from" className="mb-1 block text-sm font-medium">Du</label>
-            <input id="from" name="from" type="date" defaultValue={filters.from} required className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="from" name="from" type="date" defaultValue={filters.from} required className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </div>
           <div>
             <label htmlFor="to" className="mb-1 block text-sm font-medium">Au</label>
-            <input id="to" name="to" type="date" defaultValue={filters.to} required className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="to" name="to" type="date" defaultValue={filters.to} required className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </div>
           <div>
             <label htmlFor="classTypeId" className="mb-1 block text-sm font-medium">Cours</label>
-            <select id="classTypeId" name="classTypeId" defaultValue={filters.classTypeId ?? ""} className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            <select id="classTypeId" name="classTypeId" defaultValue={filters.classTypeId ?? ""} className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
               <option value="">Tous les cours</option>
               {classTypes.map((t) => (
                 <option key={t.id} value={t.id}>{t.disciplineName} — {t.name}</option>
@@ -65,7 +65,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
           </div>
           <div>
             <label htmlFor="personId" className="mb-1 block text-sm font-medium">Membre</label>
-            <select id="personId" name="personId" defaultValue={filters.personId ?? ""} className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
+            <select id="personId" name="personId" defaultValue={filters.personId ?? ""} className="block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2">
               <option value="">Tous les membres</option>
               {people.map((p) => (
                 <option key={p.id} value={p.id}>{p.lastName} {p.firstName}</option>

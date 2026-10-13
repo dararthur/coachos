@@ -3,7 +3,8 @@ import Link from "next/link";
 import { Alert, Card, LinkButton } from "@/components/ui/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
-import { deleteAccountAction, updatePasswordAction, updateProfileAction } from "@/server/actions/auth";
+import { deleteAccountAction, signOutAction, updatePasswordAction, updateProfileAction } from "@/server/actions/auth";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { requireUser } from "@/server/auth/guards";
 
 export const metadata: Metadata = { title: "Mon compte" };
@@ -11,7 +12,7 @@ export const metadata: Metadata = { title: "Mon compte" };
 export default async function AccountPage() {
   const user = await requireUser();
   return (
-    <main id="contenu" className="mx-auto w-full max-w-2xl space-y-6 px-4 py-10">
+    <main id="contenu" className="mx-auto w-full max-w-2xl space-y-6 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">Mon compte</h1>
         <Link href="/academies">← Mes clubs</Link>
@@ -21,6 +22,13 @@ export default async function AccountPage() {
           <TextField label="Nom affiché" name="displayName" defaultValue={user.displayName} maxLength={100} hint="Visible par l'équipe des clubs dont vous faites partie." />
           <SubmitButton>Enregistrer</SubmitButton>
         </ActionForm>
+      </Card>
+      <Card title="Session">
+        <form action={signOutAction}>
+          <button type="submit" className={buttonClasses({ variant: "secondary" })}>
+            Se déconnecter
+          </button>
+        </form>
       </Card>
       <Card title="Mot de passe">
         <ActionForm action={updatePasswordAction} className="space-y-4" resetOnSuccess>

@@ -152,7 +152,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                         <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex items-center gap-2">
                           <input type="hidden" name="userId" value={m.userId} />
                           <label className="sr-only" htmlFor={`role-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
-                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm">
+                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="min-h-11 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm">
                             {assignable.map((r) => (
                               <option key={r} value={r}>{ROLE_LABELS[r]}</option>
                             ))}

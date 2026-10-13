@@ -12,7 +12,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
   const user = await getSessionUser();
   if (!user) redirect(`/login?next=${encodeURIComponent(`/invite/${token}`)}`);
   return (
-    <main id="contenu" className="mx-auto w-full max-w-md px-4 py-12">
+    <main id="contenu" className="mx-auto w-full max-w-md px-4 pb-12 pt-[max(3rem,env(safe-area-inset-top))]">
       <div className="rounded-xl border border-line bg-surface p-6 shadow-sm">
         <h1 className="mb-2 text-xl font-semibold">Rejoindre un club</h1>
         <p className="mb-4 text-sm text-muted">

@@ -79,7 +79,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity }: { 
           <label htmlFor="roster-search" className="mb-1 block text-sm font-medium">
             Filtrer la liste
           </label>
-          <input id="roster-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nom ou prénom" className="block w-64 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+          <input id="roster-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nom ou prénom" className="block min-h-11 w-64 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
         </div>
         <p className="text-sm" aria-live="polite">
           <strong>{attended}</strong> présent{attended > 1 ? "s" : ""}

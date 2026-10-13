@@ -76,7 +76,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
                   <div className="flex items-center gap-2">
                     {s.status === "cancelled" ? <Badge tone="danger">Annulée</Badge> : s.recorded === 0 ? <Badge tone="warning">Appel à faire</Badge> : <Badge tone="success">Appel fait</Badge>}
                     {s.status === "scheduled" && (
-                      <Link href={`/a/${academyId}/attendance/${s.id}`} className="text-sm font-medium">
+                      <Link href={`/a/${academyId}/attendance/${s.id}`} className="inline-flex min-h-11 items-center px-2 text-sm font-medium">
                         Ouvrir l&apos;appel
                       </Link>
                     )}

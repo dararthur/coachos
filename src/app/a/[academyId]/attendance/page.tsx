@@ -24,7 +24,7 @@ function SessionList({ academyId, sessions, tz, mine }: { academyId: string; ses
           <div className="flex items-center gap-3">
             {s.status === "cancelled" ? <Badge tone="danger">Annulée</Badge> : s.recorded === 0 ? <Badge tone="warning">À faire</Badge> : <Badge tone="success">Fait</Badge>}
             {s.status === "scheduled" && (
-              <Link href={`/a/${academyId}/attendance/${s.id}`} className="text-sm font-medium">
+              <Link href={`/a/${academyId}/attendance/${s.id}`} className="inline-flex min-h-11 items-center px-2 text-sm font-medium">
                 {mine(s) ? "Faire l'appel" : "Consulter"}
               </Link>
             )}

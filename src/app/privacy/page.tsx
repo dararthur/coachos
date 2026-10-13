@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Confidentialité" };
  */
 export default function PrivacyPage() {
   return (
-    <main id="contenu" className="mx-auto w-full max-w-3xl space-y-5 px-4 py-10 text-sm leading-6">
+    <main id="contenu" className="mx-auto w-full max-w-3xl space-y-5 px-4 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] text-sm leading-6">
       <Link href="/">← Retour</Link>
       <h1 className="text-2xl font-semibold tracking-tight">Confidentialité et données personnelles</h1>
       <Alert tone="warning" title="Document de travail">

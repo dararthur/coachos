@@ -91,7 +91,7 @@ function useFieldState(name: string) {
 }
 
 const inputClasses =
-  "block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-ink shadow-sm placeholder:text-slate-500 disabled:bg-slate-100 aria-[invalid=true]:border-red-600";
+  "block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-ink shadow-sm placeholder:text-slate-500 disabled:bg-slate-100 aria-[invalid=true]:border-red-600";
 
 interface BaseFieldProps {
   label: string;

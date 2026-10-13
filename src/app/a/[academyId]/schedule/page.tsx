@@ -35,13 +35,13 @@ export default async function SchedulePage({ params, searchParams }: { params: P
       <Notice searchParams={sp} />
 
       <nav aria-label="Navigation par semaine" className="mb-4 flex flex-wrap gap-2">
-        <Link className="rounded-lg bg-white px-3 py-2 text-sm font-medium no-underline ring-1 ring-slate-300 hover:bg-slate-50" href={`/a/${academyId}/schedule?week=${addDays(monday, -7)}`}>
+        <Link className="inline-flex min-h-11 items-center rounded-lg bg-white px-3 py-2 text-sm font-medium no-underline ring-1 ring-slate-300 hover:bg-slate-50" href={`/a/${academyId}/schedule?week=${addDays(monday, -7)}`}>
           ← Semaine précédente
         </Link>
-        <Link className="rounded-lg bg-white px-3 py-2 text-sm font-medium no-underline ring-1 ring-slate-300 hover:bg-slate-50" href={`/a/${academyId}/schedule`}>
+        <Link className="inline-flex min-h-11 items-center rounded-lg bg-white px-3 py-2 text-sm font-medium no-underline ring-1 ring-slate-300 hover:bg-slate-50" href={`/a/${academyId}/schedule`}>
           Cette semaine
         </Link>
-        <Link className="rounded-lg bg-white px-3 py-2 text-sm font-medium no-underline ring-1 ring-slate-300 hover:bg-slate-50" href={`/a/${academyId}/schedule?week=${addDays(monday, 7)}`}>
+        <Link className="inline-flex min-h-11 items-center rounded-lg bg-white px-3 py-2 text-sm font-medium no-underline ring-1 ring-slate-300 hover:bg-slate-50" href={`/a/${academyId}/schedule?week=${addDays(monday, 7)}`}>
           Semaine suivante →
         </Link>
       </nav>
@@ -75,12 +75,12 @@ export default async function SchedulePage({ params, searchParams }: { params: P
                     <div className="flex items-center gap-3">
                       {s.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
                       {s.status === "scheduled" && canRecord && (
-                        <Link href={`/a/${academyId}/attendance/${s.id}`} className="text-sm font-medium">
+                        <Link href={`/a/${academyId}/attendance/${s.id}`} className="inline-flex min-h-11 items-center px-2 text-sm font-medium">
                           Appel
                         </Link>
                       )}
                       {canManage && (
-                        <Link href={`/a/${academyId}/schedule/${s.id}`} className="text-sm font-medium">
+                        <Link href={`/a/${academyId}/schedule/${s.id}`} className="inline-flex min-h-11 items-center px-2 text-sm font-medium">
                           Modifier
                         </Link>
                       )}

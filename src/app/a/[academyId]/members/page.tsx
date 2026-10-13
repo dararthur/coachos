@@ -63,7 +63,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
             <label htmlFor="q" className="mb-1 block text-sm font-medium">
               Rechercher
             </label>
-            <input id="q" name="q" type="search" defaultValue={q} placeholder="Nom, prénom ou e-mail" maxLength={100} className="block w-64 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="q" name="q" type="search" defaultValue={q} placeholder="Nom, prénom ou e-mail" maxLength={100} className="block min-h-11 w-64 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
           </div>
           <button type="submit" className="min-h-11 rounded-lg border border-slate-300 bg-white px-4 text-sm font-semibold hover:bg-slate-50">
             Rechercher
@@ -75,7 +75,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
               key={t.value}
               href={hrefFor(1, t.value)}
               aria-current={t.value === status ? "page" : undefined}
-              className={`rounded-lg px-3 py-2 text-sm font-medium no-underline ${t.value === status ? "bg-brand-600 text-white" : "bg-white text-ink ring-1 ring-slate-300 hover:bg-slate-50"}`}
+              className={`inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium no-underline ${t.value === status ? "bg-brand-600 text-white" : "bg-white text-ink ring-1 ring-slate-300 hover:bg-slate-50"}`}
             >
               {t.label}
             </Link>
@@ -109,7 +109,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
             {rows.map((p) => (
               <tr key={p.id}>
                 <th scope="row" className="px-4 py-3 font-medium">
-                  <Link href={`/a/${academyId}/members/${p.id}`}>
+                  <Link href={`/a/${academyId}/members/${p.id}`} className="-my-3 flex min-h-11 items-center py-3">
                     {p.lastName.toUpperCase()} {p.firstName}
                   </Link>
                 </th>
