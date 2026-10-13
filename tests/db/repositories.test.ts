@@ -181,6 +181,7 @@ describe("rapports et tableau de bord", () => {
     expect(stats.pastSessionsWithoutAttendance).toBeGreaterThanOrEqual(1);
     const inactive = await asUser(w.bob, (tx) => dashboard.listInactiveMembers(tx, academy, TZ));
     expect(inactive.map((i) => i.id)).toContain(person!.id);
+    expect(inactive.find((i) => i.id === person!.id)).toMatchObject({ email: null }); // lien « Écrire » absent sans e-mail
     const missing = await asUser(w.bob, (tx) => schedule.listSessions(tx, academy, TZ, { from: "2020-01-01", to: "2099-01-01" }, { onlyMissingAttendance: true }));
     expect(missing.length).toBeGreaterThanOrEqual(1);
   });

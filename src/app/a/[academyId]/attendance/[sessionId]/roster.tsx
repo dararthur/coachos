@@ -10,10 +10,18 @@ import { CHECKIN_REFRESH_SECONDS, CHECKIN_TOKEN_TTL_SECONDS, ROLL_POLL_INTERVAL_
 import { ATTENDANCE_LABELS, type AttendanceStatus } from "@/domain/validation";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { ConfirmAction } from "@/components/ui/confirm";
+import { Icon } from "@/components/ui/icons";
 import { Badge, Card, EmptyState } from "@/components/ui/ui";
 
 const STATUSES: AttendanceStatus[] = ["present", "late", "absent"];
 type Entry = RollSnapshot["entries"][number];
+/** Vue de la liste : tous, seulement les non renseignés (l'appel se vide au fil des gestes), ou seulement les marqués. */
+type View = "all" | "todo" | "done";
+const ACTIVE_TONE: Record<AttendanceStatus, string> = {
+  present: "border-success bg-success text-white",
+  late: "border-warning bg-warning text-white",
+  absent: "border-danger bg-danger text-white",
+};
 
 const clock = (ms: number) => new Date(ms).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
@@ -28,6 +36,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
   const [entries, setEntries] = useState<Entry[]>(initial.entries);
   const [checkin, setCheckin] = useState(initial.checkin);
   const [query, setQuery] = useState("");
+  const [view, setView] = useState<View>("all");
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [sync, setSync] = useState<{ ok: boolean; at: number }>({ ok: true, at: initial.serverNow });
@@ -68,8 +77,12 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? entries.filter((e) => `${e.firstName} ${e.lastName}`.toLowerCase().includes(q) || `${e.lastName} ${e.firstName}`.toLowerCase().includes(q)) : entries;
-  }, [entries, query]);
+    return entries.filter(
+      (e) =>
+        (view === "all" || (view === "todo" ? e.status === null : e.status !== null)) &&
+        (!q || `${e.firstName} ${e.lastName}`.toLowerCase().includes(q) || `${e.lastName} ${e.firstName}`.toLowerCase().includes(q)),
+    );
+  }, [entries, query, view]);
 
   const counts = useMemo(() => {
     const c = { present: 0, late: 0, absent: 0, none: 0, qr: 0 };
@@ -101,6 +114,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
     }
   }
 
+  // Appelée depuis une confirmation (ConfirmAction) : le résultat ferme la fenêtre ou y affiche l'erreur.
   async function markAll() {
     setMessage(null);
     lastMutation.current = Date.now();
@@ -112,8 +126,11 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
         const n = result.data.marked;
         setMessage({ tone: "ok", text: `${n} membre${n > 1 ? "s" : ""} marqué${n > 1 ? "s" : ""} présent${n > 1 ? "s" : ""}.` });
       }
+      return result;
     } catch {
-      setMessage({ tone: "error", text: "Connexion perdue : l'opération n'est pas confirmée. L'état affiché est relu depuis la base." });
+      const text = "Connexion perdue : l'opération n'est pas confirmée. L'état affiché est relu depuis la base.";
+      setMessage({ tone: "error", text });
+      return { ok: false as const, code: "internal" as const, error: text };
     } finally {
       lastMutation.current = Date.now();
       void refresh();
@@ -126,61 +143,61 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
 
   const attended = counts.present + counts.late;
   const rollEditable = editable;
+  const onSnapshot = (s: RollSnapshot) => {
+    lastMutation.current = Date.now();
+    apply(s);
+  };
   return (
-    <div className="space-y-6">
-      {qrAllowed && <CheckinPanel academyId={academyId} sessionId={sessionId} checkin={checkin} qrCount={counts.qr} onSnapshot={(s) => { lastMutation.current = Date.now(); apply(s); }} onRefresh={refresh} />}
+    <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      {qrAllowed && (
+        <aside className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
+          <CheckinPanel academyId={academyId} sessionId={sessionId} checkin={checkin} qrCount={counts.qr} onSnapshot={onSnapshot} onRefresh={refresh} />
+        </aside>
+      )}
 
-      <div>
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <label htmlFor="roster-search" className="mb-1 block text-sm font-medium">
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <div className="min-w-0 flex-1 basis-56">
+            <label htmlFor="roster-search" className="mb-1.5 block text-sm font-semibold">
               Filtrer la liste
             </label>
-            <input id="roster-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nom ou prénom" className="block min-h-11 w-64 max-w-full rounded-lg border border-slate-300 bg-white px-3 py-2" />
+            <input id="roster-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nom ou prénom" className="field" />
           </div>
-          <p className="text-sm" aria-live="polite">
-            <strong>{attended}</strong> présent{attended > 1 ? "s" : ""}
-            {capacity ? ` / ${capacity} places` : ""} · {counts.absent} absent{counts.absent > 1 ? "s" : ""} · {counts.none} non renseigné{counts.none > 1 ? "s" : ""}
-          </p>
-          {rollEditable && (
-            <button type="button" className={buttonClasses({ variant: "secondary" })} onClick={markAll} disabled={counts.none === 0}>
-              Marquer les non renseignés présents
-            </button>
-          )}
-        </div>
-
-        <div role="status" aria-live="polite" className="empty:hidden">
-          {!sync.ok && (
-            <p className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950" data-testid="sync-lost">
-              Connexion perdue — liste figée à {clock(sync.at)}. Les modifications ne sont pas enregistrées tant que la connexion n&apos;est pas revenue.
-            </p>
-          )}
-          {message && (
-            <p className={`mb-3 rounded-lg border px-3 py-2 text-sm ${message.tone === "error" ? "border-red-300 bg-red-50 text-red-900" : "border-emerald-300 bg-emerald-50 text-emerald-900"}`} role={message.tone === "error" ? "alert" : undefined}>
-              {message.text}
-            </p>
-          )}
+          <div role="group" aria-label="Afficher" className="flex rounded-sm border border-line-strong bg-surface p-0.5">
+            {(
+              [
+                ["all", `Tous ${entries.length}`],
+                ["todo", `À marquer ${counts.none}`],
+                ["done", `Marqués ${entries.length - counts.none}`],
+              ] as const
+            ).map(([v, label]) => (
+              <button key={v} type="button" aria-pressed={view === v} onClick={() => setView(v)} className={`min-h-11 rounded-xs px-2.5 text-sm font-semibold whitespace-nowrap transition-colors ${view === v ? "bg-ink text-white" : "text-ink-soft hover:text-ink"}`}>
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {visible.length === 0 ? (
-          <p className="text-sm text-muted">{entries.length === 0 ? "Aucun membre actif." : `Aucun membre ne correspond à « ${query} ».`}</p>
+          <p className="rounded-sm border border-line bg-surface px-4 py-6 text-center text-sm text-ink-soft">
+            {entries.length === 0 ? "Aucun membre actif." : query ? `Aucun membre ne correspond à « ${query} ».` : view === "todo" ? "Tout le monde est renseigné." : "Personne n'est encore marqué."}
+          </p>
         ) : (
-          <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+          <ul className="divide-y divide-line rounded-sm border border-line bg-surface">
             {visible.map((e) => (
-              <li key={e.personId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-                <p className="min-w-0 font-medium">
-                  {e.lastName.toUpperCase()} {e.firstName}
-                  {e.archived && <span className="ml-2 text-xs font-normal text-muted">(archivé)</span>}
+              <li key={e.personId} className={`grid gap-2 px-3 py-2.5 min-[30rem]:flex min-[30rem]:items-center min-[30rem]:justify-between min-[30rem]:gap-4 sm:px-4 ${busy === e.personId ? "opacity-60" : ""}`}>
+                <p className="min-w-0 truncate font-semibold">
+                  <span className="uppercase">{e.lastName}</span> {e.firstName}
+                  {e.archived && <span className="ml-2 text-xs font-normal text-ink-soft">(archivé)</span>}
                   {e.source === "qr" && (
                     <span className="ml-2 align-middle">
                       <Badge tone="brand">Pointé par QR</Badge>
                     </span>
                   )}
                 </p>
-                <div role="group" aria-label={`Présence de ${e.firstName} ${e.lastName}`} className="flex gap-1">
+                <div role="group" aria-label={`Présence de ${e.firstName} ${e.lastName}`} className="grid grid-cols-3 gap-1 min-[30rem]:flex min-[30rem]:shrink-0">
                   {STATUSES.map((s) => {
                     const active = e.status === s;
-                    const tone = s === "absent" ? "bg-red-700 text-white" : s === "late" ? "bg-amber-600 text-white" : "bg-brand-600 text-white";
                     return (
                       <button
                         key={s}
@@ -188,7 +205,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                         aria-pressed={active}
                         disabled={!rollEditable || busy === e.personId}
                         onClick={() => choose(e.personId, active ? null : s)}
-                        className={`min-h-11 min-w-20 rounded-lg px-3 text-sm font-semibold ring-1 ring-slate-300 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${active ? `${tone} ring-0` : "bg-white text-ink hover:bg-slate-50"}`}
+                        className={`min-h-11 rounded-sm border px-3 text-sm font-semibold transition-colors duration-100 disabled:cursor-not-allowed sm:min-w-24 ${active ? ACTIVE_TONE[s] : "border-line-strong bg-surface text-ink hover:border-ink disabled:text-ink-soft"}`}
                       >
                         {ATTENDANCE_LABELS[s]}
                       </button>
@@ -199,9 +216,66 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             ))}
           </ul>
         )}
-        {rollEditable && <p className="mt-3 text-xs text-muted">Cliquez à nouveau sur le statut actif pour effacer l&apos;enregistrement. Un pointage par QR peut être corrigé à tout moment.</p>}
+        {rollEditable && (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-ink-soft">Touchez à nouveau le statut actif pour effacer l&apos;enregistrement. Un pointage par QR peut être corrigé à tout moment.</p>
+            {counts.none > 0 && (
+              <ConfirmAction
+                action={markAll}
+                trigger="Marquer les non renseignés présents"
+                title={`Marquer ${counts.none} membre${counts.none > 1 ? "s" : ""} présent${counts.none > 1 ? "s" : ""} ?`}
+                description={<p>Tous les membres non renseignés de la liste seront enregistrés présents, y compris ceux qui ne sont pas venus. Vous pourrez corriger chaque ligne ensuite.</p>}
+                confirmLabel="Marquer présents"
+                confirmVariant="primary"
+              />
+            )}
+          </div>
+        )}
+        <div className="sticky bottom-[var(--tabbar-h)] z-20 -mx-4 mt-4 border-t border-line bg-canvas px-4 pb-3 pt-2.5 sm:mx-0 sm:rounded-sm sm:border sm:bg-surface sm:px-4">
+          <div role="status" aria-live="polite" className="empty:hidden">
+            {!sync.ok && (
+              <p className="mb-2 rounded-sm border border-warning/35 bg-warning-soft px-3 py-2 text-sm font-medium text-warning-ink" data-testid="sync-lost">
+                Connexion perdue — liste figée à {clock(sync.at)}. Les modifications ne sont pas enregistrées tant que la connexion n&apos;est pas revenue.
+              </p>
+            )}
+            {message && (
+              <p className={`mb-2 rounded-sm border px-3 py-2 text-sm font-medium ${message.tone === "error" ? "border-danger/30 bg-danger-soft text-danger-ink" : "border-success/30 bg-success-soft text-success-ink"}`} role={message.tone === "error" ? "alert" : undefined}>
+                {message.text}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <RollProgress counts={counts} total={entries.length} />
+              <p className="mt-1.5 text-sm" aria-live="polite">
+                <strong>{attended}</strong> présent{attended > 1 ? "s" : ""}
+                {capacity ? ` / ${capacity} places` : ""} · {counts.absent} absent{counts.absent > 1 ? "s" : ""} · {counts.none} non renseigné{counts.none > 1 ? "s" : ""}
+              </p>
+            </div>
+            {qrAllowed && !checkin.validatedAt && <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} />}
+          </div>
+        </div>
       </div>
     </div>
+  );
+}
+
+/** Progression de l'appel : la ceinture se remplit (présents, retards, absents), le reste est encore à marquer. Attributs SVG : compatible CSP. */
+function RollProgress({ counts, total }: { counts: { present: number; late: number; absent: number }; total: number }) {
+  const parts = [
+    { n: counts.present, cls: "fill-success" },
+    { n: counts.late, cls: "fill-warning" },
+    { n: counts.absent, cls: "fill-danger" },
+  ];
+  let x = 0;
+  return (
+    <svg viewBox={`0 0 ${Math.max(1, total)} 1`} preserveAspectRatio="none" className="block h-2 w-full rounded-xs bg-line" aria-hidden="true" focusable="false">
+      {parts.map((p) => {
+        const rect = p.n > 0 ? <rect key={p.cls} x={x} y="0" width={p.n} height="1" className={p.cls} /> : null;
+        x += p.n;
+        return rect;
+      })}
+    </svg>
   );
 }
 
@@ -285,9 +359,9 @@ function CheckinPanel({
   const live = isOpen && token !== null && remaining > 0;
 
   return (
-    <Card title="Pointage par QR code" description="Les adhérents scannent ce QR code avec leur téléphone pour enregistrer eux-mêmes leur présence. Vous gardez la main sur la feuille.">
+    <Card title="Pointage par QR code" description={isOpen ? "Montrez cet écran : chaque adhérent scanne et confirme sa présence. Vous gardez la main sur la feuille." : undefined}>
       {error && (
-        <p role="alert" className="mb-3 rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-900">
+        <p role="alert" className="mb-3 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2 text-sm font-medium text-danger-ink">
           {error}
         </p>
       )}
@@ -303,28 +377,26 @@ function CheckinPanel({
         </div>
       ) : !isOpen ? (
         <div className="space-y-3">
-          <p className="text-sm text-muted">Le pointage est fermé : aucun adhérent ne peut pointer.</p>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={buttonClasses()} disabled={working} onClick={() => run(() => openCheckinAction(academyId, sessionId))}>
-              {working ? "Ouverture…" : "Ouvrir le pointage"}
-            </button>
-            <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} />
-          </div>
+          <p className="text-sm text-ink-soft">Fermé. Ouvrez-le pour que les adhérents pointent eux-mêmes avec leur téléphone.</p>
+          <button type="button" className={buttonClasses({ variant: "secondary", className: "w-full" })} disabled={working} onClick={() => run(() => openCheckinAction(academyId, sessionId))}>
+            <Icon name="qr" size={18} />
+            {working ? "Ouverture…" : "Ouvrir le pointage"}
+          </button>
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-start gap-x-6 gap-y-4">
-            <div className="relative w-64 max-w-full">
+          <div className="space-y-4">
+            <div className="relative mx-auto w-full max-w-72">
               {token ? (
                 // eslint-disable-next-line @next/next/no-img-element -- QR en data URI généré par le serveur
-                <img src={token.qr} alt="QR code de pointage pour cette séance" width={256} height={256} className={`aspect-square w-full rounded-lg border border-line bg-white p-1 ${live ? "" : "opacity-30"}`} />
+                <img src={token.qr} alt="QR code de pointage pour cette séance" width={256} height={256} className={`aspect-square w-full rounded-sm border border-line bg-white p-1 transition-opacity ${live ? "" : "opacity-30"}`} />
               ) : (
-                <div className="flex aspect-square w-full items-center justify-center rounded-lg border border-dashed border-slate-300 text-sm text-muted" role="status">
+                <div className="flex aspect-square w-full items-center justify-center rounded-sm border border-line bg-sunken text-sm text-ink-soft" role="status">
                   Génération du QR code…
                 </div>
               )}
             </div>
-            <div className="min-w-0 flex-[1_1_16rem] space-y-3">
+            <div className="min-w-0 space-y-3">
               <p className="text-sm" data-testid="qr-countdown">
                 {live ? (
                   <>
@@ -334,34 +406,31 @@ function CheckinPanel({
                   "QR code expiré : renouvellement en cours…"
                 )}
               </p>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Validité du QR code" aria-valuemin={0} aria-valuemax={ttl} aria-valuenow={Math.min(remaining, ttl)}>
-                <div className="h-full rounded-full bg-brand-600 transition-[width] duration-1000 ease-linear" ref={(el) => { if (el) el.style.width = `${Math.round((Math.min(remaining, ttl) / ttl) * 100)}%`; }} />
+              <div className="h-2 w-full overflow-hidden rounded-xs bg-line" role="progressbar" aria-label="Validité du QR code" aria-valuemin={0} aria-valuemax={ttl} aria-valuenow={Math.min(remaining, ttl)}>
+                <div className="h-full bg-ink transition-[width] duration-1000 ease-linear" ref={(el) => { if (el) el.style.width = `${Math.round((Math.min(remaining, ttl) / ttl) * 100)}%`; }} />
               </div>
               {tokenError && (
-                <p role="alert" className="text-sm text-red-800">
+                <p role="alert" className="text-sm font-semibold text-danger">
                   {tokenError}
                 </p>
               )}
-              <p className="text-sm text-muted" aria-live="polite">
+              <p className="text-sm text-ink-soft" aria-live="polite">
                 <strong className="text-ink">{qrCount}</strong> adhérent{qrCount > 1 ? "s" : ""} pointé{qrCount > 1 ? "s" : ""} par QR.
               </p>
               {token && (
                 <details className="text-sm">
-                  <summary className="min-h-11 cursor-pointer py-2 font-medium">Lien de pointage (si le scan est impossible)</summary>
-                  <label htmlFor="checkin-link" className="mt-2 block text-muted">
+                  <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Lien de pointage (si le scan est impossible)</summary>
+                  <label htmlFor="checkin-link" className="mt-1 block text-ink-soft">
                     Valable quelques secondes, à ne partager qu&apos;aux adhérents présents.
                   </label>
-                  <input id="checkin-link" readOnly value={token.url} onFocus={(e) => e.currentTarget.select()} className="mt-1 block min-h-11 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 font-mono text-xs" />
+                  <input id="checkin-link" readOnly value={token.url} onFocus={(e) => e.currentTarget.select()} className="field mt-1.5 font-mono" />
                 </details>
               )}
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className={buttonClasses({ variant: "secondary" })} disabled={working} onClick={() => run(() => closeCheckinAction(academyId, sessionId))}>
-              Fermer le pointage
-            </button>
-            <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} />
-          </div>
+          <button type="button" className={buttonClasses({ variant: "secondary", className: "w-full" })} disabled={working} onClick={() => run(() => closeCheckinAction(academyId, sessionId))}>
+            Fermer le pointage
+          </button>
         </div>
       )}
     </Card>
@@ -380,11 +449,15 @@ function ValidateButton({ academyId, sessionId, onSnapshot }: { academyId: strin
           return { ok: false as const, code: "internal" as const, error: "Connexion perdue : la validation n'est pas confirmée. Réessayez." };
         }
       }}
-      trigger="Valider la feuille d'appel"
+      trigger={
+        <>
+          Valider<span className="sr-only sm:not-sr-only"> la feuille d&apos;appel</span>
+        </>
+      }
       title="Valider la feuille d'appel ?"
       description={<p>La validation ferme le pointage par QR et invalide les QR codes affichés. Vous pourrez encore corriger des présences, ou rouvrir la feuille.</p>}
       confirmLabel="Valider la feuille"
-      triggerVariant="secondary"
+      triggerVariant="primary"
       confirmVariant="primary"
     />
   );

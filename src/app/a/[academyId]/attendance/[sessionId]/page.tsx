@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { formatDateTime, formatTime } from "@/domain/dates";
-import { Alert, Badge, PageHeader } from "@/components/ui/ui";
+import { Alert, BackLink, Badge, PageHeader } from "@/components/ui/ui";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getRoster } from "@/server/repositories/attendance";
 import { getCheckinState, serverNow } from "@/server/repositories/checkin";
@@ -32,13 +31,16 @@ export default async function RosterPage({ params }: { params: Promise<{ academy
     <>
       <PageHeader
         title={session.classTypeName}
+        back={<BackLink href={`/a/${academyId}/attendance`}>Présences</BackLink>}
         description={
           <>
-            {formatDateTime(session.startsAt, tz)}–{formatTime(session.endsAt, tz)} · {session.disciplineName}
-            {session.instructorName ? ` · ${session.instructorName}` : ""} {session.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
+            <span>
+              {formatDateTime(session.startsAt, tz)}–{formatTime(session.endsAt, tz)} · {session.disciplineName}
+              {session.instructorName ? ` · ${session.instructorName}` : ""}
+            </span>
+            {session.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
           </>
         }
-        actions={<Link href={`/a/${academyId}/attendance`}>← Présences</Link>}
       />
       {session.status === "cancelled" && <Alert tone="warning">Cette séance est annulée : les présences ne sont plus modifiables et le pointage est impossible.</Alert>}
       {!allowed && session.status === "scheduled" && <Alert tone="info">Cette séance est affectée à un autre coach : vous pouvez la consulter mais pas modifier les présences.</Alert>}

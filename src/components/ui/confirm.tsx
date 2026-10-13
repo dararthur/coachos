@@ -24,7 +24,8 @@ export function ConfirmAction({
   triggerClassName,
 }: {
   action: (prev: State, formData: FormData) => Promise<State>;
-  trigger: string;
+  /** Libellé du déclencheur ; peut contenir une partie réservée aux lecteurs d'écran (sr-only). */
+  trigger: ReactNode;
   title: string;
   description: ReactNode;
   confirmLabel: string;

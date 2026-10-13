@@ -68,6 +68,16 @@
   --shadow-overlay: 0 18px 40px -12px rgb(22 25 29 / 0.35), 0 2px 8px rgb(22 25 29 / 0.12);
 }
 
+/* Hauteur de la barre d'onglets mobile : les barres collantes du bas (feuille d'appel) se posent au-dessus. */
+:root {
+  --tabbar-h: calc(3.5rem + env(safe-area-inset-bottom));
+}
+@media (width >= 48rem) {
+  :root {
+    --tabbar-h: 0px;
+  }
+}
+
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
