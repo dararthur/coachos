@@ -43,10 +43,13 @@ jobs:
 
   codeql:
     name: Analyse statique CodeQL
+    # Nécessite GitHub Code Scanning (dépôt public, ou GitHub Advanced Security sur un dépôt privé). Sans cela l'envoi des
+    # résultats échoue (« Resource not accessible by integration »). Activer avec la variable de dépôt ENABLE_CODEQL=true.
+    if: vars.ENABLE_CODEQL == 'true'
     runs-on: ubuntu-latest
     permissions: { contents: read, security-events: write }
     steps:
       - uses: actions/checkout@v4
-      - uses: github/codeql-action/init@v3
+      - uses: github/codeql-action/init@v4
         with: { languages: javascript-typescript }
-      - uses: github/codeql-action/analyze@v3
+      - uses: github/codeql-action/analyze@v4

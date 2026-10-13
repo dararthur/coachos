@@ -57,7 +57,8 @@ Un bug réel a été trouvé et corrigé par ces tests : `NULL NOT IN (...)` lai
 5. **Pas de rôle « opérateur plateforme »** : l'accès support aux données d'un club n'est pas implémenté (et n'est donc pas accordé implicitement).
 6. **Données dérivées** : les séances annulées/supprimées et statistiques ne sont pas chiffrées au niveau applicatif (chiffrement au repos géré par l'hébergeur de la base).
 7. Audit d'accessibilité : contrôles automatisés (axe) et clavier de base seulement ; pas d'audit manuel avec lecteur d'écran.
-8. Les actions GitHub de la CI sont référencées par tag majeur, pas par SHA ; à épingler avant production.
+8. **CodeQL** est désactivé tant que la variable de dépôt `ENABLE_CODEQL=true` n'est pas définie : sur un dépôt privé sans GitHub Advanced Security, l'envoi des résultats échoue (constaté sur le run du commit 4fcf863). Aucune analyse statique CodeQL n'a donc tourné ; ESLint strict et les tests restent les seuls contrôles de code.
+9. Les actions GitHub de la CI sont référencées par tag majeur, pas par SHA ; à épingler avant production.
 
 ## Signaler une vulnérabilité
 
