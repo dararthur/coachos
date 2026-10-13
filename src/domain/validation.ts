@@ -142,8 +142,10 @@ export const classTypeSchema = z.object({
 });
 
 // --- Séances ------------------------------------------------------------------------------------
-export const MAX_OCCURRENCES = 200;
-export const MAX_RECURRENCE_DAYS = 183;
+/** Une séance par jour sur une année complète (les créneaux d'une même récurrence sont à des jours distincts). */
+export const MAX_OCCURRENCES = 366;
+/** Une récurrence s'arrête au plus tard le 31 décembre de l'année de sa première séance (AAAA-MM-JJ). */
+export const recurrenceLimit = (firstDate: string): string => `${firstDate.slice(0, 4)}-12-31`;
 
 export const sessionCreateSchema = z
   .object({
@@ -166,7 +168,8 @@ export const sessionCreateSchema = z
       return;
     }
     if (v.until < v.date) ctx.addIssue({ code: "custom", path: ["until"], message: "La fin doit suivre le début." });
-    else if (daysBetween(v.date, v.until) > MAX_RECURRENCE_DAYS) ctx.addIssue({ code: "custom", path: ["until"], message: "Récurrence limitée à 6 mois." });
+    else if (v.until > recurrenceLimit(v.date))
+      ctx.addIssue({ code: "custom", path: ["until"], message: `La répétition s'arrête au plus tard le 31 décembre ${v.date.slice(0, 4)} (fin de l'année de la première séance).` });
   });
 
 export const sessionUpdateSchema = z.object({

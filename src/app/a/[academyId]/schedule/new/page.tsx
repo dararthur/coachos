@@ -4,6 +4,7 @@ import { WEEKDAY_LABELS } from "@/domain/schedule";
 import { Card, EmptyState, LinkButton, PageHeader, BackLink } from "@/components/ui/ui";
 import { ActionForm, CheckboxGroup, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { createSessionsAction } from "@/server/actions/schedule";
+import { RecurrenceEnd } from "./recurrence-end";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listClassTypes } from "@/server/repositories/academies";
 import { listInstructors } from "@/server/repositories/schedule";
@@ -60,7 +61,7 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
               </SelectField>
               <div data-repeat className="space-y-4">
                 <CheckboxGroup legend="Jours" name="weekdays" options={Object.entries(WEEKDAY_LABELS).map(([value, label]) => ({ value, label }))} />
-                <TextField label="Répéter jusqu'au" name="until" type="date" hint="Maximum 6 mois et 200 séances. Les créneaux déjà existants sont ignorés." />
+                <RecurrenceEnd firstDate={today} />
               </div>
             </fieldset>
 

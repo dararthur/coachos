@@ -4,8 +4,8 @@ import { csvCell, safeFilename, toCsv } from "@/domain/csv-export";
 import { expandOccurrences } from "@/domain/schedule";
 import { assignableRoles, can, canManageMember, PERMISSIONS, ROLES } from "@/domain/roles";
 import {
-  academySchema, attendanceSchema, formToObject, invitationSchema, parseWith, personCreateSchema,
-  reportFilterSchema, sessionCreateSchema, signupSchema,
+  academySchema, attendanceSchema, formToObject, invitationSchema, MAX_OCCURRENCES, parseWith, personCreateSchema,
+  recurrenceLimit, reportFilterSchema, sessionCreateSchema, signupSchema,
 } from "@/domain/validation";
 
 describe("dates", () => {
@@ -62,8 +62,11 @@ describe("récurrence", () => {
     expect(d).toEqual(["2026-10-12", "2026-10-14", "2026-10-19", "2026-10-21"]);
   });
   it("plafonne le nombre d'occurrences pour détecter l'excès", () => {
-    const d = expandOccurrences({ date: "2026-01-01", repeat: "weekly", weekdays: [1, 2, 3, 4, 5, 6, 7], until: "2026-12-31" });
-    expect(d.length).toBe(201);
+    // Une année complète, tous les jours, tient dans le plafond…
+    expect(expandOccurrences({ date: "2028-01-01", repeat: "weekly", weekdays: [1, 2, 3, 4, 5, 6, 7], until: "2028-12-31" })).toHaveLength(366);
+    // …au-delà, la liste s'arrête à MAX + 1 pour signaler l'excès.
+    const d = expandOccurrences({ date: "2026-01-01", repeat: "weekly", weekdays: [1, 2, 3, 4, 5, 6, 7], until: "2027-12-31" });
+    expect(d.length).toBe(MAX_OCCURRENCES + 1);
   });
 });
 
@@ -105,6 +108,11 @@ describe("validation", () => {
     expect(parseWith(sessionCreateSchema, { ...base, until: "2026-12-20" }).ok).toBe(true);
     expect(parseWith(sessionCreateSchema, { ...base }).ok).toBe(false);
     expect(parseWith(sessionCreateSchema, { ...base, until: "2028-12-20" }).ok).toBe(false);
+    // Limite : 31 décembre de l'année de la première séance (au lieu de 6 mois).
+    expect(recurrenceLimit("2026-10-12")).toBe("2026-12-31");
+    expect(parseWith(sessionCreateSchema, { ...base, until: "2026-12-31" }).ok).toBe(true);
+    expect(parseWith(sessionCreateSchema, { ...base, until: "2027-01-01" }).ok).toBe(false);
+    expect(parseWith(sessionCreateSchema, { ...base, date: "2027-01-04", until: "2027-11-30" }).ok).toBe(true); // > 6 mois, même année
     expect(parseWith(sessionCreateSchema, { ...base, until: "2026-12-20", weekdays: [] }).ok).toBe(false);
     expect(parseWith(sessionCreateSchema, { ...base, until: "2026-12-20", time: "25:00" }).ok).toBe(false);
   });

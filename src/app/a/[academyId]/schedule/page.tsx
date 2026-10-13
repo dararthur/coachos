@@ -54,7 +54,7 @@ export default async function SchedulePage({ params, searchParams }: { params: P
 
       {sessions.length === 0 && (
         <EmptyState framed title="Aucune séance cette semaine" action={canManage ? <LinkButton href={`/a/${academyId}/schedule/new`}>Planifier des séances</LinkButton> : undefined}>
-          {canManage ? "Créez une séance unique ou une récurrence hebdomadaire (jusqu'à 6 mois)." : "Le planning de ce club n'a pas encore de séance pour cette semaine."}
+          {canManage ? "Créez une séance unique ou une récurrence hebdomadaire (jusqu’à la fin de l’année)." : "Le planning de ce club n'a pas encore de séance pour cette semaine."}
         </EmptyState>
       )}
 

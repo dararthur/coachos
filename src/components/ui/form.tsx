@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useActionState, useContext, useEffect, useId, useRef, type ReactNode } from "react";
+import { createContext, Fragment, useActionState, useContext, useEffect, useId, useRef, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import type { ActionResult } from "@/domain/errors";
 import { buttonClasses, type ButtonVariant } from "./button-classes";
@@ -11,9 +11,12 @@ type FormAction<S extends State> = (prev: S, formData: FormData) => Promise<S>;
 interface Held<S extends State> {
   result: S;
   values: Record<string, string>;
+  /** Champs à valeurs multiples (cases à cocher groupées). */
+  lists: Record<string, string[]>;
+  attempt: number;
 }
 
-const FormContext = createContext<{ result: State; values: Record<string, string> }>({ result: null, values: {} });
+const FormContext = createContext<{ result: State; values: Record<string, string>; lists: Record<string, string[]> }>({ result: null, values: {}, lists: {} });
 
 /**
  * Formulaire branché sur une Server Action (useActionState). Garde les valeurs saisies après une erreur
@@ -38,13 +41,17 @@ export function ActionForm<S extends State>({
 }) {
   const ref = useRef<HTMLFormElement>(null);
   const [held, formAction] = useActionState(
-    async (_prev: Held<S> | null, formData: FormData): Promise<Held<S>> => {
+    async (prev: Held<S> | null, formData: FormData): Promise<Held<S>> => {
       const values: Record<string, string> = {};
+      const lists: Record<string, string[]> = {};
       for (const [key, value] of formData.entries()) {
-        if (typeof value === "string" && !key.startsWith("$ACTION") && !/pass|confirm/i.test(key)) values[key] = value;
+        if (typeof value === "string" && !key.startsWith("$ACTION") && !/pass|confirm/i.test(key)) {
+          values[key] = value;
+          (lists[key] ??= []).push(value);
+        }
       }
       const result = await action(null as S, formData);
-      return { result, values };
+      return { result, values, lists, attempt: (prev?.attempt ?? 0) + 1 };
     },
     null,
   );
@@ -58,9 +65,14 @@ export function ActionForm<S extends State>({
 
   return (
     <form ref={ref} action={formAction} className={className} encType={encType} noValidate={false}>
-      <FormContext.Provider value={{ result, values: result && !result.ok ? (held?.values ?? {}) : {} }}>
+      <FormContext.Provider value={{ result, values: result && !result.ok ? (held?.values ?? {}) : {}, lists: result && !result.ok ? (held?.lists ?? {}) : {} }}>
         {!hideMessage && <FormMessage result={result} />}
-        {children}
+        {/*
+          Après chaque envoi, React 19 réinitialise le formulaire aux valeurs par défaut des champs. Les remonter (clé par
+          tentative) fait de la saisie retenue leur nouvelle valeur par défaut : sans cela, listes et cases à cocher
+          retombaient sur leur valeur initiale après une erreur (ex. « Séance unique » au lieu de la récurrence saisie).
+        */}
+        <Fragment key={held?.attempt ?? 0}>{children}</Fragment>
       </FormContext.Provider>
     </form>
   );
@@ -236,6 +248,7 @@ export function CheckboxField({ label, name, hint, required, className, defaultC
 export function CheckboxGroup({ legend, name, options, error, defaultValues = [] }: { legend: string; name: string; options: { value: string; label: string }[]; error?: string; defaultValues?: string[] }) {
   const ctx = useContext(FormContext);
   const fieldError = error ?? (ctx.result && !ctx.result.ok ? ctx.result.fieldErrors?.[name] : undefined);
+  const checked = ctx.lists[name] ?? (ctx.result && !ctx.result.ok ? [] : defaultValues); // après une erreur : la saisie retenue
   return (
     <fieldset>
       <legend className="mb-1.5 text-sm font-semibold text-ink">{legend}</legend>
@@ -245,7 +258,7 @@ export function CheckboxGroup({ legend, name, options, error, defaultValues = []
             key={o.value}
             className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface px-3 py-2 text-sm font-medium transition-colors hover:border-ink has-[:checked]:border-ink has-[:checked]:bg-ink has-[:checked]:text-white has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent"
           >
-            <input type="checkbox" name={name} value={o.value} defaultChecked={defaultValues.includes(o.value)} className="size-4 accent-accent" />
+            <input type="checkbox" name={name} value={o.value} defaultChecked={checked.includes(o.value)} className="size-4 accent-accent" />
             {o.label}
           </label>
         ))}
