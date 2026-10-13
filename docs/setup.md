@@ -1,102 +1,104 @@
 # Démarrage, migrations et exploitation
 
-> Statut de vérification : les commandes **npm** de ce document (installation, typecheck, lint, tests unitaires, tests base de données, build, e2e) ont été exécutées avec succès sur Windows 11 / Node 24. Les commandes **Supabase CLI / Docker** n'ont **pas** pu être exécutées lors du développement (Docker absent) : elles sont écrites d'après la documentation officielle et marquées *(non vérifié)*.
+> Statut de vérification : les commandes **npm** de ce document (installation, typecheck, lint, tests unitaires, tests base de données, build, e2e) ont été exécutées avec succès sur Windows 11 / Node 24 avec un PostgreSQL 17 embarqué. Les commandes **psql / serveur réel** (création des rôles, base distante, Nginx) sont écrites d'après la documentation de PostgreSQL et marquées *(non vérifié)*. Rien n'a été déployé.
 
 ## Prérequis
 
 - Node.js ≥ 22 (développé avec 24) et npm.
-- Pour la pile Supabase locale : Docker + [Supabase CLI](https://supabase.com/docs/guides/local-development) *(non vérifié ici)*.
+- PostgreSQL 17 (testé en 17.10 embarqué) pour un environnement réel ; aucun Docker n'est requis pour les tests.
 - Pour les e2e en local : Chrome ou Edge installé (`PW_CHANNEL=chrome`), sinon `npx playwright install chromium`.
 
 ```bash
 npm ci
 ```
 
-## Vérifier le dépôt (sans Docker ni compte Supabase)
+## Vérifier le dépôt (sans Docker, sans serveur externe, sans compte)
 
 ```bash
 npm run typecheck        # TypeScript strict
 npm run lint
-npm run test:unit        # règles métier : dates, CSV, permissions, validation
-npm run test:db          # PostgreSQL 17 embarqué : migrations + RLS + isolation + RGPD
+npm run test:unit        # règles métier, modèles d'e-mail, adaptateur Resend (faux fetch), journal assaini
+npm run test:db          # PostgreSQL 17 embarqué : migrations + RLS + isolation + RGPD + Better Auth
 npm run audit:secrets    # aucun secret dans les fichiers versionnés
 npm run audit:deps       # npm audit (dépendances de production)
 PW_CHANNEL=chrome npm run test:e2e   # build + parcours complet dans un vrai navigateur
 ```
 
-`npm run test:db` et `npm run test:e2e` démarrent un **vrai PostgreSQL** (binaires `embedded-postgres`), appliquent **toutes** les migrations de `supabase/migrations/` puis exécutent les tests. Le schéma `auth` et les rôles Supabase (`anon`, `authenticated`) y sont imités par `tests/support/supabase-shim.sql`. Pour l'e2e, un **faux GoTrue** (`tests/e2e/support/mock-auth.mjs`, tests uniquement) remplace Supabase Auth. Conséquence : ces tests prouvent le comportement de la RLS et de l'application, **pas** celui de Supabase Auth ni du pooler Supabase ; la CI rejoue les migrations sur la pile Supabase officielle (job `supabase-migrations`).
+`npm run test:db` et `npm run test:e2e` démarrent un **vrai PostgreSQL** (binaires `embedded-postgres`) et appliquent **toutes** les migrations de `db/migrations/` (le socle de plateforme — rôles, schéma `auth`, tables Better Auth — est la migration `…0000`). Better Auth y est exécuté pour de vrai ; seule la boîte d'envoi d'e-mails est remplacée par un fichier (`MAIL_PROVIDER=outbox`). Ces tests ne prouvent rien sur Resend, Nginx, HTTPS public ni le PostgreSQL de votre serveur : voir `docs/self-hosted-auth.md` §9.
 
-## Lancer l'application en local avec Supabase *(non vérifié)*
+## Lancer l'application en local *(non vérifié sur un PostgreSQL externe)*
+
+1. Créer une base et appliquer les migrations **dans l'ordre** avec un rôle administrateur (la migration 0000 crée des rôles) :
 
 ```bash
-supabase start                      # Postgres, Auth, boîte mail de dev (Inbucket :54324)
-supabase db reset                   # applique supabase/migrations/* + seed.sql (vide)
-cp .env.example .env.local          # puis renseigner :
+createdb coachos
+for f in db/migrations/*.sql; do psql -v ON_ERROR_STOP=1 -d coachos -f "$f"; done
 ```
 
-Variables (`.env.example` documente chaque valeur) :
+2. Créer les mots de passe des deux rôles de connexion — **hors Git**, une fois par base :
+
+```sql
+alter role app_server  login password '<mot de passe généré, 32+ caractères>';
+alter role auth_runtime login password '<autre mot de passe généré, 32+ caractères>';
+```
+
+`app_server` est `NOINHERIT` et n'a aucun droit sur les tables : il ne peut qu'exécuter `SET ROLE authenticated` (RLS appliquée) et appeler le limiteur de débit et les purges. `auth_runtime` n'a que le DML sur `auth.*`. Aucun des deux n'est superutilisateur.
+
+3. Configurer l'environnement : `cp .env.example .env.local` puis renseigner :
 
 | Variable | Rôle |
 |---|---|
-| `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` | API Auth. Clé *publishable/anon* uniquement. **Jamais la clé `service_role`.** |
-| `DATABASE_URL` | Connexion du rôle `app_server` (voir ci-dessous) |
-| `SITE_URL` | URL publique (https en production) pour les liens d'e-mail et d'invitation |
-| `APP_SECRET` | ≥ 32 caractères aléatoires, pseudonymise les clés de limitation de débit |
+| `DATABASE_URL` | connexion du rôle `app_server` |
+| `AUTH_DATABASE_URL` | connexion du rôle `auth_runtime` (différent) |
+| `SITE_URL` | URL publique exacte (https en production) |
+| `APP_SECRET` | ≥ 32 caractères, pseudonymise IP et e-mails (compteurs, sessions) |
+| `BETTER_AUTH_SECRET` | ≥ 32 caractères, **distinct** d'`APP_SECRET`, signe les cookies de session. **Jamais avec la base ni ses sauvegardes** (`docs/self-hosted-auth.md` §4) |
+| `MAIL_PROVIDER` | `outbox` (développement/tests, aucun envoi) ou `resend` (+ `RESEND_API_KEY`, `MAIL_FROM`) |
+| `MAIL_OUTBOX_FILE` | avec `outbox` : fichier recevant les liens (développement uniquement) |
 | `CRON_SECRET` | optionnel, active `POST /api/cron/purge` |
 | `APP_ENV` | optionnel (`staging`), lu par `npm run pilot:preflight` |
 | `CHECKIN_TOKEN_TTL_SECONDS` | optionnel, durée du QR de pointage (10–300 s, défaut 90) |
+| `DATABASE_SSL`, `DATABASE_POOL_SIZE` | `disable` uniquement pour une base locale ; taille du pool |
 
-Créer le mot de passe du rôle applicatif — **hors Git**, une fois par base (SQL editor Supabase ou `psql`) :
-
-```sql
-alter role app_server login password '<mot de passe généré, 32+ caractères>';
-```
-
-`app_server` est `NOINHERIT` et n'a aucun droit sur les tables ; il ne peut qu'exécuter `SET ROLE authenticated` (RLS appliquée) et appeler le limiteur de débit et la purge. Ensuite :
+4. `npm run dev`. Avec `MAIL_PROVIDER=outbox`, les liens de confirmation et de réinitialisation sont écrits dans `MAIL_OUTBOX_FILE` (une ligne JSON par message). Créez un compte sur `/signup`, ouvrez le lien trouvé dans ce fichier, connectez-vous, puis créez votre club. Données de démonstration **synthétiques** (base locale uniquement) :
 
 ```bash
-npm run dev
-```
-
-Créez un compte sur `/signup` (confirmez par l'e-mail Inbucket), puis votre club. Données de démonstration **synthétiques** (base locale uniquement) :
-
-```bash
-SEED_DATABASE_URL=postgresql://postgres:<mdp-local>@127.0.0.1:54322/postgres npm run db:seed-demo -- --academy <uuid-du-club>
+SEED_DATABASE_URL=postgresql://postgres:<mdp-local>@127.0.0.1:5432/coachos npm run db:seed-demo -- --academy <uuid-du-club>
 npm run db:seed-demo -- --academy <uuid> --purge     # les retirer
 ```
 
 ## Pilote et préproduction
 
-Voir [`docs/pilot.md`](pilot.md) (variables, projet Supabase de préproduction, contrôles avant toute donnée réelle) et `npm run pilot:preflight`. Mobile/PWA : [`docs/pwa.md`](pwa.md). Pointage QR : [`docs/qr-checkin.md`](qr-checkin.md).
+Voir [`docs/pilot.md`](pilot.md) et `npm run pilot:preflight`. Authentification : [`docs/self-hosted-auth.md`](self-hosted-auth.md). Mobile/PWA : [`docs/pwa.md`](pwa.md). Pointage QR : [`docs/qr-checkin.md`](qr-checkin.md).
 
 ## Migrations
 
-- Fichiers SQL versionnés et ordonnés : `supabase/migrations/AAAAMMJJHHMMSS_nom.sql`. **Ne jamais modifier une migration déjà appliquée** sur un environnement partagé : en ajouter une nouvelle.
-- Local : `supabase db reset` (rejoue tout), `supabase migration new <nom>` pour en créer une *(non vérifié)*.
-- Distant : `supabase link --project-ref <ref>` puis `supabase db push` *(non vérifié)*. Tester d'abord sur un projet de **préproduction**.
-- Chaque migration est rejouée par `npm run test:db` ; les invariants de sécurité (RLS partout, `anon` sans privilège, fonctions `SECURITY DEFINER` à `search_path` vide, liste blanche des fonctions exposées) sont dans `tests/db/schema-invariants.test.ts` et échouent si une migration les viole.
+- Fichiers SQL versionnés et ordonnés : `db/migrations/AAAAMMJJHHMMSS_nom.sql`, appliqués par un rôle administrateur (psql). **Ne jamais modifier une migration déjà appliquée** sur un environnement partagé : en ajouter une nouvelle. (Les migrations 0001–0006 n'ont jamais été appliquées ailleurs qu'en test ; 0007 les adapte à Better Auth.)
+- Chaque migration est rejouée par `npm run test:db`, et une seconde fois sur une base vierge (`tests/db/migrations-replay.test.ts`) ; la CI les rejoue aussi sur PostgreSQL 17 standard (job `postgres-migrations`). Les invariants de sécurité (RLS partout, `anon` sans privilège, fonctions `SECURITY DEFINER` à `search_path` vide, liste blanche des fonctions exposées, tables d'authentification fermées) échouent si une migration les viole.
+- Le schéma de Better Auth est versionné dans la migration 0000 ; le test `tests/db/auth-integration.test.ts` échoue si une mise à jour de Better Auth attend un schéma différent.
 
 ## Environnements
 
 | | Développement | Préproduction | Production |
 |---|---|---|---|
-| Projet Supabase | `supabase start` local | projet dédié | projet dédié, région UE |
-| Données | synthétiques | synthétiques | réelles (après revue juridique) |
-| Secrets | `.env.local` | gestionnaire de secrets de l'hébergeur | idem, rotation documentée |
+| Base PostgreSQL | locale | base dédiée | base dédiée |
+| Données | synthétiques | synthétiques | réelles (après revue juridique et validation de `docs/pilot.md`) |
+| Secrets | `.env.local` | gestionnaire de secrets / environnement du service | idem, rotation documentée |
+| E-mails | `outbox` | `resend` (domaine de test) | `resend` |
 
-Ne partagez **aucune** clé entre environnements. Pas de données de production en préproduction.
+Ne partagez **aucun** secret entre environnements. Pas de données de production en préproduction.
 
 ## Déploiement *(non vérifié, aucun déploiement n'a été effectué)*
 
-1. Hébergeur Node (ex. Vercel) : variables ci-dessus ; `DATABASE_URL` = **pooler transactionnel** (port 6543, SSL actif ; l'app utilise `prepare: false`).
-2. Désactiver la **Data API** (PostgREST) du projet Supabase : elle n'est pas utilisée.
-3. Auth : activer la confirmation d'e-mail, mots de passe ≥ 12, URL de redirection = `SITE_URL/auth/callback`, SMTP personnalisé (limites du SMTP par défaut très basses).
-4. Planifier `POST $SITE_URL/api/cron/purge` (en-tête `Authorization: Bearer $CRON_SECRET`) **chaque jour** — c'est la purge de rétention (docs/privacy-gdpr.md).
-5. Derrière un proxy/CDN, s'assurer que `X-Forwarded-For` est **écrasé** par le proxy (la limitation de débit par IP s'y fie).
-6. Sauvegardes : activer les sauvegardes quotidiennes + PITR du projet ; **tester une restauration** avant la mise en production.
+1. Processus Node (≥ 22) sous un utilisateur système dédié, `next start` écoutant sur `127.0.0.1` seulement.
+2. Reverse proxy (Nginx) terminant TLS et **écrasant** `X-Real-IP` / `X-Forwarded-For` : exemple non appliqué dans `ops/nginx-self-hosted.example.conf`. Critères N1–N6 de `docs/self-hosted-auth.md` §9 à valider.
+3. PostgreSQL en écoute locale uniquement (jamais sur Internet), base et rôles dédiés ; `pg_hba.conf` restreint.
+4. Planifier chaque jour `POST $SITE_URL/api/cron/purge` (en-tête `Authorization: Bearer $CRON_SECRET`) — purge de rétention métier **et** des sessions/jetons d'authentification expirés.
+5. Sauvegardes chiffrées hors du serveur, **secret de session séparé**, restauration testée avant la production.
 
 ## Dépannage
 
 - `Configuration invalide ou incomplète : …` : une variable d'environnement manque (seuls les noms sont affichés).
 - `permission denied for table …` côté app : normal si une requête n'est pas passée par `withUser()` (voir `src/server/db/client.ts`) — c'est le garde-fou voulu.
+- Les liens de confirmation n'arrivent pas : avec `MAIL_PROVIDER=outbox`, ouvrir `MAIL_OUTBOX_FILE` ; avec `resend`, voir les journaux (`auth.mail_failed`, sans donnée personnelle) et le tableau de bord du fournisseur.
 - `embedded-postgres` refuse de démarrer en administrateur : lancer les tests avec un utilisateur normal.

@@ -25,3 +25,6 @@ test-results/
 *.pem
 *.key
 .claude/
+
+# Boîte d'envoi d'e-mails de développement (liens à usage sensible)
+.dev-outbox.jsonl

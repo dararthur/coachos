@@ -5,6 +5,7 @@ export const SECRET_PATTERNS = [
   { name: "clé privée", re: /-----BEGIN (?:RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY-----/ },
   { name: "jeton JWT (3 segments base64url)", re: /\beyJ[A-Za-z0-9_-]{15,}\.eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{10,}/ },
   { name: "clé secrète Supabase", re: /\bsb_secret_[A-Za-z0-9_-]{10,}/ },
+  { name: "clé API Resend", re: /\bre_[A-Za-z0-9]{8,}_[A-Za-z0-9]{16,}\b|\bre_[A-Za-z0-9]{24,}\b/ },
   { name: "clé AWS", re: /\bAKIA[0-9A-Z]{16}\b/ },
   { name: "jeton GitHub", re: /\bgh[pousr]_[A-Za-z0-9]{30,}\b/ },
   { name: "clé API Stripe/OpenAI/Anthropic", re: /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{16,}\b|\bsk-(?:ant-)?[A-Za-z0-9_-]{30,}\b/ },

@@ -4,8 +4,8 @@ Résumé des contrôles **implémentés**, de l'endroit où ils sont prouvés, e
 
 ## Modèle d'accès aux données
 
-1. **Le navigateur n'accède jamais à la base ni à Supabase** : toutes les lectures/écritures passent par des Server Components, Server Actions ou Route Handlers. Aucune clé n'est exposée au client (`NEXT_PUBLIC_*` n'est pas utilisé). La clé `service_role` n'est utilisée nulle part.
-2. **Le serveur se connecte avec `app_server`**, un rôle `NOINHERIT` sans aucun privilège sur les tables. Chaque requête utilisateur s'exécute dans une transaction qui fait `SET LOCAL ROLE authenticated` et pose `request.jwt.claims` (identité vérifiée auprès de Supabase Auth via `getUser()`). **La RLS PostgreSQL est donc la seule autorité** : oublier `withUser()` produit `permission denied`, pas une fuite.
+1. **Le navigateur n'accède jamais à la base** : toutes les lectures/écritures passent par des Server Components, Server Actions ou Route Handlers. Aucune clé n'est exposée au client (`NEXT_PUBLIC_*` n'est pas utilisé). La clé `service_role` n'est utilisée nulle part.
+2. **Le serveur se connecte avec `app_server`**, un rôle `NOINHERIT` sans aucun privilège sur les tables. Chaque requête utilisateur s'exécute dans une transaction qui fait `SET LOCAL ROLE authenticated` et pose `request.jwt.claims` (identité validée côté serveur par Better Auth : session lue en base, signature du cookie vérifiée). **La RLS PostgreSQL est donc la seule autorité** : oublier `withUser()` produit `permission denied`, pas une fuite.
 3. **Isolation multi-tenant dans le schéma** : toute table tenant porte `academy_id NOT NULL` ; les références entre tables utilisent des **clés étrangères composites `(id, academy_id)`** (une séance de A ne peut pas référencer un type de cours de B, même avec un UUID forgé) ; `academy_id` est immuable (trigger + privilèges de colonnes).
 4. **Moindre privilège** : `anon` n'a aucun privilège ; `authenticated` n'a que des `GRANT` colonne par colonne ; pas de `INSERT/DELETE` direct sur `academies`, `academy_memberships`, `audit_events` (fonctions `SECURITY DEFINER` à `search_path` vide qui re-vérifient le rôle). `created_by`, `recorded_by` et l'horodatage de l'attestation de majorité sont imposés par la base.
 5. **Autorisation en trois couches** : `requireAcademy()` / `authorizeAcademy()` (membre + permission, 404 pour un non-membre), matrice `src/domain/roles.ts`, RLS. `tests/db/roles-workflows.test.ts` vérifie que la matrice applicative et la base **donnent la même réponse** pour chaque rôle.
@@ -24,17 +24,23 @@ Résumé des contrôles **implémentés**, de l'endroit où ils sont prouvés, e
 | CSV malveillant, formules, binaire, doublons | `tests/unit/csv-import.test.ts`, `tests/unit/domain.test.ts`, e2e |
 | Injection SQL | requêtes paramétrées exclusivement (aucune concaténation) ; `tests/db/repositories.test.ts` |
 | Pointage QR : jetons devinés/expirés/révoqués/rejoués, double scan et concurrence, pointer pour autrui, forger `source`, oracle d'existence, isolation entre clubs | `tests/db/checkin.test.ts` (17 cas), `tests/unit/checkin.test.ts`, `tests/e2e/qr-checkin.spec.ts` ; détail dans `docs/qr-checkin.md` |
-| Configuration de préproduction (rôle, RLS, pooler, Auth) | `tests/db/preflight.test.ts` ; `npm run pilot:preflight` (jamais exécuté contre un vrai projet Supabase) |
+| Configuration de préproduction (rôles, RLS, authentification fermée, secrets, e-mail) | `tests/db/preflight.test.ts` ; `npm run pilot:preflight` (jamais exécuté contre l'environnement de préproduction) |
+| Better Auth sur PostgreSQL réel : parcours, jetons falsifiés/expirés/rejoués, révocation des sessions, limites de débit (HTTP et `auth.api`, concurrence), IP pseudonymisées, jetons hachés, journaux sans fuite sur exception SQL, schéma versionné, privilèges, invitation, suppression | `tests/db/auth-integration.test.ts` (20 cas), `tests/db/migrations-replay.test.ts`, `tests/unit/mail.test.ts` |
+| Parcours d'authentification dans un vrai navigateur (confirmation, récupération, changement/suppression de compte, abus, surface HTTP, contrôle d'origine) | `tests/e2e/auth-flows.spec.ts` |
 | Secrets versionnés | `npm run audit:secrets`, gitleaks en CI |
 
 Un bug réel a été trouvé et corrigé par ces tests : `NULL NOT IN (...)` laissait un non-membre passer la garde de `create_invitation`/`set_member_role` (corrigé par `coalesce`).
 
 ## Authentification et session
 
-- Supabase Auth via `@supabase/ssr` ; cookies de session **HttpOnly**, `SameSite=Lax`, `Secure` en production ; identité toujours revérifiée côté serveur (`auth.getUser()`).
-- Mots de passe ≥ 12 caractères (config Auth + validation) ; messages de connexion identiques pour compte inconnu / mauvais mot de passe ; réinitialisation sans énumération de comptes.
-- Redirections (`next`) limitées aux chemins internes (`safeNext`).
-- Invitations : jeton aléatoire 256 bits, **seul le hachage SHA-256 est stocké**, 7 jours, usage unique, liée à l'e-mail **confirmé** du compte.
+Détail, risques et limites : [`docs/self-hosted-auth.md`](self-hosted-auth.md).
+
+- Better Auth (sessions en base, PostgreSQL) ; cookie de session **HttpOnly**, `SameSite=Lax`, `Secure` dès que `SITE_URL` est en https (préfixe `__Secure-`) ; valeur signée par HMAC (`BETTER_AUTH_SECRET`) ; identité toujours revalidée côté serveur (session lue en base à chaque requête, sans cache de cookie : révocation immédiate).
+- Mots de passe ≥ 12 caractères ; connexion refusée tant que l'e-mail n'est pas confirmé ; messages de connexion identiques pour compte inconnu / mauvais mot de passe ; inscription et réinitialisation sans énumération de comptes.
+- La réinitialisation et le changement de mot de passe **révoquent les autres sessions** ; le lien de réinitialisation est à usage unique (1 h) et son identifiant est haché en base ; le lien de vérification (24 h) ne connecte jamais automatiquement.
+- Redirections (`next`) limitées aux chemins internes (`safeNext`). Surface HTTP de Better Auth réduite (14 chemins désactivés) ; contrôle d'origine sur les requêtes portant un cookie.
+- Invitations : jeton aléatoire 256 bits, **seul le hachage SHA-256 est stocké**, 7 jours, usage unique, liée à l'e-mail **confirmé** du compte (`email_verified`).
+- **Risque résiduel documenté : les jetons de session sont stockés en clair dans `auth.sessions`** (aucune option documentée de hachage dans Better Auth ; aucune modification interne non documentée n'a été introduite). Le cookie exige la signature HMAC, donc une copie de la base seule ne permet pas de détourner une session ; **le secret de session ne doit jamais être stocké avec la base ni ses sauvegardes** (`docs/self-hosted-auth.md` §4).
 
 ## Protection des requêtes
 
@@ -43,17 +49,17 @@ Un bug réel a été trouvé et corrigé par ces tests : `NULL NOT IN (...)` lai
 - **Caméra** : `Permissions-Policy: camera=(self)` uniquement sur `/checkin` (posé par `src/proxy.ts`), `camera=()` partout ailleurs ; micro, géolocalisation, paiement, USB interdits partout.
 - **En-têtes** : `X-Frame-Options: DENY`, `frame-ancestors 'none'`, `nosniff`, HSTS, `Referrer-Policy`, `Permissions-Policy`, `Cache-Control: no-store` sur les exports.
 - **CORS** : aucune route n'émet d'en-tête CORS (même origine uniquement).
-- **Limitation de débit** : compteurs en base (valables en serverless), clés pseudonymisées par HMAC ; connexion, inscription, réinitialisation, invitations, import, exports, effacement, suppression de compte, plafond d'écritures par utilisateur. Échec **fermé** si le compteur est indisponible.
+- **Limitation de débit** : compteurs atomiques en base, clés pseudonymisées par HMAC (aucune IP ni e-mail en clair) ; connexion, inscription, réinitialisation, vérification (hook Better Auth : HTTP **et** appels serveur `auth.api`), invitations, import, exports, effacement, suppression de compte, plafond d'écritures par utilisateur. Échec **fermé** si le compteur est indisponible.
 - **Erreurs** : jamais de SQL ni de message interne vers l'UI (`AppError` + codes stables) ; journaux JSON redactés (`src/server/logger.ts`) sans mot de passe, jeton, e-mail ni nom.
 - **Import CSV** : 1 Mo / 2 000 lignes max, UTF-8 strict, schéma validé ligne par ligne, rejet des guillemets non fermés, des caractères de contrôle et des préfixes `= + - @`, dates strictes (jour d'abord, `31/02` rejeté), doublons internes et existants ignorés, **revalidation complète côté serveur** à la confirmation, colonnes inconnues non conservées.
 - **Export CSV** : toutes les cellules texte entre guillemets, préfixe `'` contre l'injection de formules, BOM UTF-8, nom de fichier assaini, exports journalisés (compteurs uniquement).
 
 ## Limites connues et risques restants
 
-1. **Supabase Auth non testé de bout en bout** : l'e2e utilise un faux GoTrue. À valider sur un projet Supabase réel (confirmation d'e-mail, reset, refresh, limites SMTP).
-2. **Pooler / rôle `app_server` sur Supabase hébergé non testés** (voir `docs/setup.md`) ; si le pooler refusait `set_config('role')`, utiliser la connexion directe.
-3. **IP client** : `X-Forwarded-For` est cru tel quel ; à déployer derrière un proxy qui l'écrase. La limite par e-mail reste efficace sans cela.
-4. **Pas de MFA**, pas de verrouillage de compte au-delà des limites de débit, pas de détection de mots de passe compromis côté application (Supabase offre HIBP en option payante).
+1. **Architecture auto-hébergée non validée en production** : Nginx réel, HTTPS public, envoi réel d'e-mails (adaptateur Resend jamais exécuté), PostgreSQL du serveur et critères N1 à N6 restent à valider (`docs/self-hosted-auth.md` §9, `docs/pilot.md`).
+2. **Jetons de session en clair en base** (voir ci-dessus) : à accepter explicitement, avec la séparation du secret et des sauvegardes.
+3. **IP client** : lue dans `X-Real-IP`, que le reverse proxy de confiance doit **écraser** ; sans cela la limite par IP est contournable (testé et documenté) ; la limite par e-mail reste efficace. IPv6 : un /64 permet de changer d'IP à volonté.
+4. **Pas de MFA**, pas de verrouillage de compte au-delà des limites de débit, pas de détection de mots de passe compromis.
 5. **Pas de rôle « opérateur plateforme »** : l'accès support aux données d'un club n'est pas implémenté (et n'est donc pas accordé implicitement).
 6. **Données dérivées** : les séances annulées/supprimées et statistiques ne sont pas chiffrées au niveau applicatif (chiffrement au repos géré par l'hébergeur de la base).
 7. Audit d'accessibilité : contrôles automatisés (axe) et clavier de base seulement ; pas d'audit manuel avec lecteur d'écran.

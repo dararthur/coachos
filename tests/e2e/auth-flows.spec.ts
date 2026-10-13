@@ -1,7 +1,8 @@
+import { randomUUID } from "node:crypto";
 import { createClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, waitForMail } from "./support/helpers";
 import type { Page } from "@playwright/test";
 
-const NEW_PASSWORD = "nouveau-mot-de-passe-e2e-42";
+const NEW_PASSWORD = `e2e-nouveau-${randomUUID()}`; // jetable, généré à chaque exécution
 const SESSION_COOKIE = /better-auth\.session_token/;
 
 async function register(page: Page, email: string) {

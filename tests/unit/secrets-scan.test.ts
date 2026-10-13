@@ -5,6 +5,11 @@ import { isForbiddenFile, scanText } from "../../scripts/lib/secret-patterns.mjs
 const find = (text: string): { name: string }[] => scanText(text);
 
 describe("détection de secrets", () => {
+  it("détecte une clé API Resend (valeur factice construite à la volée)", () => {
+    expect(find("RESEND_KEY=" + "re_" + "A".repeat(30)).length).toBeGreaterThan(0);
+    expect(find("RESEND_API_KEY=").length).toBe(0);
+  });
+
   it("détecte des secrets typiques (valeurs factices construites à la volée)", () => {
     const fakeJwt = ["eyJ" + "a".repeat(20), "eyJ" + "b".repeat(20), "c".repeat(20)].join(".");
     expect(find(`token = ${fakeJwt}`).length).toBeGreaterThan(0);

@@ -1,6 +1,6 @@
 # Coach OS
 
-> **Application (branche `feature/mvp-vertical-slice`)** — SaaS multi-tenant de gestion de club (JJB, grappling, MMA) : Next.js 16 · TypeScript strict · Tailwind · PostgreSQL/Supabase avec RLS. Premier parcours utilisable de bout en bout : compte → club → membres (saisie + import CSV validé) → cours et planning → appel → tableau de bord → historique et exports → droits RGPD.
+> **Application (branche `feature/self-hosted-infra`)** — SaaS multi-tenant de gestion de club (JJB, grappling, MMA) : Next.js 16 · TypeScript strict · Tailwind · PostgreSQL standard avec RLS · Better Auth (auto-hébergé). Premier parcours utilisable de bout en bout : compte → club → membres (saisie + import CSV validé) → cours et planning → appel → tableau de bord → historique et exports → droits RGPD.
 >
 > ```bash
 > npm ci

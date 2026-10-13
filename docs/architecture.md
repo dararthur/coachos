@@ -1,6 +1,6 @@
 # Architecture de l'application
 
-Monolithe modulaire Next.js 16 (App Router) + PostgreSQL/Supabase. Complète `PRODUCT_ARCHITECTURE.md` (vision) par ce qui est **réellement implémenté**.
+Monolithe modulaire Next.js 16 (App Router) + PostgreSQL standard + Better Auth (auto-hébergeables). Complète `PRODUCT_ARCHITECTURE.md` (vision) par ce qui est **réellement implémenté**.
 
 ## Structure
 
@@ -15,14 +15,14 @@ src/
     errors.ts          codes d'erreur stables et ActionResult
   server/            exécuté côté serveur uniquement (import "server-only")
     db/client.ts       withUser() : transaction soumise à la RLS ; withApp() ; mapDbError()
-    auth/              client Supabase Auth (cookies), gardes d'autorisation, runAction()
+    auth/              Better Auth (factory, instance, session), gardes d'autorisation, runAction()
     repositories/      requêtes SQL paramétrées par domaine (une fonction = une requête)
     actions/           Server Actions : autorisent, valident, appellent un dépôt, renvoient un ActionResult
     rate-limit.ts, logger.ts, env.ts
   components/ui, layout   primitives accessibles (formulaires, dialogues <dialog>, tableaux)
   app/                 routes : (auth), onboarding, academies, account, a/[academyId]/*
   proxy.ts             rafraîchissement de session + CSP à nonce
-supabase/migrations/   schéma, RLS, fonctions (versionnés)
+db/migrations/         socle de plateforme, schéma, RLS, fonctions (versionnés)
 tests/{unit,db,e2e,support}
 ```
 
@@ -30,7 +30,7 @@ Flux d'une écriture : `Server Action` → `authorizeAcademy(id, permission)` (s
 
 ## Décisions
 
-- **SQL direct plutôt que PostgREST** (`postgres.js`, rôle `app_server` → `SET LOCAL ROLE authenticated`) : mêmes politiques RLS que le client Supabase, mais transactions multi-étapes, requêtes typées, et surtout **tests d'intégration exécutables sans Docker** sur un vrai PostgreSQL. Compromis : une connexion base à protéger (rôle sans privilège, pooler transactionnel) et l'obligation de passer par `withUser()` — imposée par les privilèges, pas par la discipline.
+- **SQL direct plutôt que PostgREST** (`postgres.js`, rôle `app_server` → `SET LOCAL ROLE authenticated`) : politiques RLS conservées, mais transactions multi-étapes, requêtes typées, et surtout **tests d'intégration exécutables sans Docker** sur un vrai PostgreSQL. Compromis : une connexion base à protéger (rôle sans privilège, pooler transactionnel) et l'obligation de passer par `withUser()` — imposée par les privilèges, pas par la discipline.
 - **Fonctions `SECURITY DEFINER` seulement quand la règle dépasse la RLS** (création d'académie, hiérarchie des rôles, invitations, effacement/export) ; chacune re-vérifie l'appelant et fixe `search_path = ''`.
 - **Pas de bibliothèque de composants** : primitives maison minimales (≈ 600 lignes) construites sur des éléments natifs (`<dialog>`, `<select>`, validation HTML) pour l'accessibilité et la CSP stricte.
 - **Français uniquement** pour l'instant ; les libellés métier sont regroupés (`domain/*`), l'internationalisation viendra avec un second marché (voir questions ouvertes dans `PRODUCT_ARCHITECTURE.md`).

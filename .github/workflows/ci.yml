@@ -59,18 +59,34 @@ jobs:
             test-results/
           retention-days: 7
 
-  supabase-migrations:
-    name: Migrations sur la pile Supabase officielle
+  postgres-migrations:
+    name: Migrations rejouées sur PostgreSQL 17 standard (deux fois, depuis zéro)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: ci-jetable-sans-valeur
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      PGPASSWORD: ci-jetable-sans-valeur
     steps:
       - uses: actions/checkout@v4
-      - uses: supabase/setup-cli@v1
-        with: { version: latest }
-      - name: Démarrer Supabase (Postgres + Auth) et rejouer toutes les migrations
-        run: supabase start -x realtime,storage-api,imgproxy,edge-runtime,logflare,vector,studio,postgres-meta,mailpit
-      - name: Rejouer depuis zéro (reproductibilité)
-        run: supabase db reset
-      - name: Lint SQL
-        run: supabase db lint --level warning --fail-on error
-      - run: supabase stop --no-backup
-        if: always()
+      - name: Rejouer toutes les migrations sur deux bases vierges (reproductibilité)
+        run: |
+          for db in coachos_a coachos_b; do
+            psql -h localhost -U postgres -v ON_ERROR_STOP=1 -q -c "create database $db"
+            for f in db/migrations/*.sql; do
+              echo "== $db : $f"
+              psql -h localhost -U postgres -d "$db" -v ON_ERROR_STOP=1 -q -f "$f"
+            done
+          done
+      - name: Invariants de sécurité (RLS partout, rôles sans privilège excessif, tables d'authentification fermées)
+        run: |
+          q() { psql -h localhost -U postgres -d coachos_a -tAq -c "$1"; }
+          test "$(q "select count(*) from pg_tables where schemaname = 'public' and not rowsecurity")" = "0"
+          test "$(q "select count(*) from pg_roles where rolname in ('app_server','auth_runtime','anon','authenticated') and (rolsuper or rolbypassrls or rolcreaterole or rolcreatedb)")" = "0"
+          test "$(q "select count(*) from information_schema.role_table_grants where table_schema = 'auth' and grantee not in ('auth_runtime','postgres')")" = "0"
+          test "$(q "select count(*) from pg_tables where schemaname = 'auth'")" = "4"

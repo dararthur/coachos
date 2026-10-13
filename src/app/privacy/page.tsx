@@ -65,7 +65,7 @@ export default function PrivacyPage() {
 
       <section>
         <h2 className="text-lg font-semibold">Hébergement et sous-traitants</h2>
-        <p>[Hébergeur de l&apos;application, fournisseur de base de données et d&apos;authentification (Supabase), région d&apos;hébergement UE, éventuels transferts hors UE et garanties : à compléter.] Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;IA.</p>
+        <p>[Hébergeur de l&apos;application, base de données PostgreSQL et authentification auto-hébergées, fournisseur d&apos;e-mails transactionnels (stockage aux États-Unis, conservation de 30 jours du contenu des e-mails), région d&apos;hébergement UE, éventuels transferts hors UE et garanties : à compléter.] Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;IA.</p>
       </section>
     </main>
   );
