@@ -24,6 +24,12 @@ export const ERROR_MESSAGES = {
   session_cancelled: "Cette séance est annulée : les présences ne peuvent plus être enregistrées.",
   person_archived: "Ce membre est archivé : restaurez-le avant d'enregistrer une présence.",
   session_has_attendance: "Cette séance contient des présences : annulez-la plutôt que de la supprimer.",
+  checkin_invalid: "Ce QR code n'est plus valide. Demandez au coach d'afficher le QR code actuel et scannez-le à nouveau.",
+  checkin_no_profile: "Votre compte n'est lié à aucune fiche membre active de ce club : demandez au coach de vous rattacher.",
+  checkin_closed: "Le pointage n'est pas ouvert pour cette séance.",
+  checkin_too_early: "Le pointage ne peut pas encore être ouvert pour cette séance.",
+  checkin_too_late: "Cette séance est terminée depuis trop longtemps pour ouvrir le pointage.",
+  roll_validated: "La feuille d'appel est validée : rouvrez-la pour modifier le pointage.",
   payload_too_large: "Le fichier est trop volumineux.",
   internal: "Une erreur inattendue est survenue. Réessayez ; si le problème persiste, contactez le support.",
 } as const;

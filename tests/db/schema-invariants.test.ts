@@ -71,8 +71,9 @@ describe("invariants du schéma", () => {
       select distinct p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'execute') order by 1`;
     expect(rows.map((r) => r.proname)).toEqual([
-      "accept_invitation", "create_academy", "create_invitation", "delete_academy", "delete_my_account", "erase_person",
-      "export_my_data", "export_person_data", "record_event", "remove_member", "set_member_role",
+      "accept_invitation", "checkin_close", "checkin_issue_token", "checkin_open", "checkin_peek", "checkin_redeem",
+      "create_academy", "create_invitation", "delete_academy", "delete_my_account", "erase_person",
+      "export_my_data", "export_person_data", "record_event", "remove_member", "roll_set_validated", "set_member_role",
     ]);
   });
 
