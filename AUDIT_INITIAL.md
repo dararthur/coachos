@@ -65,3 +65,27 @@ The README explicitly says the immediate experiment is whether a coach changes t
 This audit was conducted by reading GitHub files via the connected integration. The code was not cloned or executed in a local Node.js environment during this review, so findings above are static-analysis observations, not a claim that runtime tests passed or failed.
 
 No files on `main` were changed. This report is committed only to branch `audit/initial`.
+
+
+## Additional findings from line-by-line static review
+
+11. **Multiple classes on one day are collapsed.** `loadAttendance` stores attendance timestamps as date-only values and then deduplicates them with `new Set(dates)`. The detected class/program column is not used in attendance counting. A member who attends two sessions on the same date therefore counts as one class for `totalClasses` and the weekly frequency calculations. This can distort the very behavior signals the brief depends on. Decide whether metrics mean unique attendance days or actual sessions; the documented intent says classes/week, so session-level deduplication (stable event ID, or date + program/class where appropriate) is likely needed.
+12. **Invalid explicit reference dates are not rejected.** `--date` uses `parseDate`, which may return `null` for an invalid input; the script does not fail fast before calculations and output generation. ISO and numeric-form dates also need calendar-bound validation to avoid JavaScript date normalization.
+13. **Ambiguous date imports are unsafe by default for French exports.** When every numeric date is ambiguous (e.g. all dates have day and month <= 12), `inferDayFirst` returns false and silently interprets the data month-first. A French/European export can therefore have systematically incorrect dates without an error. Add an explicit option to select DMY/MDY and fail/warn when ambiguity cannot be resolved.
+14. **Custom feedback input is inconsistently handled.** The `--feedback` path is used when reading feedback, but new rows are still appended to the default feedback path. Either append back to the selected file or make the CLI read-only for custom feedback paths.
+15. **CSV output needs a complete serializer.** The current feedback writer places the student ID unquoted and the name in quotes without escaping embedded double quotes/newlines. Use a tested CSV serializer or escape fields correctly. Keep names and identifiers treated as untrusted input.
+16. **The checked-in ignore policy deserves tightening.** `.gitignore` correctly ignores most attendance CSVs but explicitly re-includes `v0/data/weird-export.csv`. The current sample appears to follow the same synthetic ID/name pattern as the demo generator, but the broad exception is an avoidable future footgun: prefer a clearly named synthetic fixture and a documented synthetic-data allowlist only.
+17. **No execution-based verification has been completed.** These are static findings only. They should be reproduced using Node >= 18 and isolated temporary directories before code fixes are made.
+
+## Suggested first engineering ticket
+
+**Ticket: characterize and harden attendance import.** Before adding web UI, build automated tests around CSV parsing, date parsing and attendance granularity. This is P0 because all subsequent retention signals rely on the import being correct.
+
+Acceptance criteria:
+- DMY and MDY date formats are explicitly configurable; ambiguous input cannot silently flip.
+- Impossible dates and invalid `--date` arguments fail with actionable errors.
+- Multiple sessions on one day are counted according to a documented rule, tested with fixtures.
+- Quoted commas, escaped quotes, embedded newlines, UTF-8 BOM, semicolon and tab delimiters have tests.
+- Feedback CSV handles commas, quotes, CR/LF and unusual IDs without corrupting rows.
+- Running twice for the same fixed reference date is deterministic apart from generated-at metadata; history does not silently double-count.
+- Tests only use invented members and fixtures.
