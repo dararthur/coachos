@@ -1,3 +1,18 @@
+# Coach OS
+
+> **Application (branche `feature/mvp-vertical-slice`)** — SaaS multi-tenant de gestion de club (JJB, grappling, MMA) : Next.js 16 · TypeScript strict · Tailwind · PostgreSQL/Supabase avec RLS. Premier parcours utilisable de bout en bout : compte → club → membres (saisie + import CSV validé) → cours et planning → appel → tableau de bord → historique et exports → droits RGPD.
+>
+> ```bash
+> npm ci
+> npm run check            # types, lint, tests unitaires + base de données (PostgreSQL réel), scan de secrets
+> PW_CHANNEL=chrome npm run test:e2e   # parcours complet dans un navigateur (build inclus)
+> ```
+>
+> Documentation : [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md), audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
+> Le CLI de brief hebdomadaire (`v0/`) reste un moteur autonome, non branché à l'application.
+
+---
+
 # CoachOS — nom de code interne
 
 > **Le nom public sera choisi quand 3 coachs utiliseront le produit.** Pas avant.
