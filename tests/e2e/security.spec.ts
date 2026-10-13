@@ -225,3 +225,57 @@ test("séances : un membre sans club voit l'état vide, pas de données de démo
   await expect(page.getByText("Aucune séance aujourd'hui").first()).toBeVisible();
   void parisToday;
 });
+
+test("rôle membre : espace personnel limité, aucune page de gestion, ne voit que ses présences", async ({ browser }) => {
+  const owner = await newUser(browser, "proprio");
+  const club = await createClub(owner.page, "Club Membres");
+  // fiche liée au futur compte + une autre fiche (dont les données ne doivent jamais apparaître au membre)
+  for (const [first, last] of [["Mia", "Adhérente"], ["Zed", "Autre-Secret"]] as const) {
+    await owner.page.goto(`/a/${club}/members/new`);
+    await owner.page.getByLabel("Prénom").fill(first);
+    await owner.page.getByRole("textbox", { name: "Nom", exact: true }).fill(last);
+    await owner.page.getByLabel("Je confirme que ce membre est majeur.").check();
+    await owner.page.getByRole("button", { name: "Créer le membre" }).click();
+    await expect(owner.page.getByRole("heading", { name: `${first} ${last}` })).toBeVisible();
+  }
+  await owner.page.goto(`/a/${club}/schedule/new`);
+  await owner.page.getByLabel("Date de la première séance").fill(parisToday());
+  await owner.page.getByRole("button", { name: "Créer" }).click();
+  await expect(owner.page.getByText("Création effectuée")).toBeVisible();
+  await owner.page.goto(`/a/${club}/attendance`);
+  await owner.page.getByRole("link", { name: "Faire l'appel" }).first().click();
+  await owner.page.getByRole("group", { name: "Présence de Mia Adhérente" }).getByRole("button", { name: "Présent", exact: true }).click();
+  await owner.page.getByRole("group", { name: "Présence de Zed Autre-Secret" }).getByRole("button", { name: "Présent", exact: true }).click();
+  await expect(owner.page.getByText(/2 présents/)).toBeVisible();
+
+  const member = await newUser(browser, "adherente");
+  await owner.page.goto(`/a/${club}/settings`);
+  const team = owner.page.getByRole("region", { name: "Équipe" });
+  await team.getByLabel("E-mail").fill(member.email);
+  await team.getByRole("combobox", { name: "Rôle", exact: true }).selectOption("member");
+  await team.getByRole("combobox", { name: "Fiche membre liée" }).selectOption({ label: "Adhérente Mia" });
+  await team.getByRole("button", { name: "Créer le lien d'invitation" }).click();
+  const invitePath = new URL(await owner.page.getByLabel("Lien d'invitation").inputValue()).pathname;
+
+  await member.page.goto(invitePath);
+  await member.page.getByRole("button", { name: "Accepter l'invitation" }).click();
+  await expect(member.page).toHaveURL(new RegExp(`/a/${club}/me`));
+  await expect(member.page.getByRole("heading", { name: "Mon espace" })).toBeVisible();
+  const nav = member.page.getByRole("navigation", { name: "Navigation principale" });
+  await expect(nav.getByRole("link", { name: "Planning" })).toBeVisible();
+  for (const hidden of ["Membres", "Présences", "Rapports", "Paramètres", "Tableau de bord"]) await expect(nav.getByRole("link", { name: hidden })).toHaveCount(0);
+
+  // ses propres présences uniquement
+  await expect(member.page.getByRole("cell", { name: "Présent" })).toHaveCount(1);
+  await expect(member.page.getByText("Autre-Secret")).toHaveCount(0);
+  for (const path of ["members", "attendance", "reports", "settings", "schedule/new", "members/new"]) {
+    await member.page.goto(`/a/${club}/${path}`);
+    await expect(member.page).toHaveURL(new RegExp(`/a/${club}/forbidden`));
+  }
+  for (const path of ["members/export", "reports/export"]) expect((await member.page.request.get(`/a/${club}/${path}`)).status()).toBe(403);
+  await member.page.goto(`/a/${club}/schedule`);
+  await expect(member.page.getByRole("link", { name: "Modifier" })).toHaveCount(0);
+
+  await owner.context.close();
+  await member.context.close();
+});
