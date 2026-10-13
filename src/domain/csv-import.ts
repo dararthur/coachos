@@ -51,7 +51,6 @@ export function normalizeHeader(header: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
-// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 const FORMULA_START = /^[=+\-@]/;
 

@@ -31,7 +31,6 @@ const optional = <T extends z.ZodType>(schema: T) => z.preprocess(emptyToUndefin
 
 // Lettres (toutes langues), marques, chiffres, espace, apostrophe, point, tiret. Refuse <, >, =, @, etc.
 const NAME_PATTERN = /^[\p{L}\p{M}][\p{L}\p{M}\p{N} '’.-]*$/u;
-// eslint-disable-next-line no-control-regex
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/;
 
 export const nameField = (label: string) =>
