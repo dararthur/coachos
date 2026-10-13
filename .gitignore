@@ -28,3 +28,7 @@ test-results/
 
 # Boîte d'envoi d'e-mails de développement (liens à usage sensible)
 .dev-outbox.jsonl
+
+# Impeccable : fichiers de travail locaux (page de décision, captures de revue)
+.impeccable/questions/
+.impeccable/review/

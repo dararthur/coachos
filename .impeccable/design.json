@@ -1,0 +1,401 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-13T22:22:07.868Z",
+  "title": "Design System: Matnexa",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Coton",
+        "tonalRamp": [
+          "#2b2925",
+          "#4a4640",
+          "#6b665e",
+          "#8f897f",
+          "#b3ada3",
+          "#d4cfc6",
+          "#eae7e1",
+          "#f4f2ee"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Blanc panneau"
+      },
+      "sunken": {
+        "role": "neutral",
+        "displayName": "Retrait"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Filet"
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Filet fort"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Encre",
+        "tonalRamp": [
+          "#16191d",
+          "#2c3036",
+          "#43484f",
+          "#585d64",
+          "#7a7f86",
+          "#a3a9b1",
+          "#cfd2d6",
+          "#eef0f2"
+        ]
+      },
+      "ink-soft": {
+        "role": "neutral",
+        "displayName": "Encre douce"
+      },
+      "ink-faint": {
+        "role": "neutral",
+        "displayName": "Encre pâle (indicatif)"
+      },
+      "bar": {
+        "role": "neutral",
+        "displayName": "Barre noire"
+      },
+      "bar-raised": {
+        "role": "neutral",
+        "displayName": "Barre relevée"
+      },
+      "bar-text": {
+        "role": "neutral",
+        "displayName": "Texte de barre"
+      },
+      "bar-muted": {
+        "role": "neutral",
+        "displayName": "Texte de barre atténué"
+      },
+      "accent": {
+        "role": "primary",
+        "displayName": "Orange ceinture",
+        "tonalRamp": [
+          "#5c1e06",
+          "#7c2d0b",
+          "#9a3412",
+          "#c2410c",
+          "#ea6a2a",
+          "#f59a6a",
+          "#f8d3bd",
+          "#fbeadf"
+        ]
+      },
+      "accent-strong": {
+        "role": "primary",
+        "displayName": "Orange ceinture appuyé"
+      },
+      "accent-bright": {
+        "role": "primary",
+        "displayName": "Orange ceinture vif (symbole)"
+      },
+      "accent-soft": {
+        "role": "primary",
+        "displayName": "Orange voile"
+      },
+      "accent-ink": {
+        "role": "primary",
+        "displayName": "Orange encre"
+      },
+      "success": {
+        "role": "semantic",
+        "displayName": "Vert présent",
+        "tonalRamp": [
+          "#0b2e1a",
+          "#14532d",
+          "#1a6a3b",
+          "#1e7a46",
+          "#3f9a63",
+          "#7cc196",
+          "#bfe0cb",
+          "#e5f2ea"
+        ]
+      },
+      "success-soft": {
+        "role": "semantic",
+        "displayName": "Vert voile"
+      },
+      "success-ink": {
+        "role": "semantic",
+        "displayName": "Vert encre"
+      },
+      "warning": {
+        "role": "semantic",
+        "displayName": "Ambre retard",
+        "tonalRamp": [
+          "#3a2002",
+          "#6b3d04",
+          "#8f4f06",
+          "#b45309",
+          "#d97a2b",
+          "#eeae6c",
+          "#f7d9ac",
+          "#fcf0d9"
+        ]
+      },
+      "warning-soft": {
+        "role": "semantic",
+        "displayName": "Ambre voile"
+      },
+      "warning-ink": {
+        "role": "semantic",
+        "displayName": "Ambre encre"
+      },
+      "danger": {
+        "role": "semantic",
+        "displayName": "Rouge absent",
+        "tonalRamp": [
+          "#3f0d09",
+          "#7a1a12",
+          "#8f1c13",
+          "#b42318",
+          "#d64a3e",
+          "#ea8a80",
+          "#f6c8c2",
+          "#fbe9e7"
+        ]
+      },
+      "danger-strong": {
+        "role": "semantic",
+        "displayName": "Rouge appuyé"
+      },
+      "danger-soft": {
+        "role": "semantic",
+        "displayName": "Rouge voile"
+      },
+      "danger-ink": {
+        "role": "semantic",
+        "displayName": "Rouge encre"
+      }
+    },
+    "typographyMeta": {
+      "figure": {
+        "displayName": "Chiffre",
+        "purpose": "Valeurs de la bande de compteurs, chasse 75 %."
+      },
+      "title": {
+        "displayName": "Titre de page",
+        "purpose": "Unique h1 de l'en-tête de page, chasse 80 %."
+      },
+      "headline": {
+        "displayName": "Titre de dialogue",
+        "purpose": "Titres des dialogues modaux."
+      },
+      "body": {
+        "displayName": "Corps",
+        "purpose": "Texte courant et champs (16 px minimum)."
+      },
+      "body-sm": {
+        "displayName": "Corps réduit",
+        "purpose": "Descriptions, texte secondaire, cellules de tableau."
+      },
+      "label": {
+        "displayName": "Libellé",
+        "purpose": "Boutons, libellés de champ, onglets, navigation."
+      },
+      "caption": {
+        "displayName": "Légende",
+        "purpose": "Badges, en-têtes de colonne, dates secondaires."
+      }
+    },
+    "shadows": [
+      {
+        "name": "overlay",
+        "value": "0 18px 40px -12px rgb(22 25 29 / 0.35), 0 2px 8px rgb(22 25 29 / 0.12)",
+        "purpose": "Dialogues modaux uniquement, sur voile rgb(22 25 29 / 0.6)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "color-fast",
+        "value": "120ms ease-out",
+        "purpose": "Bordure de champ, soulignement de lien."
+      },
+      {
+        "name": "color-standard",
+        "value": "150ms ease-out",
+        "purpose": "Fond des boutons et de la navigation."
+      },
+      {
+        "name": "reduced",
+        "value": "0.01ms",
+        "purpose": "prefers-reduced-motion : animations et transitions neutralisées."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "row",
+        "value": "480px"
+      },
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ],
+    "focusRing": {
+      "default": "outline: 2px solid #c2410c; outline-offset: 2px",
+      "onBar": "outline-color: #ffffff",
+      "field": "border-color: #16191d; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #c2410c"
+    }
+  },
+  "components": [
+    {
+      "name": "Bouton principal",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Action principale, une par écran.",
+      "html": "<button class=\"ds-btn-primary\">Faire l'appel</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border:0;border-radius:4px;background:#c2410c;color:#fff;font:600 14px/20px Archivo,system-ui,sans-serif;transition:background-color 150ms ease-out;cursor:pointer}.ds-btn-primary:hover,.ds-btn-primary:active{background:#a3360a}.ds-btn-primary:focus-visible{outline:2px solid #c2410c;outline-offset:2px}"
+    },
+    {
+      "name": "Bouton secondaire",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Action par défaut : blanc, filet d'encre.",
+      "html": "<button class=\"ds-btn-secondary\">Nouvelle séance</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1px solid rgb(22 25 29 / .8);border-radius:4px;background:#fff;color:#16191d;font:600 14px/20px Archivo,system-ui,sans-serif;transition:background-color 150ms ease-out;cursor:pointer}.ds-btn-secondary:hover,.ds-btn-secondary:active{background:#eeebe5}.ds-btn-secondary:focus-visible{outline:2px solid #c2410c;outline-offset:2px}"
+    },
+    {
+      "name": "Bouton danger",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Action destructive, derrière une confirmation.",
+      "html": "<button class=\"ds-btn-danger\">Supprimer</button>",
+      "css": ".ds-btn-danger{min-height:44px;padding:8px 16px;border:0;border-radius:4px;background:#b42318;color:#fff;font:600 14px/20px Archivo,system-ui,sans-serif;transition:background-color 150ms ease-out;cursor:pointer}.ds-btn-danger:hover{background:#8f1c13}.ds-btn-danger:focus-visible{outline:2px solid #c2410c;outline-offset:2px}"
+    },
+    {
+      "name": "Champ",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "Champ unique de tous les formulaires et filtres.",
+      "html": "<label class=\"ds-label\">Filtrer la liste<input class=\"ds-field\" placeholder=\"Nom ou prénom\"></label>",
+      "css": ".ds-label{display:block;font:600 14px/20px Archivo,system-ui,sans-serif;color:#16191d}.ds-field{display:block;box-sizing:border-box;width:100%;margin-top:6px;min-height:44px;padding:8px 12px;border:1px solid #8a8378;border-radius:4px;background:#fff;color:#16191d;font:400 16px/24px Archivo,system-ui,sans-serif;transition:border-color 120ms ease-out,box-shadow 120ms ease-out}.ds-field::placeholder{color:#6a6f76}.ds-field:hover{border-color:#585d64}.ds-field:focus-visible{outline:none;border-color:#16191d;box-shadow:0 0 0 2px #fff,0 0 0 4px #c2410c}"
+    },
+    {
+      "name": "Navigation latérale",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Barre noire ; l'élément actif est une bande blanche pleine largeur.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item is-active\" href=\"#\">Tableau de bord</a><a class=\"ds-nav-item\" href=\"#\">Membres</a><a class=\"ds-nav-item\" href=\"#\">Planning</a></nav>",
+      "css": ".ds-nav{display:flex;flex-direction:column;gap:1px;width:240px;padding:8px 0;background:#16191d}.ds-nav-item{display:flex;align-items:center;min-height:44px;padding:0 20px;color:#a3a9b1;font:600 14px/20px Archivo,system-ui,sans-serif;text-decoration:none;transition:background-color 150ms,color 150ms}.ds-nav-item:hover{background:#23272d;color:#fff}.ds-nav-item.is-active{background:#fff;color:#16191d}.ds-nav-item:focus-visible{outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Badge",
+      "kind": "chip",
+      "refersTo": "badge",
+      "description": "Bande d'état rectangulaire, jamais une pilule.",
+      "html": "<span class=\"ds-badge\">Archivé</span> <span class=\"ds-badge ds-badge-success\">Actif</span>",
+      "css": ".ds-badge{display:inline-flex;padding:2px 8px;border-radius:2px;background:#eeebe5;color:#585d64;font:600 12px/16px Archivo,system-ui,sans-serif}.ds-badge-success{background:#e5f2ea;color:#14532d}"
+    },
+    {
+      "name": "Bande de compteurs",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Un panneau divisé par des filets, jamais une rangée de cartes.",
+      "html": "<dl class=\"ds-stats\"><div><dt>Membres actifs</dt><dd>38</dd></div><div><dt>Séances aujourd'hui</dt><dd>3</dd></div><div><dt>Présences cette semaine</dt><dd>22</dd></div></dl>",
+      "css": ".ds-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:0;border:1px solid #ddd8cf;border-radius:4px;overflow:hidden;background:#ddd8cf;font-family:Archivo,system-ui,sans-serif}.ds-stats>div{background:#fff;padding:14px 16px}.ds-stats dt{font-size:14px;line-height:20px;font-weight:500;color:#585d64}.ds-stats dd{margin:6px 0 0;font-size:32px;line-height:32px;font-weight:700;font-stretch:75%;font-variant-numeric:tabular-nums;color:#16191d}"
+    },
+    {
+      "name": "Boutons de statut de l'appel",
+      "kind": "custom",
+      "description": "Présent / En retard / Absent : filet au repos, plein sémantique quand actif.",
+      "html": "<div class=\"ds-roll\"><button class=\"is-present\" aria-pressed=\"true\">Présent</button><button>En retard</button><button>Absent</button></div>",
+      "css": ".ds-roll{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;max-width:360px}.ds-roll button{min-height:44px;padding:0 12px;border:1px solid #8a8378;border-radius:4px;background:#fff;color:#16191d;font:600 14px/20px Archivo,system-ui,sans-serif;transition:background-color 100ms,border-color 100ms;cursor:pointer}.ds-roll button:hover{border-color:#16191d}.ds-roll button.is-present{border-color:#1e7a46;background:#1e7a46;color:#fff}.ds-roll button:focus-visible{outline:2px solid #c2410c;outline-offset:2px}"
+    },
+    {
+      "name": "Barrette d'assiduité",
+      "kind": "custom",
+      "description": "Signature : bandes de ruban blanc sur barre noire, une par semaine avec venue.",
+      "html": "<div class=\"ds-tally\"><span class=\"on\"></span><span class=\"on\"></span><span></span><span class=\"on\"></span><span class=\"on\"></span><span></span><span class=\"on\"></span><span class=\"on\"></span></div>",
+      "css": ".ds-tally{display:inline-flex;gap:3px;padding:4px;border-radius:2px;background:#16191d}.ds-tally>span{display:block;width:8px;height:20px;border-radius:1px;background:#3b4047}.ds-tally>span.on{background:#fff}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La Ceinture",
+    "overview": "Matnexa compte comme une ceinture : chaque présence est une bande de ruban blanc sur une barre noire. La structure est portée par la barre noire de navigation, les données sont comptées en bandes, et rien ne flotte. Fond coton chaud, panneaux blancs sur filets de 1 px, coins presque droits, un seul accent orange réservé à l'action principale et au focus.\n\nLa densité est celle d'un outil de travail : en-têtes de page compacts, lignes de liste de 44 à 56 px, chiffres tabulaires partout. Le téléphone du coach au bord du tatami est le cas prioritaire : navigation en bas, barre de progression de l'appel collée au-dessus, cibles de 44 px. Thème clair uniquement (salle éclairée, coups d'œil rapides).\n\nRefus confirmés : barre latérale teintée, rangée de cartes KPI, cartes arrondies à ombre portée.",
+    "keyCharacteristics": [
+      "Barre noire (`bar`) pour la navigation ; l'élément actif est une bande blanche pleine largeur.",
+      "Panneaux blancs, filet `line` de 1 px, coins de 4 px, aucune ombre.",
+      "Un accent orange ceinture, une seule fois par écran, pour l'action principale.",
+      "Couleurs sémantiques séparées de l'accent : vert présent, ambre retard, rouge absent.",
+      "Archivo variable : titres et chiffres condensés en gras, données en chasse normale, chiffres tabulaires.",
+      "Signature : la barrette (bandes de ruban sur barre noire) pour l'appel, l'assiduité, la nav active et le symbole."
+    ],
+    "rules": [
+      {
+        "name": "La règle de l'accent unique",
+        "body": "L'orange n'apparaît qu'une fois par écran, sur l'action principale (ex. « Faire l'appel » de la séance suivante ; les autres séances ont un bouton secondaire). Toute autre action est secondaire, fantôme ou discrète.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle des sémantiques à part",
+        "body": "Vert, ambre et rouge disent un état (présent, retard, absent, succès, avertissement, erreur) ; l'orange ne dit jamais un état et une sémantique ne sert jamais de décoration.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle des deux chasses",
+        "body": "Condensé pour titres, chiffres et heures ; chasse normale pour tout ce qui se lit en phrase. Pas de deuxième famille, pas de police système en titre.",
+        "section": "typography"
+      },
+      {
+        "name": "La règle des 16 px",
+        "body": "Tout champ de saisie fait au moins 16 px (pas de zoom iOS).",
+        "section": "typography"
+      },
+      {
+        "name": "La règle tableau / rangées",
+        "body": "Les données tabulaires sont un tableau sur grand écran et des rangées empilées (liste à filets, une ligne cliquable de 44 px et plus) en dessous de 640 px. Une liste très large peut basculer plus tôt (membres : 768 px).",
+        "section": "layout"
+      },
+      {
+        "name": "La règle sans style en ligne",
+        "body": "La CSP interdit l'attribut `style` en production (`style-src` à nonce). Les tailles calculées (barres hebdomadaires, progression de l'appel) passent par des attributs SVG ; tout le reste par classes.",
+        "section": "layout"
+      },
+      {
+        "name": "La règle rien ne flotte",
+        "body": "Aucune ombre sur panneaux, boutons, champs ou listes. Une ombre signifie « au-dessus de la page » : seuls les dialogues la portent.",
+        "section": "elevation"
+      },
+      {
+        "name": "La règle pas de carte dans la carte",
+        "body": "Un panneau ne contient jamais un autre panneau ; un tableau ou une liste posé dedans va bord à bord (variante `flush`), séparé par des filets.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do utiliser l'orange ceinture (`#c2410c`) pour une seule action principale par écran ; tout le reste en secondaire, fantôme ou discret.",
+      "Do poser les données dans des panneaux blancs à filet de 1 px et 4 px de coin, et aller bord à bord (`flush`) pour une liste ou un tableau.",
+      "Do afficher un tableau sur grand écran et des rangées empilées sous 640 px.",
+      "Do garder toute cible tactile à 44 × 44 px minimum et tout champ à 16 px minimum.",
+      "Do souligner les liens dans le texte (1 px à 45 %, 2 px plein au survol) : la couleur seule ne suffit pas.",
+      "Do laisser le focus visible : contour orange de 2 px décalé de 2 px, blanc sur la barre noire.",
+      "Do passer les dimensions calculées par des attributs SVG ou des classes : aucun `style` en ligne (CSP).",
+      "Do réutiliser la barrette (bandes blanches sur barre noire) pour tout ce qui se compte.",
+      "Do respecter `prefers-reduced-motion` ; les transitions restent des changements de couleur de 100 à 150 ms."
+    ],
+    "donts": [
+      "Don't mettre d'ombre ailleurs que sur un dialogue.",
+      "Don't imbriquer un panneau dans un panneau.",
+      "Don't utiliser l'orange pour un état, ni vert / ambre / rouge pour décorer.",
+      "Don't arrondir en pilule ni dépasser 6 px de rayon (hors carré du symbole).",
+      "Don't écrire la marque autrement que « Matnexa », ni la dessiner en image de texte.",
+      "Don't aligner une rangée de cartes KPI : les compteurs vont dans une seule bande divisée par des filets.",
+      "Don't ajouter de surtitre (petit libellé en capitales au-dessus d'un titre) ni d'icône sans libellé.",
+      "Don't ajouter de thème sombre ni de seconde famille de caractères."
+    ]
+  }
+}
