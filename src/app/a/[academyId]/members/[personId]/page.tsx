@@ -115,7 +115,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                   confirmVariant="primary"
                 />
                 {can(ctx.role, "members.erase") && (
-                  <LinkButton href={`/a/${academyId}/members/${personId}/export`} variant="secondary">
+                  <LinkButton href={`/a/${academyId}/members/${personId}/export`} variant="secondary" download>
                     Exporter ses données
                   </LinkButton>
                 )}

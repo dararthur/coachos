@@ -1,0 +1,7 @@
+prénom;nom;email;date_inscription;id;téléphone
+Camille;Fixture-Un;camille.un@example.invalid;12/09/2024;F-001;0600000000
+Dominique;Fixture-Deux;dominique.deux@example.invalid;2025-01-15;F-002;
+Eden;Fixture-Trois;;03/03/2025;F-003;
+Camille;Doublon;camille.un@example.invalid;01/01/2025;F-004;
+=cmd();Formule;;;F-005;
+Gaël;Datefausse;gael@example.invalid;31/02/2025;F-006;

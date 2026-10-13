@@ -41,7 +41,7 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
       <PageHeader
         title="Historique des présences"
         description="Présences enregistrées sur la période, avec export CSV pour les administrateurs."
-        actions={can(ctx.role, "reports.export") ? <LinkButton href={`${base}/export?${qs.toString()}`} variant="secondary">Exporter (CSV)</LinkButton> : undefined}
+        actions={can(ctx.role, "reports.export") ? <LinkButton href={`${base}/export?${qs.toString()}`} variant="secondary" download>Exporter (CSV)</LinkButton> : undefined}
       />
 
       <Card className="mb-6">

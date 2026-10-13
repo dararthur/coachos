@@ -46,7 +46,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
               </LinkButton>
             )}
             {can(ctx.role, "reports.export") && (
-              <LinkButton href={`/a/${academyId}/members/export`} variant="secondary">
+              <LinkButton href={`/a/${academyId}/members/export`} variant="secondary" download>
                 Exporter (CSV)
               </LinkButton>
             )}

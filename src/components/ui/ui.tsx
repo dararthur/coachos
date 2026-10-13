@@ -2,7 +2,15 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { buttonClasses, type ButtonVariant } from "./button-classes";
 
-export function LinkButton({ href, children, variant = "primary", className }: { href: string; children: ReactNode; variant?: ButtonVariant; className?: string }) {
+export function LinkButton({ href, children, variant = "primary", className, download }: { href: string; children: ReactNode; variant?: ButtonVariant; className?: string; download?: boolean }) {
+  // Téléchargement : <a> natif (une navigation client Next.js vers un fichier laisserait le routeur en attente).
+  if (download) {
+    return (
+      <a href={href} download className={buttonClasses({ variant, className })}>
+        {children}
+      </a>
+    );
+  }
   return (
     <Link href={href} className={buttonClasses({ variant, className })}>
       {children}
@@ -22,13 +30,21 @@ export function PageHeader({ title, description, actions }: { title: string; des
   );
 }
 
+const slug = (text: string) =>
+  text
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+
 export function Card({ title, description, children, actions, className, as: Tag = "section" }: { title?: string; description?: ReactNode; children: ReactNode; actions?: ReactNode; className?: string; as?: "section" | "div" }) {
   return (
-    <Tag className={`rounded-xl border border-line bg-surface p-5 shadow-sm ${className ?? ""}`}>
+    <Tag aria-labelledby={title ? `card-${slug(title)}` : undefined} className={`rounded-xl border border-line bg-surface p-5 shadow-sm ${className ?? ""}`}>
       {(title || actions) && (
         <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
           <div>
-            {title && <h2 className="text-base font-semibold text-ink">{title}</h2>}
+            {title && <h2 id={`card-${slug(title)}`} className="text-base font-semibold text-ink">{title}</h2>}
             {description && <p className="mt-0.5 text-sm text-muted">{description}</p>}
           </div>
           {actions}

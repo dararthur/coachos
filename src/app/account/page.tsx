@@ -34,7 +34,7 @@ export default async function AccountPage() {
           Vous pouvez télécharger l&apos;ensemble des données associées à votre compte (profil, appartenances aux clubs, fiches membre vous concernant et leurs présences).
           Pour exercer vos droits auprès d&apos;un club (rectification, effacement de votre fiche membre), adressez-vous à ses responsables ; voir la <Link href="/privacy">notice de confidentialité</Link>.
         </p>
-        <LinkButton href="/account/export" variant="secondary">
+        <LinkButton href="/account/export" variant="secondary" download>
           Télécharger mes données (JSON)
         </LinkButton>
       </Card>

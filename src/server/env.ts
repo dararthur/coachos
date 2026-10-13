@@ -27,8 +27,10 @@ export function env(): Env {
     const names = [...new Set(parsed.error.issues.map((i) => String(i.path[0])))].join(", ");
     throw new Error(`Configuration invalide ou incomplète : ${names}. Voir .env.example.`);
   }
-  if (parsed.data.NODE_ENV === "production" && !parsed.data.SITE_URL.startsWith("https://")) {
-    throw new Error("SITE_URL doit utiliser https en production.");
+  const site = new URL(parsed.data.SITE_URL);
+  const loopback = site.hostname === "localhost" || site.hostname === "127.0.0.1";
+  if (parsed.data.NODE_ENV === "production" && site.protocol !== "https:" && !loopback) {
+    throw new Error("SITE_URL doit utiliser https en production (seul le loopback est toléré, pour les tests locaux).");
   }
   cached = parsed.data;
   return cached;

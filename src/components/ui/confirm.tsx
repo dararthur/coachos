@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useId, useRef, useState, type ReactNode } from "react";
 import type { ActionResult } from "@/domain/errors";
 import { buttonClasses, type ButtonVariant } from "./button-classes";
 import { ActionForm, SubmitButton } from "./form";
@@ -33,6 +33,7 @@ export function ConfirmAction({
   triggerClassName?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
   const [message, setMessage] = useState<State>(null);
   return (
     <>
@@ -46,7 +47,7 @@ export function ConfirmAction({
       )}
       <dialog
         ref={dialog}
-        aria-labelledby="confirm-title"
+        aria-labelledby={titleId}
         className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-xl bg-white p-0 text-ink shadow-xl"
         onClose={() => setMessage(null)}
       >
@@ -58,7 +59,7 @@ export function ConfirmAction({
             if (r?.ok) dialog.current?.close();
           }}
         >
-          <h2 id="confirm-title" className="text-lg font-semibold">
+          <h2 id={titleId} className="text-lg font-semibold">
             {title}
           </h2>
           <div className="space-y-3 text-sm text-muted">{description}</div>
