@@ -1,5 +1,5 @@
 import postgres from "postgres";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
 import { createTestClient, withUser, type Sql, type Tx } from "@/server/db/client";
 
 let admin: Sql | undefined;
@@ -124,7 +124,7 @@ export async function buildWorld(): Promise<World> {
   await adminSql()`insert into public.attendance (academy_id, session_id, person_id, status) values (${academyA}, ${sessionA}, ${personA}, 'present')`;
   await adminSql()`insert into public.attendance (academy_id, session_id, person_id, status) values (${academyB}, ${sessionB}, ${personB}, 'present')`;
   await adminSql()`insert into public.invitations (academy_id, email, role, token_hash, expires_at)
-    values (${academyB}, 'invite-b@example.invalid', 'coach', ${"b".repeat(64)}, now() + interval '1 day')`;
+    values (${academyB}, ${`invite-b-${randomUUID().slice(0, 6)}@example.invalid`}, 'coach', ${randomBytes(32).toString("hex")}, now() + interval '1 day')`;
   const classTypeB = await firstClassType(academyB);
   return { alice: alice!, carl: carl!, mia: mia!, adam: adam!, bob: bob!, academyA, academyB, personA, miaPerson, personB, sessionA, sessionB, classTypeB };
 }
