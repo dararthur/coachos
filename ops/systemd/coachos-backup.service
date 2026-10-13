@@ -1,0 +1,15 @@
+# EXEMPLE NON INSTALLÉ. Sauvegarde chiffrée hors machine (voir docs/operations.md). Les variables viennent d'un fichier root:root 0600.
+[Unit]
+Description=Coach OS - sauvegarde chiffrée de la base
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/coachos/backup.env
+ExecStart=/srv/coachos/current/ops/backup/backup.sh
+User=coachos-backup
+PrivateTmp=true
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/coachos
