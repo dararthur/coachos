@@ -1,7 +1,6 @@
-import { expect, test } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { createClub, logIn, parisToday, signUp, uniqueEmail } from "./support/helpers";
+import { createClub, logIn, parisToday, signUp, uniqueEmail, expect, randomIp, test } from "./support/helpers";
 
 /**
  * Parcours principal bout en bout, contre PostgreSQL réel (RLS active) et un faux GoTrue.

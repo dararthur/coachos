@@ -1,5 +1,16 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, test as base, type Page } from "@playwright/test";
 import { randomUUID } from "node:crypto";
+
+/** Adresse IP fictive unique : isole les compteurs anti-abus (par IP) entre tests qui partagent la même pile. */
+export const randomIp = () => `10.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250)}.${1 + Math.floor(Math.random() * 250)}`;
+
+export const test = base.extend({
+  context: async ({ context }, use) => {
+    await context.setExtraHTTPHeaders({ "x-forwarded-for": randomIp() });
+    await use(context);
+  },
+});
+export { expect };
 
 export const PASSWORD = `e2e-${randomUUID()}`; // mot de passe jetable, généré à chaque exécution
 
