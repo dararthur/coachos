@@ -104,7 +104,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
               );
             })}
           </svg>
-          <table className="sr-only">
+          <div className="sr-only">
+          <table>
             <caption>Présences par semaine (début de semaine)</caption>
             <thead>
               <tr>
@@ -121,6 +122,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
               ))}
             </tbody>
           </table>
+          </div>
         </Card>
       </div>
 

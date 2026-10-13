@@ -11,7 +11,8 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 4. *Fermer le pointage* (révoque immédiatement tous les QR) ou *Valider la feuille d'appel* (ferme + révoque ; réversible par *Rouvrir la feuille*).
 
 **Adhérent** (compte rattaché à sa fiche membre par l'invitation « fiche membre liée ») :
-1. *Mon espace → Scanner le QR code* (ou scan natif de l'appareil photo : le lien s'ouvre dans Coach OS ; ou collage du lien si pas de caméra).
+1. **Recommandé : le scanner intégré** — *Mon espace → Scanner le QR code* (ou l'onglet « Pointer »). Il fonctionne dans l'application installée et garde votre session.
+   **Secours** : (a) l'application *Appareil photo* du téléphone — le lien s'ouvre dans le **navigateur par défaut** (Safari sur iOS, même si Coach OS est installé : sur iOS la session de l'app installée est séparée de celle de Safari ; sur Android, l'ouverture dans l'app installée n'est pas garantie). Il faut alors se connecter dans ce navigateur ; la connexion ramène au pointage, à condition que le QR n'ait pas expiré (sinon rescanner) ; (b) coller le lien affiché par le coach dans le scanner intégré.
 2. La caméra n'est demandée qu'après le clic ; le décodage se fait dans le navigateur (aucune image n'est envoyée ni conservée).
 3. Un écran affiche le cours concerné ; **rien n'est enregistré avant « Confirmer ma présence »**. La confirmation « Présence enregistrée » n'apparaît qu'après la réponse du serveur confirmant l'écriture.
 

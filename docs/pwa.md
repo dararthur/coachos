@@ -43,5 +43,5 @@ Sur un **iPhone (Safari)** et un **Android (Chrome)**, avec l'environnement de *
 4. Faire un appel complet (7 membres) en conditions réelles de salle (une main, lumière forte) ; vérifier la lisibilité et les cibles tactiles.
 5. Vérifier que rien ne passe sous l'encoche ou la barre d'accueil, en portrait et en paysage.
 6. Mode avion : confirmer que l'app affiche une erreur claire et ne montre aucune donnée périmée.
-7. Pointage QR (`docs/qr-checkin.md`) : refuser puis accepter la permission caméra, scanner en lumière de salle, ouvrir le lien par le scan natif, tester « coller le lien ».
+7. Pointage QR (`docs/qr-checkin.md`) : refuser puis accepter la permission caméra, scanner en lumière de salle, tester le scanner intégré (application installée), puis le secours : scan avec l'application Appareil photo (vérifier dans quel navigateur le lien s'ouvre, se connecter, confirmer avant expiration), puis « coller le lien ».
 8. Noter tout écart dans ce document.

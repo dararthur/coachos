@@ -16,6 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <>
       <h1 className="mb-1 text-xl font-semibold">Connexion</h1>
       <p className="mb-5 text-sm text-muted">Accédez à votre club.</p>
+      {safeNext(params.next).startsWith("/checkin/") && <Alert tone="info">Vous avez ouvert un lien de pointage. Connectez-vous : vous reviendrez à la confirmation de votre présence (si le QR code a expiré, rescannez-le).</Alert>}
       {params.deleted && <Alert tone="success">Votre compte a été supprimé.</Alert>}
       {params.error === "callback" && <Alert tone="danger">Ce lien est invalide ou a expiré. Recommencez la procédure.</Alert>}
       <ActionForm action={signInAction} className="space-y-4">

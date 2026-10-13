@@ -10,7 +10,7 @@ type Phase = "idle" | "starting" | "scanning" | "denied" | "unavailable" | "erro
 
 const MESSAGES: Record<Exclude<Phase, "idle" | "starting" | "scanning">, string> = {
   denied: "L'accès à la caméra a été refusé. Autorisez-le dans les réglages du navigateur, ou utilisez l'une des solutions ci-dessous.",
-  unavailable: "Aucune caméra utilisable sur cet appareil ou ce navigateur. Utilisez le scan de l'appareil photo du téléphone, ou saisissez le lien ci-dessous.",
+  unavailable: "Aucune caméra utilisable sur cet appareil ou ce navigateur. Utilisez l'application Appareil photo du téléphone (le lien s'ouvrira dans votre navigateur, où il faudra peut-être vous reconnecter), ou saisissez le lien ci-dessous.",
   error: "La caméra n'a pas pu démarrer. Réessayez, ou utilisez l'une des solutions ci-dessous.",
 };
 
@@ -161,7 +161,7 @@ export function Scanner() {
           Pas de caméra ? Saisir le lien
         </h2>
         <p className="mb-3 mt-1 text-sm text-muted">
-          Vous pouvez aussi scanner le QR code avec l&apos;appareil photo de votre téléphone : le lien s&apos;ouvre ici. Sinon, collez ci-dessous le lien de pointage que le coach vous montre.
+          Solution de secours : scannez avec l&apos;application Appareil photo du téléphone. Le lien s&apos;ouvre dans votre navigateur (pas toujours dans l&apos;application installée) et vous devrez peut-être vous y reconnecter avant de confirmer. Ou collez ci-dessous le lien de pointage que le coach vous montre.
         </p>
         <form onSubmit={submitManual} className="space-y-3">
           <div>
