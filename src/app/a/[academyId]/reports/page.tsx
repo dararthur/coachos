@@ -42,7 +42,12 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
       <PageHeader
         title="Rapports"
         description="Historique des présences enregistrées sur la période choisie."
-        actions={can(ctx.role, "reports.export") ? <LinkButton href={`${base}/export?${qs.toString()}`} variant="secondary" icon="download" download>Exporter (CSV)</LinkButton> : undefined}
+        actions={
+          <>
+            <LinkButton href={`/a/${academyId}/ranking`} variant="secondary" icon="trophy">Classement</LinkButton>
+            {can(ctx.role, "reports.export") && <LinkButton href={`${base}/export?${qs.toString()}`} variant="secondary" icon="download" download>Exporter (CSV)</LinkButton>}
+          </>
+        }
       />
 
       <Card className="mb-6">

@@ -16,6 +16,7 @@ const PATHS = {
   download: "M12 4v11M7.5 10.5 12 15l4.5-4.5M4 15v5h16v-5",
   mail: "M4 6h16v12H4zM4 7l8 6 8-6",
   chat: "M4 5h16v11H9l-5 4V5ZM8 9.5h8M8 12.5h5",
+  trophy: "M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 14v4M8 20h8",
   back: "M10 6l-6 6 6 6M4 12h16",
   prev: "M14.5 6 8.5 12l6 6",
   next: "M9.5 6l6 6-6 6",

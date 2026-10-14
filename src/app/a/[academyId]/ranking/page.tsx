@@ -1,0 +1,90 @@
+import type { Metadata } from "next";
+import { localDate } from "@/domain/dates";
+import { can } from "@/domain/roles";
+import { ordinal, parseRankingPeriod, RANKING_LABELS, RANKING_PERIODS, rankingRange } from "@/domain/ranking";
+import { Alert, Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid, TabNav } from "@/components/ui/ui";
+import { ActionForm, SubmitButton } from "@/components/ui/form";
+import { setRankingVisibilityAction } from "@/server/actions/members";
+import { inAcademy, requireAcademy } from "@/server/auth/guards";
+import { attendanceRanking, myRankingVisibility } from "@/server/repositories/ranking";
+
+export const metadata: Metadata = { title: "Classement" };
+
+/** Classement des venues (présent ou en retard) sur la semaine, le mois ou l'année en cours. */
+export default async function RankingPage({ params, searchParams }: { params: Promise<{ academyId: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
+  const { academyId } = await params;
+  const sp = await searchParams;
+  const ctx = await requireAcademy(academyId);
+  const staff = can(ctx.role, "reports.read");
+  const period = parseRankingPeriod(sp.periode);
+  const { from, to } = rankingRange(period, localDate(new Date(), ctx.academy.timezone));
+  const { rows, visible } = await inAcademy(ctx, async (tx) => ({
+    rows: await attendanceRanking(tx, academyId, from, to),
+    visible: staff ? null : await myRankingVisibility(tx, academyId),
+  }));
+  const me = rows.find((r) => r.isMe);
+  const total = rows[0]?.rankedTotal ?? 0;
+  const base = `/a/${academyId}/ranking`;
+
+  return (
+    <>
+      <PageHeader
+        title="Classement"
+        description={staff ? "Tous les membres, classés par nombre de venues (présent ou en retard)." : "Classé par nombre de venues (présent ou en retard). Seuls les membres qui l'ont accepté apparaissent."}
+      />
+      <div className="mb-6 border-b border-line">
+        <TabNav
+          label="Période du classement"
+          items={RANKING_PERIODS.map((p) => ({ href: `${base}?periode=${p}`, label: RANKING_LABELS[p], current: p === period }))}
+        />
+      </div>
+
+      {!staff && (
+        <StatGrid cols={3} className="mb-6">
+          <Stat label="Mon rang" value={me?.rank ? ordinal(me.rank) : "—"} hint={me?.rank ? `sur ${total} membre${total > 1 ? "s" : ""} venu${total > 1 ? "s" : ""}` : "Aucune venue sur la période"} />
+          <Stat label="Mes venues" value={me?.visits ?? 0} />
+          <Stat label="Membres venus" value={total} />
+        </StatGrid>
+      )}
+
+      <Card title={RANKING_LABELS[period]} flush className="mb-6">
+        {rows.filter((r) => r.visits > 0).length === 0 ? (
+          <EmptyState level={3} title="Aucune venue sur cette période">Le classement se remplira dès les prochains appels.</EmptyState>
+        ) : (
+          <DataTable bare caption={`Classement ${RANKING_LABELS[period].toLowerCase()}`} headers={["Rang", "Membre", "Venues"]} numeric={[2]}>
+            {rows.filter((r) => r.visits > 0).map((r) => (
+              <tr key={r.personId} className={r.isMe ? "bg-accent-soft/40" : undefined}>
+                <td className="px-4 py-2.5 font-bold">{r.rank ? ordinal(r.rank) : "—"}</td>
+                <td className="px-4 py-2.5">
+                  {r.firstName} {r.lastName} {r.isMe && <Badge tone="brand">Vous</Badge>}
+                </td>
+                <td className="px-4 py-2.5 text-right font-semibold">{r.visits}</td>
+              </tr>
+            ))}
+          </DataTable>
+        )}
+      </Card>
+
+      {!staff && visible !== null && (
+        <Card title="Ma visibilité" description="Votre rang vous reste toujours visible. Vous choisissez si les autres membres voient aussi votre nom dans ce classement ; vous pouvez changer d'avis à tout moment.">
+          {visible ? (
+            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, false)}>
+              <p className="mb-3 text-sm">
+                <Badge tone="success">Visible</Badge> Votre nom apparaît dans le classement des autres membres.
+              </p>
+              <SubmitButton variant="secondary">Me retirer du classement des autres</SubmitButton>
+            </ActionForm>
+          ) : (
+            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, true)}>
+              <p className="mb-3 text-sm">
+                <Badge>Masqué</Badge> Les autres membres ne voient pas votre nom. Le coach, lui, voit les présences comme d&apos;habitude.
+              </p>
+              <SubmitButton>Apparaître dans le classement</SubmitButton>
+            </ActionForm>
+          )}
+        </Card>
+      )}
+      {staff && <Alert tone="info">Les membres choisissent eux-mêmes d&apos;apparaître ou non dans le classement des autres ; vous les voyez tous ici.</Alert>}
+    </>
+  );
+}

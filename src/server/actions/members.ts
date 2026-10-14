@@ -8,6 +8,7 @@ import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import * as members from "@/server/repositories/members";
+import * as ranking from "@/server/repositories/ranking";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import { parseForm } from "./helpers";
 
@@ -170,5 +171,14 @@ export async function importMembersAction(academyId: string, _prev: ActionResult
         sample: report.plan.toCreate.slice(0, 10),
       },
     };
+  });
+}
+
+export async function setRankingVisibilityAction(academyId: string, visible: boolean, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("setRankingVisibility", async () => {
+    const ctx = await authorizeAcademy(academyId);
+    await inAcademy(ctx, (tx) => ranking.setMyRankingVisibility(tx, academyId, visible));
+    revalidatePath(`/a/${academyId}/ranking`);
+    return { ok: true, data: null, message: visible ? "Vous apparaissez dans le classement." : "Vous n'apparaissez plus dans le classement des autres membres." };
   });
 }
