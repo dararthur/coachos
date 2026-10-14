@@ -13,8 +13,8 @@ export function occupancyLabel(b: Pick<BookingInfo, "booked" | "waitlisted">, ca
 /** Séance complète : une nouvelle réservation part en liste d'attente. */
 export const isFull = (b: Pick<BookingInfo, "booked">, capacity: number | null) => capacity !== null && b.booked >= capacity;
 
-/** Rappel affiché sous une séance où l'adhérent attend une place : la promotion est automatique mais pas notifiée. */
-export const WAITLIST_HINT = "Si une place se libère, elle vous revient automatiquement, sans notification : vérifiez avant le cours.";
+/** Rappel affiché sous une séance où l'adhérent attend une place : la promotion est automatique et annoncée par e-mail (docs/bookings.md). */
+export const WAITLIST_HINT = "Si une place se libère avant le cours, elle vous revient automatiquement et vous êtes prévenu(e) par e-mail.";
 
 /**
  * Réservation de l'adhérent : état + action. `bookable` = séance à venir ou en cours, non annulée.

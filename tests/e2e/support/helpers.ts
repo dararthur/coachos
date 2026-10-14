@@ -31,7 +31,7 @@ export function parisToday(offsetDays = 0): string {
 
 // --- Boîte d'envoi de test (MAIL_PROVIDER=outbox) : l'application y écrit les e-mails au lieu de les envoyer. ---
 export const OUTBOX = path.join(os.tmpdir(), `coachos-e2e-outbox-${process.env.E2E_PORT ?? 3100}.jsonl`);
-export type Mail = { kind: "verification" | "password_reset" | "club_request" | "club_approved"; to: string; subject: string; link: string };
+export type Mail = { kind: "verification" | "password_reset" | "club_request" | "club_approved" | "booking_promoted"; to: string; subject: string; link: string };
 export const mailsTo = (to: string, kind?: Mail["kind"]): Mail[] =>
   (existsSync(OUTBOX) ? readFileSync(OUTBOX, "utf8").split("\n").filter(Boolean) : []).map((l) => JSON.parse(l) as Mail).filter((m) => m.to === to && (!kind || m.kind === kind));
 export async function waitForMail(to: string, kind: Mail["kind"], count = 1): Promise<Mail> {

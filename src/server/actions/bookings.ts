@@ -5,6 +5,7 @@ import { z } from "zod";
 import { AppError, type ActionResult } from "@/domain/errors";
 import { uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
+import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import * as bookings from "@/server/repositories/bookings";
 
 type FormState = ActionResult<unknown> | null;
@@ -31,8 +32,10 @@ export async function bookSessionAction(academyId: string, sessionId: string, _p
     return {
       ok: true,
       data: { status },
-      // La promotion depuis la liste d'attente est automatique mais n'est pas encore notifiée : ne rien promettre de plus.
-      message: status === "booked" ? "Place réservée." : "Séance complète : vous êtes sur la liste d'attente. Si une place se libère, elle vous revient automatiquement, sans notification : vérifiez avant le cours.",
+      message:
+        status === "booked"
+          ? "Place réservée."
+          : "Séance complète : vous êtes sur la liste d'attente. Si une place se libère avant le cours, elle vous revient automatiquement et vous serez prévenu(e) par e-mail.",
     };
   });
 }
@@ -41,6 +44,8 @@ export async function cancelBookingAction(academyId: string, sessionId: string, 
   return runAction("cancelBooking", async () => {
     const ctx = await authorizeAcademy(academyId);
     await inAcademy(ctx, (tx) => bookings.cancelBooking(tx, sessionIdOf(sessionId)));
+    // Une place confirmée rendue promeut le premier de la liste d'attente : il est prévenu par e-mail.
+    deliverBookingPromotionsAfterResponse();
     refresh(academyId);
     return { ok: true, data: null, message: "Réservation annulée." };
   });
@@ -53,6 +58,7 @@ export async function promoteBookingAction(academyId: string, input: { sessionId
     const parsed = z.object({ sessionId: uuidField, personId: uuidField }).safeParse(input);
     if (!parsed.success) throw new AppError("not_found");
     await inAcademy(ctx, (tx) => bookings.promoteBooking(tx, parsed.data.sessionId, parsed.data.personId));
+    deliverBookingPromotionsAfterResponse();
     refresh(academyId);
     return { ok: true, data: null, message: "Place accordée." };
   });

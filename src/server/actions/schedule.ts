@@ -7,6 +7,7 @@ import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { expandOccurrences } from "@/domain/schedule";
 import { ATTENDANCE_STATUSES, MAX_OCCURRENCES, attendanceSchema, sessionCreateSchema, sessionUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
+import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import * as attendance from "@/server/repositories/attendance";
 import * as schedule from "@/server/repositories/schedule";
 import { parseForm } from "./helpers";
@@ -58,6 +59,8 @@ export async function updateSessionAction(academyId: string, sessionId: string, 
       }),
     );
     if (!ok) throw new AppError("not_found");
+    // Une capacité augmentée ou retirée fait avancer la liste d'attente : les adhérents promus sont prévenus par e-mail.
+    deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/schedule`);
     return { ok: true, data: null, message: "Séance mise à jour." };
   });

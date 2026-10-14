@@ -1,5 +1,5 @@
 import type { Browser, Page } from "@playwright/test";
-import { completeProfile, createClub, expect, parisToday, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
+import { completeProfile, createClub, expect, mailsTo, parisToday, randomIp, signUp, test, uniqueEmail, waitForMail } from "./support/helpers";
 
 async function newPage(browser: Browser): Promise<Page> {
   const context = await browser.newContext({ locale: "fr-FR", timezoneId: "Europe/Paris", extraHTTPHeaders: { "x-real-ip": randomIp() } });
@@ -7,14 +7,15 @@ async function newPage(browser: Browser): Promise<Page> {
 }
 
 /** Inscription autonome par code, puis profil validé. */
-async function joinAsMember(browser: Browser, club: string, code: string, displayName: string): Promise<Page> {
+async function joinAsMember(browser: Browser, club: string, code: string, displayName: string): Promise<{ page: Page; email: string }> {
   const page = await newPage(browser);
-  await signUp(page, uniqueEmail("resa"), displayName);
+  const email = uniqueEmail("resa");
+  await signUp(page, email, displayName);
   await page.goto("/join");
   await page.getByLabel("Code du club").fill(code);
   await page.getByRole("button", { name: "Rejoindre" }).click();
   await completeProfile(page, club);
-  return page;
+  return { page, email };
 }
 
 test.describe("réservation des séances, liste d'attente, absence des inscrits non venus", () => {
@@ -34,8 +35,8 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     await coach.getByRole("button", { name: "Créer" }).click();
     await expect(coach.getByText("Création effectuée : 1")).toBeVisible();
 
-    const alice = await joinAsMember(browser, club, code, "Alice Resa");
-    const bruno = await joinAsMember(browser, club, code, "Bruno Resa");
+    const { page: alice, email: aliceEmail } = await joinAsMember(browser, club, code, "Alice Resa");
+    const { page: bruno, email: brunoEmail } = await joinAsMember(browser, club, code, "Bruno Resa");
 
     // Alice réserve : confirmée. Bruno : la séance est pleine, il passe en liste d'attente (sans être bloqué).
     await alice.goto(`/a/${club}/schedule?week=${day}`);
@@ -43,10 +44,10 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     await expect(alice.getByText("Inscrit", { exact: true })).toBeVisible();
 
     await bruno.goto(`/a/${club}/schedule?week=${day}`);
-    // Séance pleine : le bouton annonce la liste d'attente avant l'inscription, et le rappel dit qu'aucune notification ne suivra.
+    // Séance pleine : le bouton annonce la liste d'attente avant l'inscription, et le rappel annonce l'e-mail si une place se libère.
     await bruno.getByRole("button", { name: "Rejoindre la liste d'attente" }).click();
     await expect(bruno.getByText("Liste d'attente · n°1")).toBeVisible();
-    await expect(bruno.getByText(/sans notification/)).toBeVisible();
+    await expect(bruno.getByText("vous êtes prévenu(e) par e-mail")).toBeVisible();
 
     // « Mon espace » propose la même réservation.
     await bruno.goto(`/a/${club}/me`);
@@ -64,6 +65,12 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     // Le coach accorde une place à Bruno (au-delà de la capacité).
     await brunoRow.getByRole("button", { name: "Accorder une place" }).click();
     await expect(brunoRow.getByText("Inscrit", { exact: true })).toBeVisible();
+
+    // Bruno est prévenu par e-mail (envoyé après la réponse), avec le lien vers son espace ; personne d'autre.
+    const promoted = await waitForMail(brunoEmail, "booking_promoted");
+    expect(promoted.subject).toMatch(/^Place confirmée : .+ à 18:30 — Matnexa$/);
+    expect(new URL(promoted.link).pathname).toBe(`/a/${club}/me`);
+    expect(mailsTo(aliceEmail, "booking_promoted")).toEqual([]);
 
     // Alice annule tant que la feuille n'est pas validée.
     await alice.goto(`/a/${club}/schedule?week=${day}`);

@@ -7,6 +7,7 @@ import { MAX_IMPORT_BYTES, analyzeImport, planImport, type ImportRow, type RowIs
 import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { myProfileSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
+import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import * as members from "@/server/repositories/members";
 import * as profile from "@/server/repositories/profile";
 import * as ranking from "@/server/repositories/ranking";
@@ -75,6 +76,8 @@ export async function setMemberArchivedAction(academyId: string, personId: strin
     if (!id.success) throw new AppError("not_found");
     const ok = await inAcademy(ctx, (tx) => members.setPersonArchived(tx, academyId, id.data, archive));
     if (!ok) throw new AppError("not_found");
+    // Les places réservées d'un membre archivé reviennent à la liste d'attente : les adhérents promus sont prévenus.
+    if (archive) deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/members`);
     revalidatePath(`/a/${academyId}/members/${personId}`);
     return { ok: true, data: null, message: archive ? "Membre archivé." : "Membre restauré." };
@@ -91,6 +94,7 @@ export async function eraseMemberAction(academyId: string, personId: string, _pr
     if (!id.success) throw new AppError("not_found");
     const input = parseForm(eraseSchema, formData);
     await inAcademy(ctx, (tx) => members.erasePerson(tx, id.data, input.mode));
+    deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/members`);
     redirect(`/a/${academyId}/members?erased=${input.mode}`);
   });
