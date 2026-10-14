@@ -105,7 +105,7 @@ export interface ImportReport {
   duplicatesInFile: RowIssue[];
   skippedExisting: RowIssue[];
   possibleHomonyms: RowIssue[];
-  sample: Pick<ImportRow, "line" | "firstName" | "lastName" | "email" | "joinedOn" | "externalRef">[];
+  sample: Pick<ImportRow, "line" | "firstName" | "lastName" | "email" | "phone" | "joinedOn" | "externalRef">[];
 }
 
 const REPORT_LIST_LIMIT = 50;

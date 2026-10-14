@@ -40,8 +40,8 @@ describe("analyzeImport", () => {
 
   it("exige les colonnes prénom et nom et signale les colonnes ignorées", () => {
     expect(analyzeImport("email\na@b.co\n").fatal).toMatch(/introuvables/);
-    const r = analyzeImport("prenom;nom;telephone;adresse\nAna;Test;0600000000;1 rue X\n");
-    expect(r.ignoredColumns).toEqual(["telephone", "adresse"]);
+    const r = analyzeImport("prenom;nom;ville;adresse\nAna;Test;Lyon;1 rue X\n");
+    expect(r.ignoredColumns).toEqual(["ville", "adresse"]);
     expect(r.rows).toHaveLength(1);
   });
 
@@ -92,5 +92,14 @@ describe("planImport", () => {
     expect(plan.skippedExisting.map((s) => s.line)).toEqual([2, 3]);
     expect(plan.toCreate.map((r) => r.line)).toEqual([4, 5]);
     expect(plan.possibleHomonyms.map((s) => s.line)).toEqual([4]);
+  });
+});
+
+describe("import : téléphone", () => {
+  it("lit la colonne téléphone, la normalise (le « + » est permis ici seulement) et rejette un numéro invalide", () => {
+    const r = analyzeImport("prenom;nom;telephone\nAna;Test;06 12 34 56 78\nBob;Test;+32 470 12 34 56\nCy;Test;\nDi;Test;12\n");
+    expect(r.rows.map((x) => x.phone)).toEqual(["+33612345678", "+32470123456", null]);
+    expect(r.invalid).toHaveLength(1);
+    expect(r.invalid[0]?.messages.join(" ")).toMatch(/Numéro invalide/);
   });
 });

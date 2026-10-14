@@ -19,7 +19,7 @@ export default async function ImportPage({ params }: { params: Promise<{ academy
             <li>Fichier CSV UTF-8, {Math.round(MAX_IMPORT_BYTES / 1000)} Ko et {MAX_IMPORT_ROWS} lignes maximum.</li>
             <li>Séparateur virgule, point-virgule ou tabulation détecté automatiquement ; première ligne = en-têtes.</li>
             <li>
-              Colonnes reconnues : <code>prénom</code>, <code>nom</code> (obligatoires), <code>email</code>, <code>date_inscription</code> (AAAA-MM-JJ ou JJ/MM/AAAA, jour en premier), <code>id</code> (identifiant d&apos;origine).
+              Colonnes reconnues : <code>prénom</code>, <code>nom</code> (obligatoires), <code>email</code>, <code>téléphone</code>, <code>date_inscription</code> (AAAA-MM-JJ ou JJ/MM/AAAA, jour en premier), <code>id</code> (identifiant d&apos;origine).
             </li>
             <li>Les autres colonnes (téléphone, adresse, date de naissance…) sont <strong>ignorées</strong> : Matnexa ne les conserve pas.</li>
             <li>Les doublons (même e-mail ou même identifiant) sont ignorés, jamais écrasés.</li>

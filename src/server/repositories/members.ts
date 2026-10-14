@@ -134,13 +134,14 @@ export async function insertImported(tx: Tx, academyId: string, rows: readonly I
     first_name: r.firstName,
     last_name: r.lastName,
     email: r.email,
+    phone: r.phone,
     joined_on: r.joinedOn,
     external_ref: r.externalRef,
   }));
   const inserted = await tx`
-    insert into public.people (academy_id, first_name, last_name, email, joined_on, external_ref)
-    select ${academyId}::uuid, d.first_name, d.last_name, d.email, d.joined_on, d.external_ref
-    from jsonb_to_recordset(${tx.json(payload)}::jsonb) as d(first_name text, last_name text, email text, joined_on date, external_ref text)
+    insert into public.people (academy_id, first_name, last_name, email, phone, joined_on, external_ref)
+    select ${academyId}::uuid, d.first_name, d.last_name, d.email, d.phone, d.joined_on, d.external_ref
+    from jsonb_to_recordset(${tx.json(payload)}::jsonb) as d(first_name text, last_name text, email text, phone text, joined_on date, external_ref text)
     on conflict do nothing
     returning id`;
   return inserted.length;

@@ -1,7 +1,7 @@
 import Papa from "papaparse";
 import { z } from "zod";
 import { parseCalendarDate } from "./dates";
-import { emailField, nameField, parseWith } from "./validation";
+import { emailField, nameField, parseWith, phoneField } from "./validation";
 
 /** Limites défensives de l'import. */
 export const MAX_IMPORT_BYTES = 1_000_000;
@@ -12,6 +12,7 @@ export interface ImportRow {
   firstName: string;
   lastName: string;
   email: string | null;
+  phone: string | null;
   joinedOn: string | null;
   externalRef: string | null;
 }
@@ -31,13 +32,14 @@ export interface ImportAnalysis {
   ignoredColumns: string[];
 }
 
-type Field = "firstName" | "lastName" | "email" | "joinedOn" | "externalRef";
+type Field = "firstName" | "lastName" | "email" | "phone" | "joinedOn" | "externalRef";
 
 // Alias normalisés (minuscules, sans accent, séparateurs -> « _ »).
 const COLUMN_ALIASES: Record<Field, string[]> = {
   firstName: ["prenom", "first_name", "firstname", "given_name"],
   lastName: ["nom", "nom_de_famille", "last_name", "lastname", "surname", "family_name"],
   email: ["email", "e_mail", "mail", "courriel", "adresse_email", "adresse_e_mail"],
+  phone: ["telephone", "tel", "phone", "mobile", "portable", "gsm", "numero_de_telephone", "numero_telephone"],
   joinedOn: ["date_inscription", "inscription", "date_d_inscription", "joined_on", "join_date", "membre_depuis", "start_date"],
   externalRef: ["id", "identifiant", "reference", "ref", "external_id", "external_ref", "member_id", "numero_membre"],
 };
@@ -58,6 +60,7 @@ const rowSchema = z.object({
   firstName: nameField("Prénom"),
   lastName: nameField("Nom"),
   email: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), emailField.optional()),
+  phone: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), phoneField.optional()),
   externalRef: z.preprocess(
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
     z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._:/#-]{0,99}$/, "Identifiant : lettres, chiffres et . _ : / # - uniquement.").optional(),
@@ -127,13 +130,14 @@ export function analyzeImport(input: string): ImportAnalysis {
     for (const field of Object.keys(COLUMN_ALIASES) as Field[]) {
       const value = get(field);
       if (CONTROL_CHARS.test(value)) messages.push("Caractère de contrôle interdit.");
-      else if (value && FORMULA_START.test(value) && field !== "joinedOn") messages.push("Une valeur ne peut pas commencer par = + - ou @.");
+      else if (value && FORMULA_START.test(value) && field !== "joinedOn" && field !== "phone") messages.push("Une valeur ne peut pas commencer par = + - ou @.");
     }
 
     const checked = parseWith(rowSchema, {
       firstName: get("firstName"),
       lastName: get("lastName"),
       email: get("email"),
+      phone: get("phone"),
       externalRef: get("externalRef"),
     });
     if (!checked.ok) messages.push(...Object.values(checked.fieldErrors));
@@ -150,7 +154,7 @@ export function analyzeImport(input: string): ImportAnalysis {
       invalid.push({ line, messages: [...new Set(messages)] });
       return;
     }
-    const { firstName, lastName, email, externalRef } = checked.data;
+    const { firstName, lastName, email, phone, externalRef } = checked.data;
 
     const dupMessages: string[] = [];
     if (email) {
@@ -167,7 +171,7 @@ export function analyzeImport(input: string): ImportAnalysis {
       duplicatesInFile.push({ line, messages: dupMessages });
       return;
     }
-    rows.push({ line, firstName, lastName, email: email ?? null, joinedOn, externalRef: externalRef ?? null });
+    rows.push({ line, firstName, lastName, email: email ?? null, phone: phone ?? null, joinedOn, externalRef: externalRef ?? null });
   });
 
   return { fatal: null, totalRows: dataRows.length, rows, invalid, duplicatesInFile, ignoredColumns };

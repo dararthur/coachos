@@ -1,5 +1,6 @@
 "use client";
 
+import { formatPhone } from "@/domain/phone";
 import { useActionState, useRef, useState, startTransition } from "react";
 import { Alert, Card, DataTable } from "@/components/ui/ui";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -108,13 +109,14 @@ export function ImportForm({ academyId }: { academyId: string }) {
 
             {!committed && report.sample.length > 0 && (
               <div className="-mx-4 mb-4 border-y border-line sm:-mx-5">
-                <DataTable bare caption="Aperçu des premiers membres à créer" headers={["Ligne", "Prénom", "Nom", "E-mail", "Inscription", "Identifiant"]}>
+                <DataTable bare caption="Aperçu des premiers membres à créer" headers={["Ligne", "Prénom", "Nom", "E-mail", "Téléphone", "Inscription", "Identifiant"]}>
                   {report.sample.map((r) => (
                     <tr key={r.line}>
                       <td className="px-4 py-2">{r.line}</td>
                       <td className="px-4 py-2">{r.firstName}</td>
                       <td className="px-4 py-2">{r.lastName}</td>
                       <td className="px-4 py-2">{r.email ?? "—"}</td>
+                      <td className="px-4 py-2">{r.phone ? formatPhone(r.phone) : "—"}</td>
                       <td className="px-4 py-2">{r.joinedOn ?? "—"}</td>
                       <td className="px-4 py-2">{r.externalRef ?? "—"}</td>
                     </tr>
