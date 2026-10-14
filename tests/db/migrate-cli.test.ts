@@ -36,14 +36,14 @@ describe("scripts/migrate.mjs (processus réel)", () => {
 
     const dry = run({ MIGRATION_DATABASE_URL: url }, ["--dry-run"]);
     expect(dry.status, dry.stderr).toBe(0);
-    expect(dry.stdout).toMatch(/en attente : 11/);
+    expect(dry.stdout).toMatch(/en attente : 12/);
     const probe = postgres(url, { max: 1, onnotice: () => {} });
     expect((await probe`select to_regclass('coachos_migrations.applied') is not null as ok`)[0]!.ok).toBe(false);
 
     const first = run({ MIGRATION_DATABASE_URL: url });
     expect(first.status, first.stderr).toBe(0);
-    expect(first.stdout).toMatch(/11 migration\(s\) appliquée\(s\) au total/);
-    expect((await probe`select count(*)::int as n from coachos_migrations.applied`)[0]!.n).toBe(11);
+    expect(first.stdout).toMatch(/12 migration\(s\) appliquée\(s\) au total/);
+    expect((await probe`select count(*)::int as n from coachos_migrations.applied`)[0]!.n).toBe(12);
     const again = run({ MIGRATION_DATABASE_URL: url }, ["--dry-run"]);
     expect(again.stdout).toMatch(/en attente : 0/);
     await probe.end();
