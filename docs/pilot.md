@@ -27,7 +27,7 @@ Cette séquence prouve le comportement de l'application, de la RLS et de Better 
 | `BETTER_AUTH_SECRET` | ✅ | **oui** | ≥ 32 caractères, **distinct** d'`APP_SECRET` ; signe les cookies de session ; **jamais avec la base ni ses sauvegardes** |
 | `MAIL_PROVIDER` | ✅ | non | `resend` pour un pilote. `outbox` est **refusé au démarrage du serveur** avec `APP_ENV=staging`/`production` (et avec toute `SITE_URL` non locale) et par le préflight |
 | `RESEND_API_KEY`, `MAIL_FROM` | avec `resend` | clé : **oui** | clé API Resend (gestionnaire de secrets) ; expéditeur d'un domaine vérifié |
-| `CRON_SECRET` | ✅ avant données réelles | **oui** | ≥ 32 caractères ; active `POST /api/cron/purge` (rétention + sessions expirées) |
+| `CRON_SECRET` | ✅ avant données réelles | **oui** | ≥ 32 caractères ; active `POST /api/cron/purge` (rétention + sessions expirées + e-mails de place confirmée en attente) |
 | `APP_ENV` | ✅ | non | `staging` (puis `production`) : rôle explicite de l'instance, sans valeur par défaut ; lu **au démarrage** (refus si incohérent) et par le préflight pour refuser un contrôle accidentel de la production |
 | `DATABASE_SSL`, `DATABASE_POOL_SIZE` | non | non | `disable` **interdit pour une base distante** (refus au démarrage) ; taille du pool (défaut 10). Une base **distante** exige `?sslmode=require` (ou `verify-ca`/`verify-full`) dans **les deux** URL, sinon le serveur refuse de démarrer ; la boucle locale et les sockets Unix en sont dispensés |
 | `MIGRATION_DATABASE_URL` | pour migrer et pour le préflight complet | **oui** | URL d'un rôle **administrateur**, utilisée **uniquement** par `npm run db:migrate` et `npm run pilot:preflight` (suivi des migrations). **Jamais** dans l'environnement du service |
@@ -78,7 +78,7 @@ Statut : le script et ses règles sont testés (`tests/db/preflight.test.ts`, co
 | D1 | **Effacement d'un membre** (anonymiser puis supprimer) : plus aucune trace du nom dans l'app et les exports | membre de test | ☐ |
 | D2 | **Suppression de compte** : l'utilisateur disparaît de `auth.users`, `auth.sessions`, `auth.accounts` et `profiles` ; refus s'il est seul propriétaire | compte de test, requêtes SQL de contrôle | ☐ |
 | D3 | **Suppression du club** : toutes les tables vides pour ce club | club de test, requêtes SQL de contrôle | ☐ |
-| D4 | Purge : `curl -X POST -H "Authorization: Bearer $CRON_SECRET" $SITE_URL/api/cron/purge` renvoie les compteurs (dont `auth_sessions_deleted`) ; sans jeton → 404 | commande | ☐ |
+| D4 | Purge : `curl -X POST -H "Authorization: Bearer $CRON_SECRET" $SITE_URL/api/cron/purge` renvoie les compteurs (dont `auth_sessions_deleted` et `booking_emails_sent`) ; sans jeton → 404 | commande | ☐ |
 | D5 | **Restauration d'une sauvegarde chiffrée** testée sur une base jetable ; `BETTER_AUTH_SECRET` absent de la sauvegarde | procédure documentée | ☐ |
 | Q1 | Pointage QR sur **vrais téléphones** : permission caméra, scan en lumière de salle, expiration, lien de secours | séance de test avec 3 personnes | ☐ |
 | Q2 | Installation écran d'accueil (iOS et Android) selon `docs/pwa.md` | deux appareils | ☐ |

@@ -19,6 +19,7 @@
 | Invitations | Rattacher un compte à un club | Exécution du contrat | e-mail invité, rôle, hachage de jeton | admins | 7 jours + 30 jours après expiration/acceptation |
 | Compteurs anti-abus | Limiter les tentatives répétées | Intérêt légitime (sécurité) | HMAC d'IP / e-mail (non réversible sans le secret) | aucun (table interne) | < 24 h |
 | E-mails transactionnels | Confirmation d'adresse, réinitialisation de mot de passe | Exécution du contrat | adresse e-mail du destinataire, lien à usage limité, texte générique (aucun nom de club ni donnée métier) | fournisseur d'e-mails (sous-traitant) | côté fournisseur : voir ci-dessous |
+| E-mail « place confirmée » | Prévenir l'adhérent promu depuis la liste d'attente (`docs/bookings.md`) | Exécution du contrat d'adhésion | adresse du compte, nom du club, nom du cours, date et heure ; file interne `booking_notifications` (identifiants seulement) | fournisseur d'e-mails (sous-traitant) ; la file n'est lisible par aucun rôle applicatif | file : jusqu'à l'envoi (ou abandon après 5 tentatives, ou début du cours) ; côté fournisseur : voir ci-dessous |
 
 ## Minimisation et exclusions (appliquées par le code)
 
@@ -50,7 +51,7 @@ Délai de réponse légal : **1 mois**. [Procédure interne de réception et de 
 | Sous-traitant | Rôle | Région | Garanties |
 |---|---|---|---|
 | [Hébergeur du serveur — à documenter] | Exécution de l'application et de la base PostgreSQL (auto-hébergées), journaux d'accès | [UE — à confirmer] | [DPA / conditions de l'hébergeur à archiver] |
-| Resend (fournisseur d'e-mails transactionnels, **prévu, non activé**) | Envoi des e-mails de confirmation et de réinitialisation | Envoi possible depuis l'Irlande ; **les données stockées (métadonnées, journaux, contenu) sont aux États-Unis** d'après la documentation du fournisseur | DPA pré-signé avec clauses contractuelles types ; cadre UE–États-Unis en complément ; sous-traitants ultérieurs listés (dont un traitement d'**échantillons** d'e-mails à des fins de sécurité) — **à faire valider juridiquement avant tout envoi réel** |
+| Resend (fournisseur d'e-mails transactionnels, **prévu, non activé**) | Envoi des e-mails de confirmation, de réinitialisation et de place confirmée | Envoi possible depuis l'Irlande ; **les données stockées (métadonnées, journaux, contenu) sont aux États-Unis** d'après la documentation du fournisseur | DPA pré-signé avec clauses contractuelles types ; cadre UE–États-Unis en complément ; sous-traitants ultérieurs listés (dont un traitement d'**échantillons** d'e-mails à des fins de sécurité) — **à faire valider juridiquement avant tout envoi réel** |
 | [Stockage de sauvegardes chiffrées — à choisir] | Sauvegardes hors du serveur | [UE] | [DPA ; chiffrement avec une clé que le fournisseur ne détient pas] |
 | [Hébergeur de l'application, ex. Vercel] | Exécution de l'application, journaux d'accès | [UE — fonctions et journaux] | [DPA] |
 
@@ -59,7 +60,7 @@ Aucun outil d'analyse produit/traqueur n'est inclus. Aucun cookie non essentiel 
 ## Sauvegardes et accès
 
 - Sauvegardes **chiffrées**, hors du serveur, à planifier [fréquence et durée de rétention à documenter] ; les données effacées disparaissent des sauvegardes à leur expiration — l'indiquer dans la notice. **Le secret de session (`BETTER_AUTH_SECRET`) ne doit jamais figurer dans une sauvegarde** : une sauvegarde contient des jetons de session en clair (`docs/self-hosted-auth.md` §4). **Tester la restauration** avant production.
-- **E-mails (fournisseur)** : le contenu et les journaux des e-mails sont conservés par le fournisseur (30 jours d'après sa documentation) ; ils contiennent l'adresse du destinataire et un lien à usage limité (1 h pour la réinitialisation, 24 h pour la confirmation). Désactiver le suivi des ouvertures et des clics. Limiter l'accès au tableau de bord du fournisseur (comptes nominatifs, double authentification).
+- **E-mails (fournisseur)** : le contenu et les journaux des e-mails sont conservés par le fournisseur (30 jours d'après sa documentation) ; ils contiennent l'adresse du destinataire et un lien à usage limité (1 h pour la réinitialisation, 24 h pour la confirmation) ; l'e-mail de place confirmée contient en plus le nom du club, du cours, la date et l'heure (aucun nom d'adhérent). Désactiver le suivi des ouvertures et des clics. Limiter l'accès au tableau de bord du fournisseur (comptes nominatifs, double authentification).
 - Accès humain à la base de production : restreint aux personnes nommées, journalisé, jamais depuis un poste non protégé ; aucune donnée de production en développement.
 - Le support de l'éditeur n'a **aucun accès implicite** aux données d'un club (aucun rôle « super-admin » n'existe dans l'application).
 

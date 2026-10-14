@@ -22,7 +22,7 @@
 **Pour le coach et le responsable de club**
 
 - **Membres** : liste paginée avec recherche et statut, fiche complète (grade, assiduité, historique), création, modification, archivage, import CSV validé en deux étapes, export CSV, contact WhatsApp en un geste.
-- **Planning** : séances uniques ou récurrentes, capacité, coach affecté, annulation ; **réservations avec liste d'attente** (la capacité ne bloque jamais : le surplus est mis en attente et promu automatiquement ; le coach peut aussi accorder une place).
+- **Planning** : séances uniques ou récurrentes, capacité, coach affecté, annulation ; **réservations avec liste d'attente** (la capacité ne bloque jamais : le surplus est mis en attente et promu automatiquement ; le coach peut aussi accorder une place ; l'adhérent promu est **prévenu par e-mail**).
 - **Appel** : feuille d'appel (Présent / En retard / Absent) avec les inscrits en premier, filtre « Inscrits », validation finale qui marque absents les inscrits non venus.
 - **Pointage par QR code**, deux modes au choix du club : **QR tournant** affiché par le coach (jeton court renouvelé), ou **QR fixe** imprimé (affiche A4 avec le logo du club) qui retrouve le cours par l'heure (par défaut de 45 min avant à 30 min après le début, réglable). Le scanner est **intégré à l'application** (pas besoin de l'appareil photo natif). La réservation est obligatoire pour pointer ; un membre non inscrit réserve et pointe en un geste.
 - **Tableau de bord** et **rapports** filtrables avec deux exports CSV : l'historique des présences, et le **classement d'une période** (nombre de présences de chaque membre entre deux dates) ; membres à recontacter (actifs sans présence depuis 30 jours).
@@ -33,7 +33,7 @@
 **Pour l'adhérent**
 
 - Inscription par le code ou le lien du club ; la fiche est créée automatiquement, le membre complète « Mon profil » : identité, téléphone, **ceinture et barrettes**, **photo** (facultative) ou silhouette (femme / homme / neutre).
-- Planning, réservation et annulation (jusqu'à la validation de la feuille), « Mon espace », ses présences, **classement** (semaine, mois, année) auquel il choisit d'apparaître ou non.
+- Planning, réservation et annulation (jusqu'à la validation de la feuille), e-mail « Votre place est confirmée » quand une place lui est attribuée depuis la liste d'attente, « Mon espace », ses présences, **classement** (semaine, mois, année) auquel il choisit d'apparaître ou non.
 - Pointage de sa présence par QR, export et suppression de ses données.
 
 ## Technologies utilisées
@@ -101,7 +101,7 @@ v0/, discovery/, ops/   moteur de brief hebdomadaire autonome et matériel de d�
 
 ## Documentation
 
-[Pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · [exploitation](docs/operations.md) · [Nginx](docs/nginx.md) · [déploiement sur le VPS](docs/deploy-vps.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md) · audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
+[Pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [réservations et liste d'attente](docs/bookings.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · [exploitation](docs/operations.md) · [Nginx](docs/nginx.md) · [déploiement sur le VPS](docs/deploy-vps.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md) · audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
 
 ---
 
