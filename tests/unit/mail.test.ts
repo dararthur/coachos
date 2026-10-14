@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { safeLog } from "@/server/auth/factory";
 import { outboxMailer } from "@/server/mail/outbox";
 import { MailDeliveryError, resendMailer } from "@/server/mail/resend";
-import { passwordResetEmail, verificationEmail } from "@/server/mail/templates";
+import { bookingPromotedEmail, passwordResetEmail, verificationEmail } from "@/server/mail/templates";
 
 const LINK = "https://club.example/api/auth/verify-email?token=abc.def.ghi&callbackURL=%2Flogin";
 
@@ -25,6 +25,37 @@ describe("modèles d'e-mails", () => {
     const html = verificationEmail("a@example.invalid", evil).html;
     expect(html).not.toContain("<script>");
     expect(html).toContain("&lt;script&gt;");
+  });
+});
+
+describe("e-mail de place confirmée (promotion depuis la liste d'attente)", () => {
+  const ME = "https://club.example/a/7d1c2a4e-0b6f-4c1e-9a55-3f2d8e9b1c00/me";
+  // 17:00 UTC le mardi 20 octobre 2026 : 19:00 à Paris (heure d'été), 13:00 à Montréal.
+  const promo = { academyName: "Gracie Lyon", className: "JJB débutants", startsAt: new Date("2026-10-20T17:00:00Z"), timeZone: "Europe/Paris", link: ME };
+
+  it("donne le club, le cours, la date et l'heure dans le fuseau du club, et le lien vers l'espace adhérent", () => {
+    const m = bookingPromotedEmail("ana@example.invalid", promo);
+    expect(m).toMatchObject({ to: "ana@example.invalid", kind: "booking_promoted", link: ME });
+    expect(m.subject).toBe("Place confirmée : JJB débutants, mardi 20 octobre à 19:00 — Matnexa");
+    expect(m.text).toContain("« JJB débutants » du mardi 20 octobre à 19:00, au club « Gracie Lyon »");
+    expect(m.text).toContain(`Voir mes séances : ${ME}`);
+    expect(m.html).toContain(`href="${ME}"`);
+    expect(bookingPromotedEmail("ana@example.invalid", { ...promo, timeZone: "America/Montreal" }).text).toContain("mardi 20 octobre à 13:00");
+  });
+
+  it("couvre la place libérée comme la place accordée, sans rien promettre d'autre ni citer l'adhérent", () => {
+    const m = bookingPromotedEmail("ana@example.invalid", promo);
+    expect(m.text).toMatch(/Une place vous a été attribuée : votre réservation est confirmée\./);
+    expect(m.text).toMatch(/annulez votre réservation depuis votre espace pour libérer la place/);
+    expect(`${m.subject} ${m.text} ${m.html}`).not.toMatch(/ana@|rappel|garanti|rang|n°/i);
+  });
+
+  it("échappe le HTML des noms et garde l'objet sur une seule ligne", () => {
+    const m = bookingPromotedEmail("a@example.invalid", { ...promo, academyName: 'Club <script>alert(1)</script>', className: "JJB\r\nBcc: x@evil.example" });
+    expect(m.html).not.toContain("<script>");
+    expect(m.html).toContain("&lt;script&gt;");
+    expect(m.subject).not.toMatch(/[\r\n]/);
+    expect(m.subject).toContain("JJB Bcc: x@evil.example");
   });
 });
 

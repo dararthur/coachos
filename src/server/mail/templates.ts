@@ -1,9 +1,15 @@
+import { formatDay, formatTime } from "@/domain/dates";
 import type { MailMessage } from "./types";
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+/** Une seule ligne, sans caractère de contrôle (nom de club ou de cours repris dans l'objet). */
+const oneLine = (s: string) => s.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim();
+
 /**
- * Contenu minimal : ni nom de club, ni donnée métier, ni liste. Un seul lien à usage sensible, durée de vie rappelée.
+ * Contenu minimal : un titre, un paragraphe, un seul lien. Les e-mails d'authentification ne citent ni club ni donnée métier
+ * (lien à usage sensible, durée de vie rappelée) ; les autres ne citent que ce que le destinataire doit savoir (demande de club ;
+ * place confirmée : club, cours et horaire).
  * (Le contenu des e-mails est conservé 30 jours par le fournisseur : voir docs/privacy-gdpr.md.)
  */
 function layout(title: string, intro: string, action: string, link: string, outro: string): { text: string; html: string } {
@@ -63,4 +69,31 @@ export function clubApprovedEmail(to: string, link: string, clubName: string): M
     "Ce message n'est valable que pour l'adresse à laquelle il a été envoyé. Si vous n'êtes pas à l'origine de cette demande, ignorez-le.",
   );
   return { to, kind: "club_approved", subject: "Votre club est approuvé — Matnexa", link, ...body };
+}
+
+export interface BookingPromotion {
+  academyName: string;
+  className: string;
+  startsAt: Date;
+  /** Fuseau du club : la date et l'heure sont celles affichées dans l'application. */
+  timeZone: string;
+  /** Espace adhérent du club (`/a/<academyId>/me`), où la réservation se consulte et s'annule. */
+  link: string;
+}
+
+/**
+ * Place attribuée depuis la liste d'attente, qu'elle se soit libérée ou que le coach l'ait accordée : la formulation couvre
+ * les deux cas. Ni le nom de l'adhérent, ni les autres inscrits, ni rang ou capacité.
+ */
+export function bookingPromotedEmail(to: string, p: BookingPromotion): MailMessage {
+  const className = oneLine(p.className);
+  const when = `${formatDay(p.startsAt, p.timeZone)} à ${formatTime(p.startsAt, p.timeZone)}`;
+  const body = layout(
+    "Votre place est confirmée",
+    `Vous étiez sur la liste d'attente du cours « ${className} » du ${when}, au club « ${oneLine(p.academyName)} ». Une place vous a été attribuée : votre réservation est confirmée.`,
+    "Voir mes séances",
+    p.link,
+    "Si vous ne pouvez plus venir, annulez votre réservation depuis votre espace pour libérer la place.",
+  );
+  return { to, kind: "booking_promoted", subject: `Place confirmée : ${className}, ${when} — Matnexa`, link: p.link, ...body };
 }
