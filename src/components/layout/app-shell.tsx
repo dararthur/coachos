@@ -4,6 +4,7 @@ import { can, ROLE_LABELS, type Role } from "@/domain/roles";
 import { signOutAction } from "@/server/actions/auth";
 import { MatnexaLogo } from "@/components/brand/logo";
 import { AcademyLogo } from "@/components/ui/academy-logo";
+import { InstallApp } from "@/components/ui/install-app";
 import { Icon } from "@/components/ui/icons";
 import { MobileTabBar, NavLinks, type NavItem } from "./nav-links";
 
@@ -30,6 +31,7 @@ export function AppShell({ academy, role, userLabel, children }: { academy: { id
       <MobileTopBar academy={academy} role={role} />
       <div className="min-w-0">
         <main id="contenu" className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 sm:px-6 md:px-8 md:pb-12 md:pt-8 print:max-w-none print:p-0" tabIndex={-1}>
+          <InstallApp banner />
           {children}
         </main>
       </div>

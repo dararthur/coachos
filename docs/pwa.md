@@ -9,6 +9,10 @@
 - **Navigation mobile** : barre d'onglets fixe en bas (< 768 px), menu latéral sur grand écran ; « Mon compte » (avec déconnexion) dans l'en-tête.
 - **Tactile** : cibles ≥ 44 × 44 px (vérifié par test), champs ≥ 16 px (pas de zoom automatique iOS), `touch-action: manipulation`.
 
+- **Rester connecté** : session de 365 jours renouvelée à l'usage (cookie persistant) ; l'adhérent ou le coach se connecte une fois par appareil. Révocable à tout moment (changement de mot de passe, suppression du compte).
+- **Installation guidée** (`src/components/ui/install-app.tsx`) : sur Android/Chrome, bouton « Installer l'application » (événement `beforeinstallprompt`) ; sur iPhone/iPad, mode d'emploi « Partager → Sur l'écran d'accueil » (Safari n'a pas d'invite programmable). Bandeau refermable dans l'application (mémorisé sur l'appareil) et bloc permanent dans « Mon compte ». Rien n'est affiché une fois installée.
+- **Raccourci** du manifeste : « Pointer ma présence » (appui long sur l'icône, Android).
+
 ## Ce qui n'est volontairement PAS implémenté : le hors ligne
 
 **Aucun service worker, aucun cache de données.** Une page authentifiée contient des données personnelles de membres ; la mettre en cache sur l'appareil ou dans un cache partagé exigerait une stratégie validée (chiffrement, purge à la déconnexion, invalidation à la révocation d'un accès, appareils partagés). Tant qu'elle n'existe pas :

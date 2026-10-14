@@ -18,6 +18,7 @@ export default function manifest(): MetadataRoute.Manifest {
     background_color: "#f4f2ee",
     theme_color: "#16191d",
     categories: ["sports", "productivity"],
+    shortcuts: [{ name: "Pointer ma présence", short_name: "Pointer", url: "/checkin", icons: [{ src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }] }],
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },

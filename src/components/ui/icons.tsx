@@ -12,6 +12,7 @@ const PATHS = {
   qr: "M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h2v2h-2zM18 18h2v2h-2zM14 18h2v2h-2zM18 14h2v2h-2z",
   search: "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13ZM15.5 15.5 20 20",
   plus: "M12 5v14M5 12h14",
+  x: "M6 6l12 12M18 6 6 18",
   upload: "M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v5h16v-5",
   download: "M12 4v11M7.5 10.5 12 15l4.5-4.5M4 15v5h16v-5",
   mail: "M4 6h16v12H4zM4 7l8 6 8-6",

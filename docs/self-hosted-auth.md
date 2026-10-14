@@ -25,7 +25,7 @@ Le contrat applicatif ne change pas : `getSessionUser()` renvoie `{ id, email, e
 ## 3. Cookies et sessions
 
 - Cookie `better-auth.session_token` (préfixe `__Secure-` en HTTPS) : `HttpOnly`, `SameSite=Lax`, `Path=/`, `Secure` dès que `SITE_URL` est en https. Valeur = `jeton.signature` (HMAC avec `BETTER_AUTH_SECRET`).
-- Session de 7 jours, prolongée d'un jour à l'usage **en base** ; le cookie lui-même n'est renouvelé que lors d'une action serveur (limite connue : une personne connectée depuis 7 jours sans action serveur doit se reconnecter). Pas de cache de cookie : la révocation est immédiate (testé).
+- Session d'**un an**, prolongée d'un jour à l'usage **en base** (cookie persistant, plafond de 400 jours des navigateurs respecté) : sur un téléphone, l'application installée ne demande de se reconnecter qu'après une très longue absence ou une révocation. Le cookie lui-même n'est renouvelé que lors d'une action serveur. Pas de cache de cookie : la révocation est immédiate (testé).
 - Validation côté serveur à chaque requête : lecture de la session en base + vérification de la signature. Aucun test de simple présence de cookie.
 - Contrôle d'origine (CSRF) de Better Auth sur les requêtes portant un cookie (testé en e2e, serveur de production) ; les Server Actions Next.js ont leur propre contrôle d'origine.
 

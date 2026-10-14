@@ -128,7 +128,8 @@ export function createAuth(o: AuthOptions) {
     },
     session: {
       modelName: "sessions",
-      expiresIn: 60 * 60 * 24 * 7,
+      // Un an, prolongé à chaque usage : sur un téléphone (application installée) on ne se reconnecte qu'après une longue absence. Sessions en base, révocables.
+      expiresIn: 60 * 60 * 24 * 365,
       updateAge: 60 * 60 * 24,
       fields: { expiresAt: "expires_at", createdAt: "created_at", updatedAt: "updated_at", ipAddress: "ip_address", userAgent: "user_agent", userId: "user_id" },
     },

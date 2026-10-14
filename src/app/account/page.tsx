@@ -7,6 +7,7 @@ import { ConfirmAction } from "@/components/ui/confirm";
 import { deleteAccountAction, signOutAction, changePasswordAction, updateProfileAction } from "@/server/actions/auth";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { requireUser } from "@/server/auth/guards";
+import { InstallApp } from "@/components/ui/install-app";
 
 export const metadata: Metadata = { title: "Mon compte" };
 
@@ -22,6 +23,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <TextField label="Nom affiché" name="displayName" defaultValue={user.displayName} maxLength={100} hint="Visible par l'équipe des clubs dont vous faites partie." />
           <SubmitButton>Enregistrer</SubmitButton>
         </ActionForm>
+      </Card>
+      <Card title="Application sur mon téléphone" description="Installez Matnexa sur l'écran d'accueil : elle s'ouvre en plein écran et vous restez connecté, sans ressaisir votre mot de passe.">
+        <InstallApp />
       </Card>
       <Card title="Session">
         <form action={signOutAction}>
