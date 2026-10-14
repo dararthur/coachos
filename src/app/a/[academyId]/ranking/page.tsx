@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { localDate } from "@/domain/dates";
 import { can } from "@/domain/roles";
 import { ordinal, parseRankingPeriod, RANKING_LABELS, RANKING_PERIODS, rankingRange } from "@/domain/ranking";
+import { Avatar } from "@/components/ui/avatar";
+import { BeltIcon } from "@/components/ui/belt";
 import { Alert, Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid, TabNav } from "@/components/ui/ui";
 import { ActionForm, SubmitButton } from "@/components/ui/form";
 import { setRankingVisibilityAction } from "@/server/actions/members";
@@ -55,8 +57,16 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
             {rows.filter((r) => r.visits > 0).map((r) => (
               <tr key={r.personId} className={r.isMe ? "bg-accent-soft/40" : undefined}>
                 <td className="px-4 py-2.5 font-bold">{r.rank ? ordinal(r.rank) : "—"}</td>
-                <td className="px-4 py-2.5">
-                  {r.firstName} {r.lastName} {r.isMe && <Badge tone="brand">Vous</Badge>}
+                <td className="px-4 py-2">
+                  <span className="flex items-center gap-3">
+                    <Avatar academyId={academyId} personId={r.personId} avatarStyle={r.avatarStyle} hasPhoto={r.hasPhoto} size="sm" />
+                    <span className="min-w-0">
+                      <span className="block">
+                        {r.firstName} {r.lastName} {r.isMe && <Badge tone="brand">Vous</Badge>}
+                      </span>
+                      {r.belt && <BeltIcon belt={r.belt} stripes={r.beltStripes} size="sm" />}
+                    </span>
+                  </span>
                 </td>
                 <td className="px-4 py-2.5 text-right font-semibold">{r.visits}</td>
               </tr>

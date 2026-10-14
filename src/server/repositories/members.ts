@@ -2,6 +2,7 @@ import "server-only";
 import type { Tx } from "@/server/db/client";
 import type { ExistingKeys, ImportRow } from "@/domain/csv-import";
 import { nameKey } from "@/domain/csv-import";
+import type { AvatarStyle, Belt } from "@/domain/profile";
 
 export interface PersonRow {
   id: string;
@@ -15,6 +16,10 @@ export interface PersonRow {
   anonymizedAt: Date | null;
   createdAt: Date;
   lastAttendedAt: Date | null;
+  belt: Belt | null;
+  beltStripes: number;
+  avatarStyle: AvatarStyle;
+  hasPhoto: boolean;
   /** Présent seulement si listPeople reçoit `assiduityTimezone` (lundis AAAA-MM-JJ des semaines avec une venue). */
   attendedWeeks?: string[];
 }
@@ -51,6 +56,8 @@ export async function listPeople(
   const rows = await tx<PersonRow[]>`
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
+           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle",
+           exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            (select max(s.starts_at) from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
              where a.person_id = p.id and a.academy_id = p.academy_id and a.status in ('present', 'late')) as "lastAttendedAt"
            ${weeks}
@@ -65,6 +72,8 @@ export async function getPerson(tx: Tx, academyId: string, personId: string): Pr
   const rows = await tx<PersonRow[]>`
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
+           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle",
+           exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.id = ${personId} and p.academy_id = ${academyId}`;
   return rows[0] ?? null;
@@ -155,6 +164,8 @@ export async function listAllForExport(tx: Tx, academyId: string): Promise<Perso
   const rows = await tx<PersonRow[]>`
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
+           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle",
+           exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.academy_id = ${academyId} and p.anonymized_at is null
     order by lower(p.last_name), lower(p.first_name) limit 20000`;

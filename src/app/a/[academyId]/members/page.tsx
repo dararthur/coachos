@@ -5,6 +5,8 @@ import { can } from "@/domain/roles";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
 import { Badge, DataTable, EmptyState, LinkButton, Notice, PageHeader, Pagination, TabNav } from "@/components/ui/ui";
+import { Avatar } from "@/components/ui/avatar";
+import { BeltIcon } from "@/components/ui/belt";
 import { TallyBar, weeksFromMondays } from "@/components/ui/assiduity";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listPeople, PAGE_SIZE, type MemberStatus } from "@/server/repositories/members";
@@ -108,14 +110,16 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable caption="Liste des membres" headers={["Nom", "Assiduité (8 sem.)", "Dernière présence", "Inscription", "E-mail", ...(showStatus ? ["Statut"] : [])]}>
+            <DataTable caption="Liste des membres" headers={["Nom", "Ceinture", "Assiduité (8 sem.)", "Dernière présence", "Inscription", "E-mail", ...(showStatus ? ["Statut"] : [])]}>
               {rows.map((p) => (
                 <tr key={p.id}>
                   <th scope="row" className="px-4 py-1 font-semibold">
-                    <Link href={`/a/${academyId}/members/${p.id}`} className="flex min-h-11 items-center no-underline hover:underline">
+                    <Link href={`/a/${academyId}/members/${p.id}`} className="flex min-h-11 items-center gap-3 no-underline hover:underline">
+                      <Avatar academyId={academyId} personId={p.id} avatarStyle={p.avatarStyle} hasPhoto={p.hasPhoto} size="sm" />
                       {p.lastName.toUpperCase()} {p.firstName}
                     </Link>
                   </th>
+                  <td className="px-4 py-1">{p.belt ? <BeltIcon belt={p.belt} stripes={p.beltStripes} /> : <span className="text-ink-faint">—</span>}</td>
                   <td className="px-4 py-1">
                     <TallyBar weeks={weeksFromMondays(p.attendedWeeks, tz)} />
                   </td>
@@ -131,10 +135,12 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
             {rows.map((p) => (
               <li key={p.id}>
                 <Link href={`/a/${academyId}/members/${p.id}`} className="flex min-h-14 items-center justify-between gap-3 px-4 py-2 no-underline">
-                  <span className="min-w-0">
+                  <Avatar academyId={academyId} personId={p.id} avatarStyle={p.avatarStyle} hasPhoto={p.hasPhoto} size="sm" />
+                  <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">
                       {p.lastName.toUpperCase()} {p.firstName}
                     </span>
+                    {p.belt && <BeltIcon belt={p.belt} stripes={p.beltStripes} size="sm" />}
                     <span className="block text-xs text-ink-soft">{p.lastAttendedAt ? `Dernière venue : ${formatDateTime(p.lastAttendedAt, tz)}` : "Jamais venu(e)"}</span>
                   </span>
                   {p.archivedAt ? <Badge>Archivé</Badge> : <TallyBar weeks={weeksFromMondays(p.attendedWeeks, tz)} />}

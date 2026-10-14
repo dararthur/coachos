@@ -1,5 +1,6 @@
 import "server-only";
 import type { Tx } from "@/server/db/client";
+import type { AvatarStyle, Belt } from "@/domain/profile";
 
 export interface RankingRow {
   personId: string;
@@ -10,13 +11,18 @@ export interface RankingRow {
   rank: number | null;
   rankedTotal: number;
   isMe: boolean;
+  belt: Belt | null;
+  beltStripes: number;
+  avatarStyle: AvatarStyle;
+  hasPhoto: boolean;
 }
 
 /** Classement filtré par la base : un membre ne reçoit que sa ligne et celles des membres consentants. */
 export async function attendanceRanking(tx: Tx, academyId: string, from: string, to: string): Promise<RankingRow[]> {
   const rows = await tx<RankingRow[]>`
     select person_id as "personId", first_name as "firstName", last_name as "lastName", visits, rank,
-           ranked_total as "rankedTotal", is_me as "isMe"
+           ranked_total as "rankedTotal", is_me as "isMe", belt, belt_stripes as "beltStripes",
+           avatar_style as "avatarStyle", has_photo as "hasPhoto"
     from public.attendance_ranking(${academyId}, ${from}::date, ${to}::date)`;
   return [...rows];
 }

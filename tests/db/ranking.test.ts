@@ -47,6 +47,27 @@ describe("classement d'assiduité", () => {
     expect(JSON.stringify(asMe)).not.toMatch(/Timide|Cache/);
   });
 
+  it("chaque ligne porte grade, silhouette et photo ; seules les lignes déjà visibles sont concernées", async () => {
+    const academy = await createAcademy(await createUser("rk3-owner"), "Club profils");
+    const me = await createUser("rk3-me");
+    await addMember(academy, me, "member");
+    const meP = await createPerson(academy, "Moi", "Profil");
+    await adminSql()`update public.people set user_id = ${me.id}, belt = 'purple', belt_stripes = 3, avatar_style = 'woman' where id = ${meP}`;
+    const star = await createPerson(academy, "Star", "Profil");
+    await adminSql()`update public.people set ranking_opt_in = true, belt = 'black', belt_stripes = 1 where id = ${star}`;
+    const shy = await createPerson(academy, "Timide", "Profil");
+    await adminSql()`update public.people set belt = 'brown' where id = ${shy}`;
+    await adminSql()`insert into public.person_photos (person_id, academy_id, content_type, data) values (${star}, ${academy}, 'image/webp', ${Buffer.from([1, 2, 3])})`;
+    for (const p of [meP, star, shy]) await visit(academy, p, -1);
+    const { from, to } = range();
+    const rows = await asUser(me, (tx) => ranking.attendanceRanking(tx, academy, from, to));
+    expect(rows.map((r) => [r.firstName, r.belt, r.beltStripes, r.avatarStyle, r.hasPhoto])).toEqual([
+      ["Moi", "purple", 3, "woman", false],
+      ["Star", "black", 1, "neutral", true],
+    ]);
+    expect(JSON.stringify(rows)).not.toMatch(/Timide|brown/);
+  });
+
   it("un membre sans venue voit sa ligne (rang nul) ; période invalide et autre club refusés", async () => {
     const owner = await createUser("rk2-owner");
     const academy = await createAcademy(owner, "Club vide");
