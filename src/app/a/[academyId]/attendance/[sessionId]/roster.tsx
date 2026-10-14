@@ -39,7 +39,8 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
   const [entries, setEntries] = useState<Entry[]>(initial.entries);
   const [checkin, setCheckin] = useState(initial.checkin);
   const [query, setQuery] = useState("");
-  const [view, setView] = useState<View>("all");
+  // Par défaut, les inscrits (ceux que le coach attend) ; la liste complète reste à un appui quand personne ne s'est inscrit.
+  const [view, setView] = useState<View>(initial.entries.some((e) => e.booking !== null) ? "booked" : "all");
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [sync, setSync] = useState<{ ok: boolean; at: number }>({ ok: true, at: initial.serverNow });
