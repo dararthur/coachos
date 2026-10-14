@@ -219,7 +219,9 @@ describe("pointage par l'adhérent", () => {
     expect(await code(() => redeem(m.user, d.token))).toBe("checkin_invalid");
     expect(await code(() => open(w.carl, d.session))).toBe("roll_validated");
 
-    for (const s of [a, b, c, d]) expect(await rows(s.session)).toHaveLength(0);
+    // Aucune présence pour l'adhérent. Seule exception : à la validation, le coach affecté (inscrit d'office) est marqué présent.
+    for (const s of [a, b, c, d]) expect((await rows(s.session)).filter((r) => r.person_id === m.person)).toHaveLength(0);
+    expect((await rows(d.session)).map((r) => r.status)).toEqual(["present"]);
   });
 
   it("utilisateur non connecté, hors club, sans fiche liée ou archivé : jamais de pointage", async () => {
@@ -249,7 +251,9 @@ describe("pointage par l'adhérent", () => {
     const noProfile = await createUser("sans-fiche");
     await addMember(w.academyA, noProfile, "member");
     expect(await code(() => redeem(noProfile, token))).toBe("checkin_no_profile");
-    expect(await code(() => redeem(w.carl, token))).toBe("checkin_no_profile"); // un coach sans fiche membre
+    const bareCoach = await createUser("coach-sans-fiche");
+    await addMember(w.academyA, bareCoach, "coach");
+    expect(await code(() => redeem(bareCoach, token))).toBe("checkin_no_profile"); // un coach sans fiche membre (aucune séance affectée)
 
     const archived = await linkedMember(w.academyA, "archive");
     await adminSql()`update public.people set archived_at = now() where id = ${archived.person}`;

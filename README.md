@@ -25,8 +25,9 @@
 - **Planning** : séances uniques ou récurrentes, capacité, coach affecté, annulation ; **réservations avec liste d'attente** (la capacité ne bloque jamais : le surplus est mis en attente et promu automatiquement ; le coach peut aussi accorder une place).
 - **Appel** : feuille d'appel (Présent / En retard / Absent) avec les inscrits en premier, filtre « Inscrits », validation finale qui marque absents les inscrits non venus.
 - **Pointage par QR code**, deux modes au choix du club : **QR tournant** affiché par le coach (jeton court renouvelé), ou **QR fixe** imprimé (affiche A4 avec le logo du club) qui retrouve le cours par l'heure (par défaut de 45 min avant à 30 min après le début, réglable). Le scanner est **intégré à l'application** (pas besoin de l'appareil photo natif). La réservation est obligatoire pour pointer ; un membre non inscrit réserve et pointe en un geste.
-- **Tableau de bord** et **rapports** filtrables avec export ; membres à recontacter (actifs sans présence depuis 30 jours).
-- **Équipe** (propriétaire, administrateur, coach, membre), invitations par e-mail, **inscription autonome des adhérents par code ou lien permanent** du club, journal d'audit.
+- **Tableau de bord** et **rapports** filtrables avec deux exports CSV : l'historique des présences, et le **classement d'une période** (nombre de présences de chaque membre entre deux dates) ; membres à recontacter (actifs sans présence depuis 30 jours).
+- **Équipe** (propriétaire, administrateur, coach, membre), invitations par e-mail, **inscription autonome des adhérents par code ou lien permanent** du club, journal d'audit. **Mode membre** pour l'équipe (réserver d'autres cours) ; le coach affecté à une séance y est inscrit d'office.
+- **Accès maîtrisé** : un compte ne se crée qu'avec un code de club, une invitation ou une demande de club approuvée ; **un club ne se crée qu'après approbation par l'administrateur de la plateforme** (e-mail de demande, page d'administration réservée, adresse de l'administrateur uniquement dans l'environnement du serveur).
 - **Identité du club** : logo (affiché dans la navigation et sur l'affiche), réglages du pointage, fuseau horaire, durée de conservation des données.
 
 **Pour l'adhérent**

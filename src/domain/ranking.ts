@@ -23,3 +23,15 @@ export function rankingRange(period: RankingPeriod, today: string): { from: stri
 
 /** « 1er », « 2e »… */
 export const ordinal = (n: number) => (n === 1 ? "1er" : `${n}e`);
+
+/**
+ * Rangs « à égalité » : des scores identiques partagent le même rang et le suivant saute (1, 1, 3). Les scores sont fournis
+ * triés du plus grand au plus petit.
+ */
+export function competitionRanks(scoresDescending: readonly number[]): number[] {
+  const ranks: number[] = [];
+  scoresDescending.forEach((score, index) => {
+    ranks.push(index > 0 && score === scoresDescending[index - 1] ? ranks[index - 1]! : index + 1);
+  });
+  return ranks;
+}

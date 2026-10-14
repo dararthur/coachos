@@ -72,7 +72,7 @@ describe("invariants du schéma", () => {
       where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'execute') order by 1`;
     expect(rows.map((r) => r.proname)).toEqual([
       "accept_invitation", "attendance_ranking", "book_session", "cancel_booking", "checkin_book_and_redeem", "checkin_close", "checkin_fixed_peek", "checkin_fixed_redeem", "checkin_issue_token", "checkin_open", "checkin_peek", "checkin_redeem",
-      "claim_academy_request", "create_invitation", "decide_academy_request", "delete_academy", "delete_my_account", "erase_person",
+      "claim_academy_request", "create_invitation", "decide_academy_request", "delete_academy", "delete_my_account", "ensure_my_member_record", "erase_person",
       "export_my_data", "export_person_data", "join_academy_with_code", "list_academy_requests", "my_approved_academy_request", "preview_join_code", "promote_booking", "record_event", "regenerate_checkin_key", "regenerate_join_code", "remove_academy_logo", "remove_member", "remove_person_photo", "roll_set_validated", "session_bookings_overview", "set_academy_logo", "set_checkin_settings", "set_member_role", "set_my_photo", "set_my_ranking_visibility", "update_my_profile",
     ]);
   });

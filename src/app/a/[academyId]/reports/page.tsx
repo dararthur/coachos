@@ -41,11 +41,16 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
     <>
       <PageHeader
         title="Rapports"
-        description="Historique des présences enregistrées sur la période choisie."
+        description="Historique des présences sur la période choisie. Le classement de la période donne le nombre de présences de chaque membre entre les deux dates."
         actions={
           <>
             <LinkButton href={`/a/${academyId}/ranking`} variant="secondary" icon="trophy">Classement</LinkButton>
-            {can(ctx.role, "reports.export") && <LinkButton href={`${base}/export?${qs.toString()}`} variant="secondary" icon="download" download>Exporter (CSV)</LinkButton>}
+            {can(ctx.role, "reports.export") && (
+              <>
+                <LinkButton href={`${base}/export?${qs.toString()}`} variant="secondary" icon="download" download>Exporter (CSV)</LinkButton>
+                <LinkButton href={`${base}/ranking-export?${qs.toString()}`} variant="secondary" icon="download" download>Classement de la période (CSV)</LinkButton>
+              </>
+            )}
           </>
         }
       />

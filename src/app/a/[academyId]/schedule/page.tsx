@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { addDays, formatDay, formatTime, localDate, mondayOf, parseCalendarDate } from "@/domain/dates";
 import { can } from "@/domain/roles";
+import { viewingAsMember } from "@/server/view-mode";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
 import { Badge, EmptyState, LinkButton, Notice, PageHeader } from "@/components/ui/ui";
@@ -32,9 +33,11 @@ export default async function SchedulePage({ params, searchParams }: { params: P
     const key = localDate(s.startsAt, tz);
     byDay.set(key, [...(byDay.get(key) ?? []), s]);
   }
-  const canManage = can(ctx.role, "schedule.manage");
-  const canRecord = can(ctx.role, "attendance.record");
-  const isMember = ctx.role === "member";
+  // Mode membre de l'équipe : la page est celle d'un adhérent (réserver), sans les commandes de gestion.
+  const asMember = await viewingAsMember(ctx.role);
+  const canManage = can(ctx.role, "schedule.manage") && !asMember;
+  const canRecord = can(ctx.role, "attendance.record") && !asMember;
+  const isMember = ctx.role === "member" || asMember;
   const fmt = (d: string) => new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "long" }).format(new Date(`${d}T00:00:00Z`));
 
   return (

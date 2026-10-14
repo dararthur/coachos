@@ -64,7 +64,7 @@ describe("préflight : contrôles base de données (réels)", () => {
 
   it("la liste attendue vient des migrations réelles", () => {
     const exp = expectedObjects(migrationsDir);
-    expect(exp.files).toHaveLength(19);
+    expect(exp.files).toHaveLength(20);
     expect(exp.tables).toEqual(expect.arrayContaining(["academies", "people", "attendance", "session_checkins", "checkin_tokens"]));
     expect(exp.functions).toEqual(expect.arrayContaining(["claim_academy_request", "checkin_redeem", "erase_person"]));
   });
