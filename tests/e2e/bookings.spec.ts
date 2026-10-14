@@ -78,9 +78,9 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     await expect(coach.getByText("Feuille validée")).toBeVisible();
     await expect(brunoRow.getByRole("button", { name: "Absent" })).toHaveAttribute("aria-pressed", "true");
 
-    // Après validation, Bruno ne peut plus annuler.
+    // Après validation, Bruno voit le résultat de l'appel (absent) et ne peut plus annuler (refus côté base : tests/db/bookings.test.ts).
     await bruno.goto(`/a/${club}/schedule?week=${day}`);
-    await bruno.getByRole("button", { name: "Annuler" }).click();
-    await expect(bruno.getByRole("alert").filter({ hasText: "validée" })).toBeVisible();
+    await expect(bruno.getByText("Absent", { exact: true })).toBeVisible();
+    await expect(bruno.getByRole("button", { name: /Annuler/ })).toHaveCount(0);
   });
 });
