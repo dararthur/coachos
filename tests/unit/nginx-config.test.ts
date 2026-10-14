@@ -113,7 +113,7 @@ describe("ops/nginx : sécurité exigée par l'application", () => {
   });
 
   it("taille des requêtes, délais et limitation de débit explicites ; 429 plutôt que 503", () => {
-    expect(cfg).toMatch(/client_max_body_size\s+2m;/);
+    expect(cfg).toMatch(/client_max_body_size\s+3m;/);
     expect(cfg).toMatch(/client_header_timeout\s+\d+s;/);
     expect(cfg).toMatch(/client_body_timeout\s+\d+s;/);
     expect(proxyCfg).toMatch(/proxy_connect_timeout\s+\d+s;/);
