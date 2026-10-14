@@ -124,6 +124,12 @@ export const academySchema = z.object({
   currency: z.enum(CURRENCIES, { error: "Devise non prise en charge." }),
 });
 
+export const checkinSettingsSchema = z.object({
+  mode: z.enum(["rotating", "fixed"], { error: "Mode inconnu." }),
+  beforeMinutes: intField("Avant le cours", 0, 240),
+  afterMinutes: intField("Après le début", 0, 240),
+});
+
 export const academySettingsSchema = academySchema.extend({
   retentionMonths: intField("Durée", 6, 120),
 });

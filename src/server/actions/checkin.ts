@@ -4,15 +4,18 @@ import { randomBytes } from "node:crypto";
 import QRCode from "qrcode";
 import { z } from "zod";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { CHECKIN_TOKEN_TTL_SECONDS, checkinPath, isCheckinToken } from "@/domain/checkin";
-import { uuidField } from "@/domain/validation";
+import { CHECKIN_TOKEN_TTL_SECONDS, checkinPath, isCheckinToken, isClubKey } from "@/domain/checkin";
+import { checkinSettingsSchema, uuidField } from "@/domain/validation";
+import { revalidatePath } from "next/cache";
 import { authorizeAcademy, authorizeUser, inAcademy, runAction } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { env } from "@/server/env";
 import * as attendance from "@/server/repositories/attendance";
 import * as checkin from "@/server/repositories/checkin";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
-import { hashToken } from "./helpers";
+import { hashToken, parseForm } from "./helpers";
+
+type FormState = ActionResult<unknown> | null;
 
 export interface CheckinStateDto {
   status: "open" | "closed";
@@ -124,4 +127,43 @@ export async function redeemCheckinAction(token: string): Promise<ActionResult<c
 /** Réserve la séance puis pointe, pour un adhérent qui n'avait pas réservé (identité = session). */
 export async function bookAndRedeemCheckinAction(token: string): Promise<ActionResult<checkin.RedeemResult>> {
   return memberCall("checkin.bookAndRedeem", token, (hash, user) => withUser(user, (tx) => checkin.bookAndRedeemCheckin(tx, hash)));
+}
+
+// --- QR fixe du club ----------------------------------------------------------------------------
+async function clubCall<T>(name: string, key: string, run: (user: Awaited<ReturnType<typeof authorizeUser>>) => Promise<T>): Promise<ActionResult<T>> {
+  return runAction(name, async () => {
+    const user = await authorizeUser();
+    await enforceRateLimit("checkin-scan", user.id, LIMITS.checkinScan.max, LIMITS.checkinScan.window);
+    if (!isClubKey(key)) return failure("checkin_invalid");
+    return { ok: true, data: await run(user) };
+  });
+}
+
+export async function redeemClubCheckinAction(key: string, sessionId: string, book: boolean): Promise<ActionResult<checkin.RedeemResult>> {
+  return clubCall("checkin.fixedRedeem", key, (user) => {
+    const id = uuidField.safeParse(sessionId);
+    if (!id.success) throw new AppError("checkin_invalid");
+    return withUser(user, (tx) => checkin.redeemFixedCheckin(tx, key, id.data, book));
+  });
+}
+
+/** Mode de pointage et fenêtre du QR fixe (administrateurs). */
+export async function setCheckinSettingsAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("checkin.settings", async () => {
+    const ctx = await authorizeAcademy(academyId, "academy.update");
+    const input = parseForm(checkinSettingsSchema, formData);
+    await inAcademy(ctx, (tx) => checkin.setCheckinSettings(tx, academyId, input.mode, input.beforeMinutes, input.afterMinutes));
+    revalidatePath(`/a/${academyId}`, "layout");
+    return { ok: true, data: null, message: "Réglages du pointage enregistrés." };
+  });
+}
+
+/** Nouvelle clé du QR fixe : les affiches déjà imprimées cessent de fonctionner. */
+export async function regenerateCheckinKeyAction(academyId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("checkin.regenerateKey", async () => {
+    const ctx = await authorizeAcademy(academyId, "academy.update");
+    await inAcademy(ctx, (tx) => checkin.regenerateCheckinKey(tx, academyId));
+    revalidatePath(`/a/${academyId}`, "layout");
+    return { ok: true, data: null, message: "Nouveau QR généré : réimprimez l'affiche." };
+  });
 }

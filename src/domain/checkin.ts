@@ -49,3 +49,34 @@ export function extractCheckinToken(input: string, allowedOrigin: string): strin
 export function remainingSeconds(expiresAtMs: number, nowMs: number): number {
   return Math.max(0, Math.ceil((expiresAtMs - nowMs) / 1000));
 }
+
+// --- QR fixe du club ---------------------------------------------------------------------------------
+/** Clé du QR fixe : 96 bits en hexadécimal. */
+export const CLUB_KEY_PATTERN = /^[a-f0-9]{24}$/;
+
+export function isClubKey(value: unknown): value is string {
+  return typeof value === "string" && CLUB_KEY_PATTERN.test(value);
+}
+
+export function clubCheckinPath(key: string): string {
+  return `/checkin/club/${key}`;
+}
+
+/** Même prudence que pour un jeton : seul un lien `<origine>/checkin/club/<clé>` de CE site est suivi. */
+export function extractClubKey(input: string, allowedOrigin: string): string | null {
+  const text = input.trim();
+  if (text.length === 0 || text.length > 600) return null;
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return null;
+  }
+  if (url.origin !== new URL(allowedOrigin).origin) return null;
+  const match = /^\/checkin\/club\/([a-f0-9]{24})\/?$/.exec(url.pathname);
+  return match ? match[1]! : null;
+}
+
+/** Réglages de fenêtre (minutes) proposés au club. */
+export const CHECKIN_WINDOW_DEFAULTS = { before: 45, after: 30 } as const;
+export const CHECKIN_WINDOW_MAX_MINUTES = 240;

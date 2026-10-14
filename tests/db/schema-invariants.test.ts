@@ -71,9 +71,9 @@ describe("invariants du schéma", () => {
       select distinct p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
       where n.nspname = 'public' and has_function_privilege('authenticated', p.oid, 'execute') order by 1`;
     expect(rows.map((r) => r.proname)).toEqual([
-      "accept_invitation", "attendance_ranking", "book_session", "cancel_booking", "checkin_book_and_redeem", "checkin_close", "checkin_issue_token", "checkin_open", "checkin_peek", "checkin_redeem",
+      "accept_invitation", "attendance_ranking", "book_session", "cancel_booking", "checkin_book_and_redeem", "checkin_close", "checkin_fixed_peek", "checkin_fixed_redeem", "checkin_issue_token", "checkin_open", "checkin_peek", "checkin_redeem",
       "create_academy", "create_invitation", "delete_academy", "delete_my_account", "erase_person",
-      "export_my_data", "export_person_data", "join_academy_with_code", "preview_join_code", "promote_booking", "record_event", "regenerate_join_code", "remove_academy_logo", "remove_member", "remove_person_photo", "roll_set_validated", "session_bookings_overview", "set_academy_logo", "set_member_role", "set_my_photo", "set_my_ranking_visibility", "update_my_profile",
+      "export_my_data", "export_person_data", "join_academy_with_code", "preview_join_code", "promote_booking", "record_event", "regenerate_checkin_key", "regenerate_join_code", "remove_academy_logo", "remove_member", "remove_person_photo", "roll_set_validated", "session_bookings_overview", "set_academy_logo", "set_checkin_settings", "set_member_role", "set_my_photo", "set_my_ranking_visibility", "update_my_profile",
     ]);
   });
 

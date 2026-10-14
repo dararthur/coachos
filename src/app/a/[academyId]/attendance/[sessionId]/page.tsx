@@ -5,7 +5,7 @@ import { formatDateTime, formatTime } from "@/domain/dates";
 import { Alert, BackLink, Badge, PageHeader } from "@/components/ui/ui";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getRoster } from "@/server/repositories/attendance";
-import { getCheckinState, serverNow } from "@/server/repositories/checkin";
+import { getCheckinSettings, getCheckinState, serverNow } from "@/server/repositories/checkin";
 import { getSession } from "@/server/repositories/schedule";
 import { Roster } from "./roster";
 
@@ -19,10 +19,10 @@ export default async function RosterPage({ params }: { params: Promise<{ academy
     const session = await getSession(tx, academyId, sessionId);
     if (!session) return null;
     const checkin = await getCheckinState(tx, academyId, sessionId);
-    return { session, roster: await getRoster(tx, academyId, sessionId), checkin, serverNow: serverNow() };
+    return { session, roster: await getRoster(tx, academyId, sessionId), checkin, checkinSettings: await getCheckinSettings(tx, academyId), serverNow: serverNow() };
   });
   if (!data) notFound();
-  const { session, roster, checkin, serverNow: now } = data;
+  const { session, roster, checkin, checkinSettings, serverNow: now } = data;
   const tz = ctx.academy.timezone;
   const allowed = ctx.role !== "coach" || session.instructorId === null || session.instructorId === ctx.user.id;
   const editable = allowed && session.status === "scheduled";
@@ -55,6 +55,7 @@ export default async function RosterPage({ params }: { params: Promise<{ academy
         editable={editable}
         capacity={session.capacity}
         qrAllowed={editable}
+        fixedQr={checkinSettings.mode === "fixed" ? { before: checkinSettings.beforeMinutes, after: checkinSettings.afterMinutes } : null}
       />
     </>
   );

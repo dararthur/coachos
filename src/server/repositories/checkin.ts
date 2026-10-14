@@ -77,3 +77,53 @@ export async function bookAndRedeemCheckin(tx: Tx, tokenHash: string): Promise<R
 
 /** Horloge serveur (ms) : référence du compte à rebours côté client. */
 export const serverNow = (): number => Date.now();
+
+// --- QR fixe du club ---------------------------------------------------------------------------------
+export interface FixedCandidate {
+  sessionId: string;
+  className: string;
+  startsAt: string;
+  endsAt: string;
+  booking: "booked" | "waitlisted" | null;
+  status: "present" | "late" | "absent" | null;
+}
+
+/** Séances que ce QR fixe permet de pointer maintenant (réservées d'abord). */
+export async function peekFixedCheckin(tx: Tx, key: string): Promise<{ timezone: string; sessions: FixedCandidate[] }> {
+  const [row] = await tx<{ r: { timezone: string; sessions: { session_id: string; class_name: string; starts_at: string; ends_at: string; booking: FixedCandidate["booking"]; status: FixedCandidate["status"] }[] } }[]>`
+    select public.checkin_fixed_peek(${key}) as r`;
+  const r = row!.r;
+  return {
+    timezone: r.timezone,
+    sessions: r.sessions.map((s) => ({ sessionId: s.session_id, className: s.class_name, startsAt: s.starts_at, endsAt: s.ends_at, booking: s.booking, status: s.status })),
+  };
+}
+
+export async function redeemFixedCheckin(tx: Tx, key: string, sessionId: string, book: boolean): Promise<RedeemResult> {
+  const [row] = await tx<RedeemRow[]>`select public.checkin_fixed_redeem(${key}, ${sessionId}, ${book}) as r`;
+  return toRedeemResult(row!);
+}
+
+export interface CheckinSettings {
+  mode: "rotating" | "fixed";
+  beforeMinutes: number;
+  afterMinutes: number;
+  /** Clé du QR fixe (staff uniquement). */
+  key: string | null;
+}
+
+export async function getCheckinSettings(tx: Tx, academyId: string): Promise<CheckinSettings> {
+  const [row] = await tx<CheckinSettings[]>`
+    select a.checkin_mode as mode, a.checkin_before_minutes as "beforeMinutes", a.checkin_after_minutes as "afterMinutes",
+           (select k.key from public.academy_checkin_keys k where k.academy_id = a.id) as key
+    from public.academies a where a.id = ${academyId}`;
+  return row!;
+}
+
+export async function setCheckinSettings(tx: Tx, academyId: string, mode: string, before: number, after: number): Promise<void> {
+  await tx`select public.set_checkin_settings(${academyId}, ${mode}, ${before}, ${after})`;
+}
+
+export async function regenerateCheckinKey(tx: Tx, academyId: string): Promise<void> {
+  await tx`select public.regenerate_checkin_key(${academyId})`;
+}

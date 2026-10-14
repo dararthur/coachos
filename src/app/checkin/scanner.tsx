@@ -3,7 +3,7 @@
 import jsQR from "jsqr";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { checkinPath, extractCheckinToken } from "@/domain/checkin";
+import { checkinPath, clubCheckinPath, extractCheckinToken, extractClubKey } from "@/domain/checkin";
 import { buttonClasses } from "@/components/ui/button-classes";
 
 type Phase = "idle" | "starting" | "scanning" | "denied" | "unavailable" | "error";
@@ -42,11 +42,12 @@ export function Scanner() {
 
   const go = useCallback(
     (raw: string): boolean => {
-      const token = extractCheckinToken(raw, window.location.origin);
-      if (!token) return false;
+      const key = extractClubKey(raw, window.location.origin);
+      const token = key ? null : extractCheckinToken(raw, window.location.origin);
+      if (!key && !token) return false;
       done.current = true;
       stop();
-      router.push(checkinPath(token));
+      router.push(key ? clubCheckinPath(key) : checkinPath(token!));
       return true;
     },
     [router, stop],

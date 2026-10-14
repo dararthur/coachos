@@ -19,6 +19,9 @@ import { env } from "@/server/env";
 import { regenerateJoinCodeAction } from "@/server/actions/join";
 import { listPeople } from "@/server/repositories/members";
 import { InviteForm } from "./invite-form";
+import { getCheckinSettings } from "@/server/repositories/checkin";
+import { regenerateCheckinKeyAction, setCheckinSettingsAction } from "@/server/actions/checkin";
+import { LinkButton } from "@/components/ui/ui";
 import { AcademyLogo } from "@/components/ui/academy-logo";
 import { ImageField } from "@/components/ui/image-field";
 import { removeAcademyLogoAction, setAcademyLogoAction } from "@/server/actions/photos";
@@ -29,6 +32,8 @@ const AUDIT_LABELS: Record<string, string> = {
   "academy.created": "Club créé",
   "academy.settings_updated": "Paramètres du club modifiés",
   "academy.logo_set": "Logo du club modifié",
+  "academy.checkin_settings_updated": "Réglages du pointage modifiés",
+  "academy.checkin_key_regenerated": "QR fixe du club régénéré",
   "academy.logo_removed": "Logo du club retiré",
   "member.archived": "Membre archivé",
   "member.restored": "Membre restauré",
@@ -55,6 +60,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
     team: await listTeam(tx, academyId),
     invitations: await listInvitations(tx, academyId),
     joinCode: await getJoinCode(tx, academyId),
+    checkin: await getCheckinSettings(tx, academyId),
     audit: await listAudit(tx, academyId, 30),
     members: (await listPeople(tx, academyId, { status: "active", page: 1, q: "" })).rows,
   }));
@@ -71,6 +77,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           ["cours", "Types de cours"],
           ["equipe", "Équipe"],
           ["inscription", "Inscription"],
+          ["pointage", "Pointage"],
           ...(can(ctx.role, "audit.read") ? [["journal", "Journal"]] : []),
           ...(can(ctx.role, "academy.delete") ? [["suppression", "Suppression"]] : []),
         ].map(([id, label]) => (
@@ -213,6 +220,38 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                 title="Générer un nouveau code ?"
                 description="L'ancien code et l'ancien lien cesseront immédiatement de fonctionner. Les membres déjà inscrits ne sont pas affectés."
                 confirmLabel="Générer un nouveau code"
+              />
+            </div>
+          )}
+        </Card>
+
+        <Card id="pointage" title="Pointage par QR code" description="Comment vos adhérents pointent leur présence avec Matnexa. Dans les deux cas, ils doivent avoir réservé le cours.">
+          <ActionForm action={setCheckinSettingsAction.bind(null, academyId)} className="grid max-w-2xl gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Mode de pointage"
+              name="mode"
+              defaultValue={data.checkin.mode}
+              className="sm:col-span-2"
+              hint="QR tournant : le coach l'affiche sur son téléphone pour chaque cours (le plus sûr). QR fixe : une affiche imprimée dans la salle, le cours est retrouvé selon l'heure."
+            >
+              <option value="rotating">QR tournant, affiché par le coach</option>
+              <option value="fixed">QR fixe, affiche imprimée</option>
+            </SelectField>
+            <TextField label="Pointage possible avant le cours (min)" name="beforeMinutes" type="number" inputMode="numeric" min={0} max={240} defaultValue={String(data.checkin.beforeMinutes)} required hint="Utilisé par le QR fixe." />
+            <TextField label="Pointage possible après le début (min)" name="afterMinutes" type="number" inputMode="numeric" min={0} max={240} defaultValue={String(data.checkin.afterMinutes)} required hint="Utilisé par le QR fixe." />
+            <div className="sm:col-span-2">
+              <SubmitButton>Enregistrer</SubmitButton>
+            </div>
+          </ActionForm>
+          {data.checkin.mode === "fixed" && (
+            <div className="mt-6 flex max-w-2xl flex-wrap items-center gap-3 border-t border-line pt-5">
+              <LinkButton href={`/a/${academyId}/settings/qr`}>Afficher l&apos;affiche à imprimer</LinkButton>
+              <ConfirmAction
+                action={regenerateCheckinKeyAction.bind(null, academyId)}
+                trigger="Régénérer le QR"
+                title="Régénérer le QR du club ?"
+                description="Les affiches déjà imprimées cesseront immédiatement de fonctionner : il faudra imprimer la nouvelle. À faire si l'affiche a été diffusée hors du club."
+                confirmLabel="Régénérer le QR"
               />
             </div>
           )}

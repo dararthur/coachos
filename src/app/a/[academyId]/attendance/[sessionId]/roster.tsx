@@ -33,7 +33,7 @@ const clock = (ms: number) => new Date(ms).toLocaleTimeString("fr-FR", { hour: "
  *  - la liste est actualisée toutes les quelques secondes (et au retour du réseau / de l'onglet) ; un instantané plus
  *    ancien qu'une modification locale est ignoré pour éviter les retours en arrière.
  */
-export function Roster({ academyId, sessionId, initial, editable, capacity, qrAllowed }: { academyId: string; sessionId: string; initial: RollSnapshot; editable: boolean; capacity: number | null; qrAllowed: boolean }) {
+export function Roster({ academyId, sessionId, initial, editable, capacity, qrAllowed, fixedQr }: { academyId: string; sessionId: string; initial: RollSnapshot; editable: boolean; capacity: number | null; qrAllowed: boolean; fixedQr?: { before: number; after: number } | null }) {
   const [entries, setEntries] = useState<Entry[]>(initial.entries);
   const [checkin, setCheckin] = useState(initial.checkin);
   const [query, setQuery] = useState("");
@@ -171,7 +171,16 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
   };
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      {qrAllowed && (
+      {qrAllowed && fixedQr && (
+        <aside className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
+          <Card title="Pointage par QR fixe">
+            <p className="text-sm text-ink-soft">
+              Les adhérents scannent l&apos;affiche du club : le pointage est ouvert de {fixedQr.before} min avant le début à {fixedQr.after} min après, sans action de votre part. Les présences arrivent ici toutes seules ({counts.qr} par QR pour l&apos;instant).
+            </p>
+          </Card>
+        </aside>
+      )}
+      {qrAllowed && !fixedQr && (
         <aside className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
           <CheckinPanel academyId={academyId} sessionId={sessionId} checkin={checkin} qrCount={counts.qr} onSnapshot={onSnapshot} onRefresh={refresh} />
         </aside>

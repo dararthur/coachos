@@ -103,3 +103,19 @@ describe("contenu du QR code", () => {
     expect(h(t)).not.toBe(h(token()));
   });
 });
+
+describe("QR fixe du club", () => {
+  const origin = "https://app.exemple.fr";
+  const key = "0123456789abcdef01234567";
+  it("accepte seulement le lien du club sur ce site", async () => {
+    const { extractClubKey, isClubKey, clubCheckinPath } = await import("../../src/domain/checkin");
+    expect(isClubKey(key)).toBe(true);
+    expect(isClubKey(key.toUpperCase())).toBe(false);
+    expect(extractClubKey(`${origin}${clubCheckinPath(key)}`, origin)).toBe(key);
+    expect(extractClubKey(`${origin}/checkin/club/${key}/`, origin)).toBe(key);
+    expect(extractClubKey(`https://autre.example${clubCheckinPath(key)}`, origin)).toBeNull();
+    expect(extractClubKey(`${origin}/checkin/club/${key}x`, origin)).toBeNull();
+    expect(extractClubKey(key, origin)).toBeNull();
+    expect(extractClubKey("javascript:alert(1)", origin)).toBeNull();
+  });
+});
