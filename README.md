@@ -1,19 +1,112 @@
 # Matnexa
 
-> **Application (branche `feature/self-hosted-infra`)** — SaaS multi-tenant de gestion de club (JJB, grappling, MMA) : Next.js 16 · TypeScript strict · Tailwind · PostgreSQL standard avec RLS · Better Auth (auto-hébergé). Premier parcours utilisable de bout en bout : compte → club → membres (saisie + import CSV validé) → cours et planning → appel → tableau de bord → historique et exports → droits RGPD.
->
-> ```bash
-> npm ci
-> npm run check            # types, lint, tests unitaires + base de données (PostgreSQL réel), scan de secrets
-> PW_CHANNEL=chrome npm run test:e2e   # parcours complet dans un navigateur (build inclus)
-> ```
->
-> Documentation : [pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md), audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
-> Le CLI de brief hebdomadaire (`v0/`) reste un moteur autonome, non branché à l'application.
+**Matnexa** est l'application de gestion des clubs de sports de combat (jiu-jitsu brésilien, grappling, MMA) : membres, planning des cours, réservations, présences et pointage par QR code, classement, rapports, équipe et droits RGPD. Elle remplace le cahier d'appel et le tableur, et aide le club à garder ses adhérents (« à qui parler »).
+
+> Nom public : **Matnexa**. `coachos` reste le nom de code interne (dépôt, rôles PostgreSQL, services, scripts). Adhérents **majeurs uniquement**, **aucune donnée de santé**.
+
+## Sommaire
+
+1. [Fonctionnalités](#fonctionnalités)
+2. [Technologies utilisées](#technologies-utilisées)
+3. [Architecture](#architecture)
+4. [Sécurité et vie privée](#sécurité-et-vie-privée)
+5. [Application mobile (PWA)](#application-mobile-pwa)
+6. [Démarrage rapide](#démarrage-rapide)
+7. [Tests et qualité](#tests-et-qualité)
+8. [Structure du dépôt](#structure-du-dépôt)
+9. [Documentation](#documentation)
+10. [Contexte produit et pilote](#contexte-produit-et-pilote)
+
+## Fonctionnalités
+
+**Pour le coach et le responsable de club**
+
+- **Membres** : liste paginée avec recherche et statut, fiche complète (grade, assiduité, historique), création, modification, archivage, import CSV validé en deux étapes, export CSV, contact WhatsApp en un geste.
+- **Planning** : séances uniques ou récurrentes, capacité, coach affecté, annulation ; **réservations avec liste d'attente** (la capacité ne bloque jamais : le surplus est mis en attente et promu automatiquement ; le coach peut aussi accorder une place).
+- **Appel** : feuille d'appel (Présent / En retard / Absent) avec les inscrits en premier, filtre « Inscrits », validation finale qui marque absents les inscrits non venus.
+- **Pointage par QR code**, deux modes au choix du club : **QR tournant** affiché par le coach (jeton court renouvelé), ou **QR fixe** imprimé (affiche A4 avec le logo du club) qui retrouve le cours par l'heure (par défaut de 45 min avant à 30 min après le début, réglable). Le scanner est **intégré à l'application** (pas besoin de l'appareil photo natif). La réservation est obligatoire pour pointer ; un membre non inscrit réserve et pointe en un geste.
+- **Tableau de bord** et **rapports** filtrables avec export ; membres à recontacter (actifs sans présence depuis 30 jours).
+- **Équipe** (propriétaire, administrateur, coach, membre), invitations par e-mail, **inscription autonome des adhérents par code ou lien permanent** du club, journal d'audit.
+- **Identité du club** : logo (affiché dans la navigation et sur l'affiche), réglages du pointage, fuseau horaire, durée de conservation des données.
+
+**Pour l'adhérent**
+
+- Inscription par le code ou le lien du club ; la fiche est créée automatiquement, le membre complète « Mon profil » : identité, téléphone, **ceinture et barrettes**, **photo** (facultative) ou silhouette (femme / homme / neutre).
+- Planning, réservation et annulation (jusqu'à la validation de la feuille), « Mon espace », ses présences, **classement** (semaine, mois, année) auquel il choisit d'apparaître ou non.
+- Pointage de sa présence par QR, export et suppression de ses données.
+
+## Technologies utilisées
+
+| Domaine | Choix |
+|---|---|
+| Framework | **Next.js 16** (App Router, Server Components, Server Actions, `proxy.ts`), **React 19**, **TypeScript** strict |
+| Interface | **Tailwind CSS 4** (jetons de conception, système visuel « Ceinture » décrit dans [DESIGN.md](DESIGN.md)), primitives maison accessibles (éléments natifs `<dialog>`, `<select>`, validation HTML), police variable **Archivo** auto-hébergée, icônes, ceintures et silhouettes en SVG dessinés à la main |
+| Base de données | **PostgreSQL 17** standard, **RLS** (Row Level Security) comme seule autorité d'accès, fonctions `SECURITY DEFINER` pour les règles qui dépassent la RLS, migrations SQL versionnées (`db/migrations`, lanceur transactionnel `scripts/migrate.mjs`) |
+| Accès aux données | **postgres.js** (SQL paramétré, transactions soumises à la RLS via `SET LOCAL ROLE`), **pg** pour Better Auth |
+| Authentification | **Better Auth** auto-hébergé : e-mail + mot de passe, confirmation d'e-mail obligatoire, sessions en base (un an, renouvelées à l'usage), cookies HttpOnly / SameSite / Secure |
+| Validation | **Zod 4** (formulaires, filtres, messages en français) |
+| Images | **sharp** : toute image (JPEG, PNG, WebP, GIF, AVIF, HEIF, TIFF) est recadrée / réduite à 256 px, ré-encodée en WebP sans métadonnées, puis stockée **en base** (photos de profil, logo du club) |
+| QR codes | **qrcode** (génération SVG), **jsQR** (décodage dans le navigateur, aucune image envoyée au serveur) |
+| E-mails | **Resend** en production ; boîte d'envoi fichier en développement et en test |
+| CSV | **PapaParse**, import défensif et export protégé contre l'injection de formules |
+| Mobile | **PWA** installable (manifeste, icônes, mode standalone, raccourci de pointage), sans service worker ni cache de données authentifiées |
+| Tests | **Vitest** (unitaires et base de données sur un vrai PostgreSQL embarqué), **Playwright** + **axe** (parcours et accessibilité), scan de secrets, audit des dépendances |
+| Exploitation | Nginx en reverse proxy, CSP stricte à nonce, limiteurs de débit en base, journal assaini, sondes `/api/live` et `/api/health` |
+
+## Architecture
+
+Monolithe modulaire : un flux d'écriture unique `Server Action` → autorisation (session, appartenance sous RLS, limite de débit) → validation Zod → dépôt SQL dans une transaction RLS → `ActionResult` typé → interface (jamais de succès supposé). Détails et décisions dans [docs/architecture.md](docs/architecture.md).
+
+Points notables : une migration par fonctionnalité (réservations, photos, logo, QR fixe…) avec ses tests de base et de RLS ; erreurs métier stables `coachos:<code>` mappées vers des messages français ; données personnelles minimales ; aucune dépendance à Docker pour tester.
+
+## Sécurité et vie privée
+
+RLS partout (isolation entre clubs testée), rôles PostgreSQL sans privilège superflu, CSP à nonce sans style inline, jetons de QR hachés et éphémères (clé du QR fixe lisible du staff seulement et régénérable), codes d'inscription limités en débit, photos servies derrière la session avec `nosniff`, export et effacement RGPD (anonymisation : la photo est supprimée avec l'identité). Voir [docs/security.md](docs/security.md) et [docs/privacy-gdpr.md](docs/privacy-gdpr.md).
+
+## Application mobile (PWA)
+
+Matnexa s'installe sur l'écran d'accueil des téléphones (Android : bouton « Installer l'application » ; iPhone : « Partager → Sur l'écran d'accueil », avec mode d'emploi intégré). La session dure un an et se prolonge à chaque usage : coachs et adhérents ne se connectent qu'une fois par appareil. Détails et liste de contrôle sur appareils réels : [docs/pwa.md](docs/pwa.md).
+
+## Démarrage rapide
+
+```bash
+npm ci
+npm run check                         # types, lint, tests unitaires + base de données (PostgreSQL réel), scan de secrets
+PW_CHANNEL=chrome npm run test:e2e    # parcours complets dans un navigateur (build inclus)
+```
+
+Lancer l'application en local (base, rôles, variables d'environnement) : [docs/setup.md](docs/setup.md). Les tests démarrent leur propre PostgreSQL embarqué ; aucun serveur externe n'est nécessaire.
+
+## Tests et qualité
+
+- `npm run typecheck`, `npm run lint`
+- `npm run test:unit` : règles métier, normalisation d'images, analyse des QR
+- `npm run test:db` : migrations, RLS, isolation entre clubs, réservations, QR, photos, RGPD, Better Auth
+- `npm run test:e2e` : inscription, réservation, pointage (QR tournant et fixe), photo, logo, accessibilité (axe), mobile
+- `npm run audit:secrets`, `npm run audit:deps`
+
+## Structure du dépôt
+
+```
+src/domain/        logique métier pure (rôles, validation, import CSV, QR, profil, classement)
+src/server/        base de données, authentification, dépôts SQL, Server Actions, image, limiteurs
+src/components/    primitives d'interface, mise en page, marque
+src/app/           routes (auth, onboarding, adhésion, pointage, espace du club a/[academyId]/*)
+db/migrations/     schéma, RLS, fonctions (une migration par fonctionnalité)
+tests/             unit, db (PostgreSQL embarqué), e2e (Playwright)
+docs/              exploitation, sécurité, RGPD, PWA, QR, rôles, architecture
+v0/, discovery/, ops/   moteur de brief hebdomadaire autonome et matériel de découverte (non branchés à l'application)
+```
+
+## Documentation
+
+[Pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · [exploitation](docs/operations.md) · [Nginx](docs/nginx.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md) · audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
 
 ---
 
-# CoachOS — nom de code interne
+# Contexte produit et pilote
+
+## CoachOS — nom de code interne
 
 > **Nom public : Matnexa** (depuis le 13/10/2026). `coachos` reste le nom de code interne : dépôt, rôles PostgreSQL, services et scripts.
 

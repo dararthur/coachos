@@ -57,3 +57,12 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 ## Données
 
 Aucune donnée supplémentaire sur la personne : un pointage est un statut de présence (finalité inchangée). Les jetons expirés sont purgés quotidiennement (`purge_expired_data`). Voir `docs/privacy-gdpr.md`.
+
+## Mode QR fixe du club
+
+En plus du QR tournant (un jeton court par séance, affiché par le coach), un club peut choisir dans **Paramètres → Pointage par QR code** le mode **QR fixe** : une affiche A4 imprimable (avec le nom et le logo du club) affichée dans la salle.
+
+- Le QR encode `<SITE_URL>/checkin/club/<clé>` ; la clé (96 bits) est un secret du club, lisible du staff seulement (`academy_checkin_keys`). **Régénérer le QR** invalide immédiatement les affiches déjà imprimées.
+- Au scan, la base retrouve les séances atteignables par l'heure : de `checkin_before_minutes` avant le début à `checkin_after_minutes` après (45 / 30 par défaut, réglables de 0 à 240), hors séances annulées ou dont la feuille est validée. Plusieurs séances qui se chevauchent : l'adhérent choisit, les cours qu'il a réservés en premier.
+- Mêmes règles que le QR tournant : l'identité est celle de la session, **la réservation est obligatoire** (« Réserver et confirmer ma présence » réserve puis pointe ; séance pleine : liste d'attente, pas de pointage), un pointage existant n'est jamais écrasé, et la page d'ouverture ne modifie rien avant confirmation.
+- Compromis à connaître : un QR fixe peut être photographié ; il ne fonctionne que pour un adhérent connecté, réservé, dans la fenêtre horaire. Pour un contrôle plus strict, garder le QR tournant.
