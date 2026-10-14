@@ -66,3 +66,14 @@ export async function createClub(page: Page, name: string): Promise<string> {
   await expect(page).toHaveURL(/\/a\/[0-9a-f-]{36}\/dashboard/);
   return /\/a\/([0-9a-f-]{36})\//.exec(page.url())![1]!;
 }
+
+/** Après l'acceptation d'une invitation, la fiche est créée automatiquement : « Mon espace » renvoie vers « Mon profil » jusqu'à sa validation. */
+export async function completeProfile(page: Page, club: string) {
+  await expect(page).toHaveURL(new RegExp(`/a/${club}/profile`));
+  const adult = page.getByLabel("Je confirme être majeur(e).");
+  if (await adult.count()) await adult.check();
+  await page.getByRole("button", { name: "Valider mon profil" }).click();
+  await expect(page.getByText("Profil enregistré.")).toBeVisible();
+  await page.goto(`/a/${club}/me`);
+  await expect(page).toHaveURL(new RegExp(`/a/${club}/me`));
+}

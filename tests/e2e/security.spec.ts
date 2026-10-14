@@ -1,5 +1,5 @@
 import type { Browser } from "@playwright/test";
-import { PASSWORD, createClub, logIn, parisToday, signUp, uniqueEmail, expect, randomIp, test } from "./support/helpers";
+import { PASSWORD, completeProfile, createClub, logIn, parisToday, signUp, uniqueEmail, expect, randomIp, test } from "./support/helpers";
 
 async function newUser(browser: Browser, label: string) {
   const context = await browser.newContext({ locale: "fr-FR", timezoneId: "Europe/Paris", extraHTTPHeaders: { "x-real-ip": randomIp() } });
@@ -264,7 +264,7 @@ test("rôle membre : espace personnel limité, aucune page de gestion, ne voit q
 
   await member.page.goto(invitePath);
   await member.page.getByRole("button", { name: "Accepter l'invitation" }).click();
-  await expect(member.page).toHaveURL(new RegExp(`/a/${club}/me`));
+  await completeProfile(member.page, club);
   await expect(member.page.getByRole("heading", { name: "Mon espace" })).toBeVisible();
   const nav = member.page.getByRole("navigation", { name: "Navigation principale" });
   await expect(nav.getByRole("link", { name: "Planning" })).toBeVisible();

@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_IMPORT_BYTES, analyzeImport, planImport, type ImportRow, type RowIssue } from "@/domain/csv-import";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
+import { myProfileSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import * as members from "@/server/repositories/members";
+import * as profile from "@/server/repositories/profile";
 import * as ranking from "@/server/repositories/ranking";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import { parseForm } from "./helpers";
@@ -180,5 +181,30 @@ export async function setRankingVisibilityAction(academyId: string, visible: boo
     await inAcademy(ctx, (tx) => ranking.setMyRankingVisibility(tx, academyId, visible));
     revalidatePath(`/a/${academyId}/ranking`);
     return { ok: true, data: null, message: visible ? "Vous apparaissez dans le classement." : "Vous n'apparaissez plus dans le classement des autres membres." };
+  });
+}
+
+export async function updateMyProfileAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("updateMyProfile", async () => {
+    const ctx = await authorizeAcademy(academyId);
+    const input = parseForm(myProfileSchema, formData);
+    try {
+      await inAcademy(ctx, (tx) =>
+        profile.updateMyProfile(tx, academyId, {
+          firstName: input.firstName,
+          lastName: input.lastName,
+          phone: input.phone ?? null,
+          belt: input.belt ?? null,
+          beltStripes: input.belt ? (input.beltStripes ?? 0) : 0,
+          avatarStyle: input.avatarStyle,
+          adultConfirmed: input.adultConfirmed === "on",
+        }),
+      );
+    } catch (e) {
+      if (e instanceof AppError && e.code === "adult_required") return failure("adult_required", { adultConfirmed: "Cochez la case pour confirmer." });
+      throw e;
+    }
+    revalidatePath(`/a/${academyId}`, "layout");
+    return { ok: true, data: null, message: "Profil enregistré." };
   });
 }

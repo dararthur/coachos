@@ -3,7 +3,9 @@ import { addDays, formatDateTime, localDate } from "@/domain/dates";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
 import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
 import { AttendanceHistory } from "@/components/ui/attendance-history";
+import { redirect } from "next/navigation";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
+import { getMyProfile } from "@/server/repositories/profile";
 import { listSessions } from "@/server/repositories/schedule";
 
 export const metadata: Metadata = { title: "Mon espace" };
@@ -14,7 +16,8 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
   const ctx = await requireAcademy(academyId);
   const tz = ctx.academy.timezone;
   const today = localDate(new Date(), tz);
-  const { upcoming, mine } = await inAcademy(ctx, async (tx) => ({
+  const { upcoming, mine, profile } = await inAcademy(ctx, async (tx) => ({
+    profile: await getMyProfile(tx, academyId),
     upcoming: await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) }),
     mine: await tx<{ startsAt: Date; classTypeName: string; status: "present" | "late" | "absent" }[]>`
       select s.starts_at as "startsAt", ct.name as "classTypeName", a.status
@@ -24,9 +27,15 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
       where a.academy_id = ${academyId}
       order by s.starts_at desc limit 100`,
   }));
+  // Fiche créée automatiquement à l'arrivée : le membre la complète une première fois (grade, majorité).
+  if (profile && !profile.completed) redirect(`/a/${academyId}/profile`);
   return (
     <>
-      <PageHeader title="Mon espace" description={`Bienvenue dans « ${ctx.academy.name} ».`} />
+      <PageHeader
+        title="Mon espace"
+        description={`Bienvenue dans « ${ctx.academy.name} ».`}
+        actions={profile ? <LinkButton href={`/a/${academyId}/profile`} variant="secondary" icon="user">Mon profil</LinkButton> : undefined}
+      />
       <div className="space-y-6">
         <Card title="Pointer ma présence" description="Au début du cours, scannez le QR code affiché par le coach." className="border-bar! bg-bar! text-white [&_h2]:text-white [&_p]:text-bar-muted">
           <LinkButton href="/checkin" icon="qr" className="w-full sm:w-auto">Scanner le QR code</LinkButton>

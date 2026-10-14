@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
-import { createClub, expect, logIn, parisToday, PASSWORD, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
+import { completeProfile, createClub, expect, logIn, parisToday, PASSWORD, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
 
 /** Heure locale Paris (HH:MM) actuelle : la séance de test couvre « maintenant ». */
 const parisNow = (offsetMin = 0) =>
@@ -56,7 +56,7 @@ async function setup(browser: Browser) {
     const invite = new URL(await coach.page.getByLabel("Lien d'invitation").inputValue()).pathname;
     await member.page.goto(invite);
     await member.page.getByRole("button", { name: "Accepter l'invitation" }).tap();
-    await expect(member.page).toHaveURL(new RegExp(`/a/${club}/me`));
+    await completeProfile(member.page, club);
     return member;
   };
   const alice = await join("Alice");

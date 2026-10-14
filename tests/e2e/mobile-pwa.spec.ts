@@ -181,6 +181,19 @@ test.describe("parcours mobiles", () => {
     await member.goto(invite);
     expect(await smallTargets(member), "invitation").toEqual([]);
     await member.getByRole("button", { name: "Accepter l'invitation" }).tap();
+    // La fiche est créée automatiquement ; tant que le profil n'est pas validé, « Mon espace » renvoie vers « Mon profil ».
+    await expect(member).toHaveURL(new RegExp(`/a/${club}/profile`));
+    await expect(member.getByRole("heading", { name: "Mon profil" })).toBeVisible();
+    await noHorizontalOverflow(member, "profil");
+    expect(await smallTargets(member), "profil").toEqual([]);
+    await member.getByLabel("Ceinture").selectOption("blue");
+    await member.getByLabel("Barrettes").selectOption("2");
+    await member.getByLabel("Silhouette").selectOption("woman");
+    await member.getByRole("textbox", { name: /^Nom/ }).fill("Adhérent");
+    await member.getByLabel("Je confirme être majeur(e).").check();
+    await member.getByRole("button", { name: "Valider mon profil" }).tap();
+    await expect(member.getByText("Profil enregistré.")).toBeVisible();
+    await member.goto(`/a/${club}/me`);
     await expect(member).toHaveURL(new RegExp(`/a/${club}/me`));
     const tabs = member.getByRole("navigation", { name: "Navigation principale" });
     await expect(tabs.getByRole("link")).toHaveCount(4);
@@ -195,7 +208,8 @@ test.describe("parcours mobiles", () => {
     await expect(member.getByText("Mon rang")).toBeVisible();
     await noHorizontalOverflow(member, "classement membre");
     expect(await smallTargets(member), "classement membre").toEqual([]);
-    await expect(member.getByText("pas encore relié à une fiche membre")).toBeVisible();
+    await member.getByRole("button", { name: "Apparaître dans le classement" }).tap();
+    await expect(member.getByRole("button", { name: "Me retirer du classement des autres" })).toBeVisible();
     await ownerCtx.close();
     await memberCtx.close();
   });

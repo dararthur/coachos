@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { addDays, daysBetween, isValidTimeZone, parseCalendarDate } from "./dates";
 import { normalizePhone } from "./phone";
+import { AVATAR_STYLES, BELTS, MAX_STRIPES } from "./profile";
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; fieldErrors: Record<string, string> };
 
@@ -141,7 +142,22 @@ export const personCreateSchema = z.object({
   // Le MVP est limité aux adultes : l'attestation est obligatoire et horodatée par la base.
   adultConfirmed: z.literal("on", { error: "Vous devez attester que ce membre est majeur." }),
 });
-export const personUpdateSchema = z.object(personFields);
+export const personUpdateSchema = z.object({
+  ...personFields,
+  belt: optional(z.enum(BELTS, { error: "Ceinture inconnue." })),
+  beltStripes: optional(intField("Barrettes", 0, MAX_STRIPES)),
+});
+
+// Profil du membre connecté : sa propre fiche. L'attestation n'est exigée (par la base) que la première fois.
+export const myProfileSchema = z.object({
+  firstName: nameField("Prénom"),
+  lastName: nameField("Nom"),
+  phone: optional(phoneField),
+  belt: optional(z.enum(BELTS, { error: "Ceinture inconnue." })),
+  beltStripes: optional(intField("Barrettes", 0, MAX_STRIPES)),
+  avatarStyle: z.enum(AVATAR_STYLES, { error: "Choisissez une silhouette." }),
+  adultConfirmed: optional(z.literal("on")),
+});
 
 // --- Catalogue ----------------------------------------------------------------------------------
 export const disciplineSchema = z.object({

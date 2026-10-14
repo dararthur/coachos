@@ -51,7 +51,7 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
           <>
             <Alert tone="danger" title={problem === "checkin_no_profile" ? "Compte non rattaché" : problem === "rate_limited" ? "Trop de tentatives" : "QR code invalide ou expiré"}>
               {problem === "checkin_no_profile"
-                ? "Votre compte n'est lié à aucune fiche membre active de ce club : demandez au coach de vous rattacher."
+                ? "Votre fiche n'est pas active dans ce club : contactez le coach."
                 : problem === "rate_limited"
                   ? "Patientez quelques minutes avant de réessayer."
                   : "Ce QR code n'est plus valide (expiré, pointage fermé ou séance terminée). Demandez au coach d'afficher le QR code actuel et scannez-le à nouveau."}
