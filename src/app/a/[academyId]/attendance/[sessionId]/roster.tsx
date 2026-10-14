@@ -13,6 +13,8 @@ import { buttonClasses } from "@/components/ui/button-classes";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { Icon } from "@/components/ui/icons";
 import { Badge, Card, EmptyState } from "@/components/ui/ui";
+import { Avatar } from "@/components/ui/avatar";
+import { BeltIcon } from "@/components/ui/belt";
 
 const STATUSES: AttendanceStatus[] = ["present", "late", "absent"];
 type Entry = RollSnapshot["entries"][number];
@@ -173,11 +175,15 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
     <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       {qrAllowed && fixedQr && (
         <aside className="lg:sticky lg:top-6 lg:col-start-2 lg:row-start-1">
-          <Card title="Pointage par QR fixe">
-            <p className="text-sm text-ink-soft">
-              Les adhérents scannent l&apos;affiche du club : le pointage est ouvert de {fixedQr.before} min avant le début à {fixedQr.after} min après, sans action de votre part. Les présences arrivent ici toutes seules ({counts.qr} par QR pour l&apos;instant).
+          <section aria-labelledby="fixed-qr-title" className="rounded-sm border border-line bg-surface px-3 py-2 sm:px-4 sm:py-3">
+            <h2 id="fixed-qr-title" className="flex items-center gap-2 text-sm font-bold sm:text-base">
+              <Icon name="qr" size={18} />
+              Pointage par QR fixe
+            </h2>
+            <p className="mt-0.5 text-sm text-ink-soft">
+              Ouvert de {fixedQr.before} min avant à {fixedQr.after} min après le début, sans action de votre part. {counts.qr} par QR.
             </p>
-          </Card>
+          </section>
         </aside>
       )}
       {qrAllowed && !fixedQr && (
@@ -230,21 +236,20 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
           <ul className="divide-y divide-line rounded-sm border border-line bg-surface">
             {visible.map((e) => (
               <li key={e.personId} className={`grid gap-2 px-3 py-2.5 min-[30rem]:flex min-[30rem]:items-center min-[30rem]:justify-between min-[30rem]:gap-4 sm:px-4 ${busy === e.personId ? "opacity-60" : ""}`}>
-                <div className="min-w-0">
-                  <p className="truncate font-semibold">
+                <div className="flex min-w-0 items-center gap-3">
+                <Avatar academyId={academyId} personId={e.personId} avatarStyle={e.avatarStyle} hasPhoto={e.hasPhoto} size="sm" />
+                <div className="min-w-28">
+                  <p className="break-words font-semibold leading-tight">
                     <span className="uppercase">{e.lastName}</span> {e.firstName}
                     {e.archived && <span className="ml-2 text-xs font-normal text-ink-soft">(archivé)</span>}
-                    {e.booking === "booked" && (
-                      <span className="ml-2 align-middle">
-                        <Badge tone="success">Inscrit</Badge>
-                      </span>
-                    )}
-                    {e.source === "qr" && (
-                      <span className="ml-2 align-middle">
-                        <Badge tone="brand">Pointé par QR</Badge>
-                      </span>
-                    )}
                   </p>
+                  {(e.booking === "booked" || e.source === "qr" || e.belt) && (
+                    <p className="mt-1 flex flex-wrap items-center gap-1.5">
+                      {e.belt && <BeltIcon belt={e.belt} stripes={e.beltStripes} size="sm" />}
+                      {e.booking === "booked" && <Badge tone="success">Inscrit</Badge>}
+                      {e.source === "qr" && <Badge tone="brand">Pointé par QR</Badge>}
+                    </p>
+                  )}
                   {e.booking === "waitlisted" && (
                     <p className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge tone="warning">Liste d&apos;attente</Badge>
@@ -256,6 +261,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                     </p>
                   )}
                 </div>
+                </div>
                 <div role="group" aria-label={`Présence de ${e.firstName} ${e.lastName}`} className="grid grid-cols-3 gap-1 min-[30rem]:flex min-[30rem]:shrink-0">
                   {STATUSES.map((s) => {
                     const active = e.status === s;
@@ -266,7 +272,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                         aria-pressed={active}
                         disabled={!rollEditable || busy === e.personId}
                         onClick={() => choose(e.personId, active ? null : s)}
-                        className={`min-h-11 rounded-sm border px-3 text-sm font-semibold transition-colors duration-100 disabled:cursor-not-allowed sm:min-w-24 ${active ? ACTIVE_TONE[s] : "border-line-strong bg-surface text-ink hover:border-ink disabled:text-ink-soft"}`}
+                        className={`min-h-11 rounded-sm border px-3 text-sm font-semibold transition-colors duration-100 disabled:cursor-not-allowed sm:min-w-20 ${active ? ACTIVE_TONE[s] : "border-line-strong bg-surface text-ink hover:border-ink disabled:text-ink-soft"}`}
                       >
                         {ATTENDANCE_LABELS[s]}
                       </button>

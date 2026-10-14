@@ -1,6 +1,7 @@
 import "server-only";
 import type { Tx } from "@/server/db/client";
 import type { AttendanceStatus } from "@/domain/validation";
+import type { AvatarStyle, Belt } from "@/domain/profile";
 
 export interface RosterEntry {
   personId: string;
@@ -12,6 +13,10 @@ export interface RosterEntry {
   archived: boolean;
   /** Réservation de la séance : confirmée, en liste d'attente, ou aucune. */
   booking: "booked" | "waitlisted" | null;
+  avatarStyle: AvatarStyle;
+  hasPhoto: boolean;
+  belt: Belt | null;
+  beltStripes: number;
 }
 
 /**
@@ -20,7 +25,9 @@ export interface RosterEntry {
 export async function getRoster(tx: Tx, academyId: string, sessionId: string): Promise<RosterEntry[]> {
   const rows = await tx<RosterEntry[]>`
     select p.id as "personId", p.first_name as "firstName", p.last_name as "lastName", a.status, a.source,
-           (p.archived_at is not null) as archived, b.status as booking
+           (p.archived_at is not null) as archived, b.status as booking,
+           p.avatar_style as "avatarStyle", exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
+           p.belt, p.belt_stripes as "beltStripes"
     from public.people p
     left join public.attendance a on a.person_id = p.id and a.academy_id = p.academy_id and a.session_id = ${sessionId}
     left join public.session_bookings b on b.person_id = p.id and b.academy_id = p.academy_id and b.session_id = ${sessionId}

@@ -52,7 +52,7 @@ function SideBar({ academy, role, userLabel, items }: Shell & { userLabel: strin
         <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-4">
           <AcademyLogo academy={academy} size={40} className="bg-white" />
           <div className="min-w-0">
-            <p className="truncate text-base font-bold" title={academy.name}>
+            <p className="line-clamp-2 break-words text-base font-bold leading-tight" title={academy.name}>
               {academy.name}
             </p>
             <p className="text-xs font-medium text-bar-muted">{ROLE_LABELS[role]}</p>
@@ -91,7 +91,7 @@ function MobileTopBar({ academy, role }: Shell) {
         <div className="flex min-w-0 flex-1 items-center gap-2.5 border-l border-line pl-3 leading-tight">
           <AcademyLogo academy={academy} size={32} />
           <div className="min-w-0">
-          <p className="truncate text-sm font-bold">{academy.name}</p>
+          <p className="line-clamp-2 break-words text-sm font-bold leading-tight">{academy.name}</p>
           <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}</p>
           </div>
         </div>

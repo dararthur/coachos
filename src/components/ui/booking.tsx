@@ -5,7 +5,7 @@ import type { BookingInfo } from "@/server/repositories/bookings";
 
 /** « 12/20 inscrits · 3 en attente » (la capacité n'est jamais bloquante : le surplus est mis en attente). */
 export function occupancyLabel(b: Pick<BookingInfo, "booked" | "waitlisted">, capacity: number | null): string {
-  const base = capacity ? `${b.booked}/${capacity} inscrit${b.booked > 1 ? "s" : ""}` : `${b.booked} inscrit${b.booked > 1 ? "s" : ""}`;
+  const base = capacity ? `${b.booked}/${capacity} inscrit${b.booked > 1 ? "s" : ""}` : b.booked === 0 ? "Aucun inscrit" : `${b.booked} inscrit${b.booked > 1 ? "s" : ""}`;
   return b.waitlisted > 0 ? `${base} · ${b.waitlisted} en attente` : base;
 }
 
