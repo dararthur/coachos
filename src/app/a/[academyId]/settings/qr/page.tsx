@@ -25,7 +25,7 @@ export default async function PosterPage({ params }: { params: Promise<{ academy
   const qr = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-6 print:max-w-none print:p-0">
+    <div className="mx-auto max-w-2xl py-2 print:max-w-none print:p-0">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href={`/a/${academyId}/settings#pointage`} className="inline-flex min-h-11 items-center underline underline-offset-[3px]">
           ← Paramètres
@@ -59,6 +59,6 @@ export default async function PosterPage({ params }: { params: Promise<{ academy
         <input id="qr-link" readOnly value={url} className="mt-1 block w-full rounded-sm border border-line bg-surface px-3 py-2 font-mono text-xs" />
         <p className="mt-1 text-xs text-ink-soft">À titre d&apos;information : elle ne fonctionne que pour les adhérents connectés de votre club.</p>
       </div>
-    </main>
+    </div>
   );
 }

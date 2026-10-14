@@ -22,14 +22,14 @@ export function AppShell({ academy, role, userLabel, children }: { academy: { id
   ].filter((i): i is NavItem => Boolean(i));
 
   return (
-    <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)]">
+    <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)] print:block">
       <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-sm focus:bg-surface focus:px-4 focus:py-3 focus:font-semibold">
         Aller au contenu
       </a>
       <SideBar academy={academy} role={role} userLabel={userLabel} items={items} />
       <MobileTopBar academy={academy} role={role} />
       <div className="min-w-0">
-        <main id="contenu" className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 sm:px-6 md:px-8 md:pb-12 md:pt-8" tabIndex={-1}>
+        <main id="contenu" className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 sm:px-6 md:px-8 md:pb-12 md:pt-8 print:max-w-none print:p-0" tabIndex={-1}>
           {children}
         </main>
       </div>
@@ -42,7 +42,7 @@ type Shell = { academy: { id: string; name: string; logoVersion: number | null }
 /** Barre latérale (≥ md) : la barrette noire. Marque, club, navigation, puis le compte en pied. */
 function SideBar({ academy, role, userLabel, items }: Shell & { userLabel: string; items: NavItem[] }) {
   return (
-    <aside data-surface="bar" className="hidden bg-bar text-bar-text md:sticky md:top-0 md:flex md:h-dvh md:flex-col">
+    <aside data-surface="bar" className="hidden bg-bar text-bar-text md:sticky md:top-0 md:flex md:h-dvh md:flex-col print:hidden">
       <div className="px-5 pb-4 pt-6">
         <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 items-center no-underline">
           <MatnexaLogo tone="light" />
@@ -81,7 +81,7 @@ function SideBar({ academy, role, userLabel, items }: Shell & { userLabel: strin
 /** Bandeau mobile (< md) : symbole, club et accès au compte ; la navigation est en bas (barre d'onglets). */
 function MobileTopBar({ academy, role }: Shell) {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden">
+    <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden print:hidden">
       <div className="flex items-center gap-3 px-4 py-1.5">
         <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 shrink-0 items-center no-underline">
           <MatnexaLogo size="sm" />

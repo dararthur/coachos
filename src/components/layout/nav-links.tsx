@@ -50,7 +50,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
 export function MobileTabBar({ items }: { items: NavItem[] }) {
   const isActive = useActive();
   return (
-    <nav aria-label="Navigation principale" data-surface="bar" className="fixed inset-x-0 bottom-0 z-40 bg-bar pb-[env(safe-area-inset-bottom)] md:hidden">
+    <nav aria-label="Navigation principale" data-surface="bar" className="fixed inset-x-0 bottom-0 z-40 bg-bar pb-[env(safe-area-inset-bottom)] md:hidden print:hidden">
       <ul className="mx-auto flex max-w-xl">
         {items.map((item) => {
           const active = isActive(item.href);
