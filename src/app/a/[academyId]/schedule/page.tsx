@@ -5,7 +5,9 @@ import { can } from "@/domain/roles";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
 import { Badge, EmptyState, LinkButton, Notice, PageHeader } from "@/components/ui/ui";
+import { BookingControls, occupancyLabel } from "@/components/ui/booking";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
+import { attachBookings } from "@/server/repositories/bookings";
 import { listSessions } from "@/server/repositories/schedule";
 
 export const metadata: Metadata = { title: "Planning" };
@@ -22,7 +24,8 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   const monday = mondayOf(requested ?? today);
   const sunday = addDays(monday, 6);
 
-  const sessions = await inAcademy(ctx, (tx) => listSessions(tx, academyId, tz, { from: monday, to: sunday }));
+  const now = new Date();
+  const sessions = await inAcademy(ctx, async (tx) => attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: monday, to: sunday })));
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const byDay = new Map<string, typeof sessions>();
   for (const s of sessions) {
@@ -31,6 +34,7 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   }
   const canManage = can(ctx.role, "schedule.manage");
   const canRecord = can(ctx.role, "attendance.record");
+  const isMember = ctx.role === "member";
   const fmt = (d: string) => new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "long" }).format(new Date(`${d}T00:00:00Z`));
 
   return (
@@ -81,12 +85,17 @@ export default async function SchedulePage({ params, searchParams }: { params: P
                       <p className="text-sm text-ink-soft">
                         {s.disciplineName}
                         {s.instructorName ? ` · ${s.instructorName}` : ""}
-                        {s.capacity ? ` · ${s.attended}/${s.capacity} places` : s.attended ? ` · ${s.attended} présent(s)` : ""}
+                        {s.status === "scheduled" && s.endsAt > now
+                          ? ` · ${occupancyLabel(s, s.capacity)}`
+                          : s.attended
+                            ? ` · ${s.attended} présent(s)`
+                            : ""}
                         {s.notes ? ` · ${s.notes}` : ""}
                       </p>
                     </div>
                     <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                       {s.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
+                      {isMember && s.status === "scheduled" && <BookingControls academyId={academyId} sessionId={s.id} myStatus={s.myStatus} myPosition={s.myPosition} bookable={s.endsAt > now} />}
                       {s.status === "scheduled" && canRecord && (
                         <Link href={`/a/${academyId}/attendance/${s.id}`} className={buttonClasses({ variant: "secondary" })}>
                           Appel

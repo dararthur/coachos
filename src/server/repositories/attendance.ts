@@ -10,20 +10,23 @@ export interface RosterEntry {
   /** Origine de l'enregistrement : QR (pointé par l'adhérent) ou manuel (coach) ; null = non renseigné. */
   source: "manual" | "qr" | null;
   archived: boolean;
+  /** Réservation de la séance : confirmée, en liste d'attente, ou aucune. */
+  booking: "booked" | "waitlisted" | null;
 }
 
 /**
- * Feuille d'appel : membres actifs + tout membre (même archivé) ayant déjà une présence enregistrée sur la séance.
+ * Feuille d'appel (inscrits d'abord, puis liste d'attente, puis les autres) : membres actifs + tout membre (même archivé) ayant déjà une présence enregistrée sur la séance.
  */
 export async function getRoster(tx: Tx, academyId: string, sessionId: string): Promise<RosterEntry[]> {
   const rows = await tx<RosterEntry[]>`
     select p.id as "personId", p.first_name as "firstName", p.last_name as "lastName", a.status, a.source,
-           (p.archived_at is not null) as archived
+           (p.archived_at is not null) as archived, b.status as booking
     from public.people p
     left join public.attendance a on a.person_id = p.id and a.academy_id = p.academy_id and a.session_id = ${sessionId}
+    left join public.session_bookings b on b.person_id = p.id and b.academy_id = p.academy_id and b.session_id = ${sessionId}
     where p.academy_id = ${academyId} and p.anonymized_at is null
       and (p.archived_at is null or a.id is not null)
-    order by lower(p.last_name), lower(p.first_name), p.id`;
+    order by case b.status when 'booked' then 0 when 'waitlisted' then 1 else 2 end, lower(p.last_name), lower(p.first_name), p.id`;
   return [...rows];
 }
 

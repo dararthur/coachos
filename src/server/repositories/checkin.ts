@@ -42,27 +42,37 @@ export interface CheckinPreview {
   timezone: string;
   alreadyRecorded: boolean;
   status: "present" | "late" | "absent" | null;
+  /** Réservation du membre pour cette séance (obligatoire pour pointer). */
+  booking: "booked" | "waitlisted" | null;
 }
 
 export async function peekCheckin(tx: Tx, tokenHash: string): Promise<CheckinPreview> {
-  const [row] = await tx<{ r: { class_name: string; starts_at: string; ends_at: string; timezone: string; already_recorded: boolean; status: CheckinPreview["status"] } }[]>`
+  const [row] = await tx<{ r: { class_name: string; starts_at: string; ends_at: string; timezone: string; already_recorded: boolean; status: CheckinPreview["status"]; booking: CheckinPreview["booking"] } }[]>`
     select public.checkin_peek(${tokenHash}) as r`;
   const r = row!.r;
-  return { className: r.class_name, startsAt: r.starts_at, endsAt: r.ends_at, timezone: r.timezone, alreadyRecorded: r.already_recorded, status: r.status };
+  return { className: r.class_name, startsAt: r.starts_at, endsAt: r.ends_at, timezone: r.timezone, alreadyRecorded: r.already_recorded, status: r.status, booking: r.booking };
 }
 
 export interface RedeemResult {
-  result: "recorded" | "already";
-  status: "present" | "late" | "absent";
+  /** « waitlisted » : séance pleine, le membre est en liste d'attente et n'est pas pointé. */
+  result: "recorded" | "already" | "waitlisted";
+  status: "present" | "late" | "absent" | null;
   className: string;
   startsAt: string;
 }
 
+type RedeemRow = { r: { result: RedeemResult["result"]; status?: RedeemResult["status"]; class_name: string; starts_at: string } };
+const toRedeemResult = ({ r }: RedeemRow): RedeemResult => ({ result: r.result, status: r.status ?? null, className: r.class_name, startsAt: r.starts_at });
+
 export async function redeemCheckin(tx: Tx, tokenHash: string): Promise<RedeemResult> {
-  const [row] = await tx<{ r: { result: RedeemResult["result"]; status: RedeemResult["status"]; class_name: string; starts_at: string } }[]>`
-    select public.checkin_redeem(${tokenHash}) as r`;
-  const r = row!.r;
-  return { result: r.result, status: r.status, className: r.class_name, startsAt: r.starts_at };
+  const [row] = await tx<RedeemRow[]>`select public.checkin_redeem(${tokenHash}) as r`;
+  return toRedeemResult(row!);
+}
+
+/** Le membre n'avait pas réservé : réservation et pointage en un geste (liste d'attente si la séance est pleine). */
+export async function bookAndRedeemCheckin(tx: Tx, tokenHash: string): Promise<RedeemResult> {
+  const [row] = await tx<RedeemRow[]>`select public.checkin_book_and_redeem(${tokenHash}) as r`;
+  return toRedeemResult(row!);
 }
 
 /** Horloge serveur (ms) : référence du compte à rebours côté client. */

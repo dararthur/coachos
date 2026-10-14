@@ -5,6 +5,7 @@ import {
   closeCheckinAction, getRollSnapshotAction, issueCheckinTokenAction, openCheckinAction, validateRollAction,
   type IssuedToken, type RollSnapshot,
 } from "@/server/actions/checkin";
+import { promoteBookingAction } from "@/server/actions/bookings";
 import { markRemainingPresentAction, setAttendanceAction } from "@/server/actions/schedule";
 import { CHECKIN_REFRESH_SECONDS, CHECKIN_TOKEN_TTL_SECONDS, ROLL_POLL_INTERVAL_MS, remainingSeconds } from "@/domain/checkin";
 import { ATTENDANCE_LABELS, type AttendanceStatus } from "@/domain/validation";
@@ -16,7 +17,7 @@ import { Badge, Card, EmptyState } from "@/components/ui/ui";
 const STATUSES: AttendanceStatus[] = ["present", "late", "absent"];
 type Entry = RollSnapshot["entries"][number];
 /** Vue de la liste : tous, seulement les non renseignés (l'appel se vide au fil des gestes), ou seulement les marqués. */
-type View = "all" | "todo" | "done";
+type View = "all" | "booked" | "todo" | "done";
 const ACTIVE_TONE: Record<AttendanceStatus, string> = {
   present: "border-success bg-success text-white",
   late: "border-warning bg-warning text-white",
@@ -79,15 +80,20 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
     const q = query.trim().toLowerCase();
     return entries.filter(
       (e) =>
-        (view === "all" || (view === "todo" ? e.status === null : e.status !== null)) &&
+        (view === "all" || (view === "booked" ? e.booking !== null : view === "todo" ? e.status === null : e.status !== null)) &&
         (!q || `${e.firstName} ${e.lastName}`.toLowerCase().includes(q) || `${e.lastName} ${e.firstName}`.toLowerCase().includes(q)),
     );
   }, [entries, query, view]);
 
   const counts = useMemo(() => {
-    const c = { present: 0, late: 0, absent: 0, none: 0, qr: 0 };
+    const c = { present: 0, late: 0, absent: 0, none: 0, qr: 0, booked: 0, waitlisted: 0, noShows: 0 };
     for (const e of entries) {
       c[e.status ?? "none"]++;
+      if (e.booking === "booked") {
+        c.booked++;
+        if (e.status === null) c.noShows++;
+      }
+      if (e.booking === "waitlisted") c.waitlisted++;
       if (e.source === "qr") c.qr++;
     }
     return c;
@@ -108,6 +114,22 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
       setMessage({ tone: "error", text: "Connexion perdue : l'enregistrement n'est pas confirmé. Vérifiez l'état affiché puis réessayez." });
     } finally {
       pending.current.delete(personId);
+      lastMutation.current = Date.now();
+      setBusy(null);
+      void refresh();
+    }
+  }
+
+  async function promote(personId: string) {
+    setBusy(personId);
+    setMessage(null);
+    try {
+      const result = await promoteBookingAction(academyId, { sessionId, personId });
+      if (result.ok) setEntries((list) => list.map((e) => (e.personId === personId ? { ...e, booking: "booked" } : e)));
+      else setMessage({ tone: "error", text: result.error });
+    } catch {
+      setMessage({ tone: "error", text: "Connexion perdue : l'opération n'est pas confirmée. Vérifiez l'état affiché." });
+    } finally {
       lastMutation.current = Date.now();
       setBusy(null);
       void refresh();
@@ -167,6 +189,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             {(
               [
                 ["all", `Tous ${entries.length}`],
+                ["booked", `Inscrits ${counts.booked + counts.waitlisted}`],
                 ["todo", `À marquer ${counts.none}`],
                 ["done", `Marqués ${entries.length - counts.none}`],
               ] as const
@@ -192,21 +215,38 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
 
         {visible.length === 0 ? (
           <p className="rounded-sm border border-line bg-surface px-4 py-6 text-center text-sm text-ink-soft">
-            {entries.length === 0 ? "Aucun membre actif." : query ? `Aucun membre ne correspond à « ${query} ».` : view === "todo" ? "Tout le monde est renseigné." : "Personne n'est encore marqué."}
+            {entries.length === 0 ? "Aucun membre actif." : query ? `Aucun membre ne correspond à « ${query} ».` : view === "booked" ? "Personne ne s'est inscrit à cette séance." : view === "todo" ? "Tout le monde est renseigné." : "Personne n'est encore marqué."}
           </p>
         ) : (
           <ul className="divide-y divide-line rounded-sm border border-line bg-surface">
             {visible.map((e) => (
               <li key={e.personId} className={`grid gap-2 px-3 py-2.5 min-[30rem]:flex min-[30rem]:items-center min-[30rem]:justify-between min-[30rem]:gap-4 sm:px-4 ${busy === e.personId ? "opacity-60" : ""}`}>
-                <p className="min-w-0 truncate font-semibold">
-                  <span className="uppercase">{e.lastName}</span> {e.firstName}
-                  {e.archived && <span className="ml-2 text-xs font-normal text-ink-soft">(archivé)</span>}
-                  {e.source === "qr" && (
-                    <span className="ml-2 align-middle">
-                      <Badge tone="brand">Pointé par QR</Badge>
-                    </span>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">
+                    <span className="uppercase">{e.lastName}</span> {e.firstName}
+                    {e.archived && <span className="ml-2 text-xs font-normal text-ink-soft">(archivé)</span>}
+                    {e.booking === "booked" && (
+                      <span className="ml-2 align-middle">
+                        <Badge tone="success">Inscrit</Badge>
+                      </span>
+                    )}
+                    {e.source === "qr" && (
+                      <span className="ml-2 align-middle">
+                        <Badge tone="brand">Pointé par QR</Badge>
+                      </span>
+                    )}
+                  </p>
+                  {e.booking === "waitlisted" && (
+                    <p className="mt-1 flex flex-wrap items-center gap-2">
+                      <Badge tone="warning">Liste d&apos;attente</Badge>
+                      {rollEditable && (
+                        <button type="button" className="min-h-9 text-sm font-semibold underline underline-offset-[3px] disabled:opacity-60" disabled={busy === e.personId} onClick={() => promote(e.personId)}>
+                          Accorder une place
+                        </button>
+                      )}
+                    </p>
                   )}
-                </p>
+                </div>
                 <div role="group" aria-label={`Présence de ${e.firstName} ${e.lastName}`} className="grid grid-cols-3 gap-1 min-[30rem]:flex min-[30rem]:shrink-0">
                   {STATUSES.map((s) => {
                     const active = e.status === s;
@@ -249,8 +289,12 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                 <strong>{attended}</strong> présent{attended > 1 ? "s" : ""}
                 {capacity ? ` / ${capacity} places` : ""} · {counts.absent} absent{counts.absent > 1 ? "s" : ""} · {counts.none} non renseigné{counts.none > 1 ? "s" : ""}
               </p>
+              <p className="text-xs text-ink-soft">
+                {counts.booked} inscrit{counts.booked > 1 ? "s" : ""}
+                {counts.waitlisted > 0 ? ` · ${counts.waitlisted} en attente` : ""}
+              </p>
             </div>
-            {qrAllowed && !checkin.validatedAt && <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} />}
+            {qrAllowed && !checkin.validatedAt && <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} noShows={counts.noShows} />}
           </div>
         </div>
       </div>
@@ -458,7 +502,7 @@ function CheckinPanel({
   );
 }
 
-function ValidateButton({ academyId, sessionId, onSnapshot }: { academyId: string; sessionId: string; onSnapshot: (s: RollSnapshot) => void }) {
+function ValidateButton({ academyId, sessionId, onSnapshot, noShows }: { academyId: string; sessionId: string; onSnapshot: (s: RollSnapshot) => void; noShows: number }) {
   return (
     <ConfirmAction
       action={async () => {
@@ -478,7 +522,16 @@ function ValidateButton({ academyId, sessionId, onSnapshot }: { academyId: strin
         </>
       }
       title="Valider la feuille d'appel ?"
-      description={<p>La validation ferme le pointage par QR et invalide les QR codes affichés. Vous pourrez encore corriger des présences, ou rouvrir la feuille.</p>}
+      description={
+        <>
+          <p>La validation ferme le pointage par QR et invalide les QR codes affichés. Les réservations ne pourront plus être annulées. Vous pourrez encore corriger des présences, ou rouvrir la feuille.</p>
+          {noShows > 0 && (
+            <p className="mt-2 font-semibold">
+              {noShows} inscrit{noShows > 1 ? "s" : ""} sans présence enregistrée {noShows > 1 ? "seront marqués absents" : "sera marqué absent"}.
+            </p>
+          )}
+        </>
+      }
       confirmLabel="Valider la feuille"
       triggerVariant="primary"
       confirmVariant="primary"

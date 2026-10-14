@@ -6,7 +6,9 @@ import { whatsappHref } from "@/domain/phone";
 import { can } from "@/domain/roles";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { buttonClasses } from "@/components/ui/button-classes";
+import { occupancyLabel } from "@/components/ui/booking";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
+import { attachBookings } from "@/server/repositories/bookings";
 import { getDashboardStats, listInactiveMembers } from "@/server/repositories/dashboard";
 import { listSessions, type SessionRow } from "@/server/repositories/schedule";
 import { WeeklyBars } from "./weekly-bars";
@@ -28,7 +30,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
 
   const { stats, todaySessions, inactive } = await inAcademy(ctx, async (tx) => ({
     stats: await getDashboardStats(tx, academyId, tz),
-    todaySessions: await listSessions(tx, academyId, tz, { from: today, to: today }),
+    todaySessions: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: today })),
     inactive: await listInactiveMembers(tx, academyId, tz),
   }));
 
@@ -81,8 +83,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
                     <div className="min-w-0 flex-1">
                       <p className={`font-semibold ${s.status === "cancelled" ? "text-ink-soft line-through" : ""}`}>{s.classTypeName}</p>
                       <p className="text-sm text-ink-soft">
-                        {s.attended} présent{s.attended > 1 ? "s" : ""}
-                        {s.capacity ? ` / ${s.capacity} places` : ""}
+                        {s.endsAt > now ? occupancyLabel(s, s.capacity) : `${s.attended} présent${s.attended > 1 ? "s" : ""}${s.capacity ? ` / ${s.capacity} places` : ""} · ${s.booked} inscrit${s.booked > 1 ? "s" : ""}`}
                         {s.instructorName ? ` · ${s.instructorName}` : ""}
                       </p>
                     </div>

@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { addDays, formatDateTime, localDate } from "@/domain/dates";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { BookingControls, occupancyLabel } from "@/components/ui/booking";
 import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
 import { AttendanceHistory } from "@/components/ui/attendance-history";
 import { redirect } from "next/navigation";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
+import { attachBookings } from "@/server/repositories/bookings";
 import { listSessions } from "@/server/repositories/schedule";
 
 export const metadata: Metadata = { title: "Mon espace" };
@@ -15,10 +17,11 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
   const { academyId } = await params;
   const ctx = await requireAcademy(academyId);
   const tz = ctx.academy.timezone;
-  const today = localDate(new Date(), tz);
+  const now = new Date();
+  const today = localDate(now, tz);
   const { upcoming, mine, profile } = await inAcademy(ctx, async (tx) => ({
     profile: await getMyProfile(tx, academyId),
-    upcoming: await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) }),
+    upcoming: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) })),
     mine: await tx<{ startsAt: Date; classTypeName: string; status: "present" | "late" | "absent" }[]>`
       select s.starts_at as "startsAt", ct.name as "classTypeName", a.status
       from public.attendance a
@@ -29,6 +32,7 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
   }));
   // Fiche créée automatiquement à l'arrivée : le membre la complète une première fois (grade, majorité).
   if (profile && !profile.completed) redirect(`/a/${academyId}/profile`);
+  const comingUp = upcoming.filter((s) => s.endsAt > now);
   return (
     <>
       <PageHeader
@@ -41,17 +45,24 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
           <LinkButton href="/checkin" icon="qr" className="w-full sm:w-auto">Scanner le QR code</LinkButton>
         </Card>
         <Assiduity weeks={weeksAttended(mine, tz)} />
-        <Card title="Prochaines séances" description="14 prochains jours." flush>
-          {upcoming.length === 0 ? (
+        <Card title="Prochaines séances" description="14 prochains jours. Réservez votre place : elle est nécessaire pour pointer votre présence." flush>
+          {comingUp.length === 0 ? (
             <EmptyState level={3} title="Aucune séance prévue" />
           ) : (
             <ul className="divide-y divide-line">
-              {upcoming.map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 sm:px-5">
-                  <span className={s.status === "cancelled" ? "text-ink-soft line-through" : "font-semibold"}>
-                    {formatDateTime(s.startsAt, tz)} · {s.classTypeName}
-                  </span>
-                  {s.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
+              {comingUp.map((s) => (
+                <li key={s.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
+                  <div className="min-w-0">
+                    <p className={s.status === "cancelled" ? "text-ink-soft line-through" : "font-semibold"}>
+                      {formatDateTime(s.startsAt, tz)} · {s.classTypeName}
+                    </p>
+                    {s.status === "scheduled" && <p className="text-sm text-ink-soft">{occupancyLabel(s, s.capacity)}</p>}
+                  </div>
+                  {s.status === "cancelled" ? (
+                    <Badge tone="danger">Annulée</Badge>
+                  ) : (
+                    <BookingControls academyId={academyId} sessionId={s.id} myStatus={s.myStatus} myPosition={s.myPosition} bookable={true} />
+                  )}
                 </li>
               ))}
             </ul>

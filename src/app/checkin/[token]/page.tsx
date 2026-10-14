@@ -45,7 +45,7 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
           <>
             <p className="mb-1 text-xl font-bold">{preview.className}</p>
             <p className="mb-4 text-sm text-ink-soft">{formatDateTime(preview.startsAt, preview.timezone)}</p>
-            <ConfirmCheckin token={token} className={preview.className} alreadyStatus={preview.alreadyRecorded ? preview.status : null} />
+            <ConfirmCheckin token={token} className={preview.className} alreadyStatus={preview.alreadyRecorded ? preview.status : null} booking={preview.booking} />
           </>
         ) : (
           <>

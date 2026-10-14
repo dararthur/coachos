@@ -120,3 +120,8 @@ export async function peekCheckinAction(token: string): Promise<ActionResult<che
 export async function redeemCheckinAction(token: string): Promise<ActionResult<checkin.RedeemResult>> {
   return memberCall("checkin.redeem", token, (hash, user) => withUser(user, (tx) => checkin.redeemCheckin(tx, hash)));
 }
+
+/** Réserve la séance puis pointe, pour un adhérent qui n'avait pas réservé (identité = session). */
+export async function bookAndRedeemCheckinAction(token: string): Promise<ActionResult<checkin.RedeemResult>> {
+  return memberCall("checkin.bookAndRedeem", token, (hash, user) => withUser(user, (tx) => checkin.bookAndRedeemCheckin(tx, hash)));
+}

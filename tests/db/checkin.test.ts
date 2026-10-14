@@ -34,7 +34,17 @@ const open = (user: { id: string }, session: string) => asUser(user, (tx) => tx`
 const close = (user: { id: string }, session: string) => asUser(user, (tx) => tx`select public.checkin_close(${session})`);
 const issue = (user: { id: string }, session: string, token = newToken(), ttl = 90) =>
   asUser(user, (tx) => tx<{ e: Date }[]>`select public.checkin_issue_token(${session}, ${hash(token)}, ${ttl}) as e`).then((r) => ({ token, expires: r[0]!.e }));
-const redeem = (user: { id: string }, token: string) => asUser(user, (tx) => tx<{ r: { result: string; status: string } }[]>`select public.checkin_redeem(${hash(token)}) as r`).then((r) => r[0]!.r);
+/** Depuis 0013 la réservation est obligatoire pour pointer : ces tests (qui portent sur le pointage) réservent d'abord pour la fiche de l'appelant. */
+async function reserve(user: { id: string }, token: string) {
+  await adminSql()`
+    insert into public.session_bookings (academy_id, session_id, person_id, status, confirmed_at)
+    select t.academy_id, t.session_id, p.id, 'booked', now()
+    from public.checkin_tokens t join public.people p on p.academy_id = t.academy_id and p.user_id = ${user.id}
+    where t.token_hash = ${hash(token)}
+    on conflict (session_id, person_id) do nothing`;
+}
+const redeem = async (user: { id: string }, token: string) => (await reserve(user, token), redeemRaw(user, token));
+const redeemRaw = (user: { id: string }, token: string) => asUser(user, (tx) => tx<{ r: { result: string; status: string } }[]>`select public.checkin_redeem(${hash(token)}) as r`).then((r) => r[0]!.r);
 const peek = (user: { id: string }, token: string) => asUser(user, (tx) => tx<{ r: Record<string, unknown> }[]>`select public.checkin_peek(${hash(token)}) as r`).then((r) => r[0]!.r);
 
 /** Adhérent connecté lié à une fiche dans l'académie. */
