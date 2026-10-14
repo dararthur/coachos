@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { adminSql, asUser, buildWorld, closeAll, createAcademy, createUser, failing } from "./support";
+import { adminSql, appSql, asUser, buildWorld, closeAll, createAcademy, createUser, failing } from "./support";
 
 beforeAll(async () => {
   await buildWorld();
@@ -82,6 +82,19 @@ describe("inscription autonome par code de club", () => {
     expect((await failing(() => asUser(outsider, (tx) => tx`select public.join_academy_with_code(${old})`))).message).toContain("coachos:join_code_invalid");
     // écriture directe impossible
     expect((await failing(() => asUser(owner, (tx) => tx`update public.academy_join_codes set code = 'AAAAAAAA' where academy_id = ${academy}`))).message).toBeTruthy();
+  });
+
+  it("aperçu public du lien : nom du club pour le serveur (app_server) seulement, jamais pour un compte ni anon", async () => {
+    const owner = await createUser("jc7-owner");
+    const academy = await createAcademy(owner, "Club public");
+    const code = await codeOf(academy);
+    const rows = await appSql()<{ academy_id: string; name: string }[]>`select * from app_private.preview_join_code_public(${code.toLowerCase()})`;
+    expect(rows).toEqual([{ academy_id: academy, name: "Club public" }]);
+    expect(await appSql()`select * from app_private.preview_join_code_public('ZZZZZZZZ')`).toHaveLength(0);
+    const [grants] = await adminSql()<{ auth: boolean; anon: boolean }[]>`
+      select has_function_privilege('authenticated', 'app_private.preview_join_code_public(text)', 'execute') as auth,
+             has_function_privilege('anon', 'app_private.preview_join_code_public(text)', 'execute') as anon`;
+    expect(grants).toEqual({ auth: false, anon: false });
   });
 
   it("preview_join_code : nom du club ou null, réservé aux comptes connectés", async () => {
