@@ -69,12 +69,14 @@ export interface InactiveMember {
   lastName: string;
   /** Pour le lien « Écrire » (mailto) : null si la fiche n'a pas d'e-mail. */
   email: string | null;
+  /** Pour le lien WhatsApp (E.164) : null si non renseigné. */
+  phone: string | null;
   lastAttendedAt: Date | null;
 }
 
 export async function listInactiveMembers(tx: Tx, academyId: string, timezone: string, limit = 8): Promise<InactiveMember[]> {
   return tx<InactiveMember[]>`
-    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email,
+    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone,
       (select max(s.starts_at) from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
         where a.person_id = p.id and a.status in ('present', 'late')) as "lastAttendedAt"
     from public.people p

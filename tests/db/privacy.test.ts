@@ -16,16 +16,22 @@ describe("effacement d'un membre", () => {
     const person = await createPerson(w.academyA, "Marie", "Curie", { email: "marie.curie@example.invalid", external: "MC-1" });
     const session = await createSession(w.academyA);
     await adminSql()`insert into public.attendance (academy_id, session_id, person_id, status) values (${w.academyA}, ${session}, ${person}, 'present')`;
+    await asUser(w.alice, (tx) => tx`update public.people set phone = '+33698765432' where id = ${person}`);
+    const exported = await asUser(w.alice, (tx) => tx<{ d: { person: { phone: string } } }[]>`select public.export_person_data(${person}) as d`);
+    expect(exported[0]?.d.person.phone).toBe("+33698765432");
 
     await asUser(w.alice, (tx) => tx`select public.erase_person(${person}, 'anonymize')`);
 
     const [p] = await adminSql()<Record<string, unknown>[]>`select * from public.people where id = ${person}`;
-    expect(p).toMatchObject({ first_name: "Membre", last_name: "anonymisé", email: null, external_ref: null, user_id: null });
+    expect(p).toMatchObject({ first_name: "Membre", last_name: "anonymisé", email: null, phone: null, external_ref: null, user_id: null });
     expect(p?.anonymized_at).toBeInstanceOf(Date);
     expect(await adminSql()`select 1 from public.attendance where person_id = ${person}`).toHaveLength(1);
     // plus aucune trace de l'identité dans toute la base
     const dump = JSON.stringify(await adminSql()`select * from public.people p left join public.attendance a on a.person_id = p.id where p.id = ${person}`);
-    expect(dump).not.toMatch(/Marie|Curie|marie\.curie/);
+    expect(dump).not.toMatch(/Marie|Curie|marie\.curie|98765432/);
+    // le format E.164 est imposé par la base, pas seulement par l'application
+    const other = await createPerson(w.academyA, "Format", "Test");
+    await expect(adminSql()`update public.people set phone = '06 12 34 56 78' where id = ${other}`).rejects.toThrow();
     const audit = JSON.stringify(await adminSql()`select * from public.audit_events where entity_id = ${person}`);
     expect(audit).toContain("member.anonymized");
     expect(audit).not.toMatch(/Marie|Curie/);

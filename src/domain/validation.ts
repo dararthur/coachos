@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { addDays, daysBetween, isValidTimeZone, parseCalendarDate } from "./dates";
+import { normalizePhone } from "./phone";
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; fieldErrors: Record<string, string> };
 
@@ -47,6 +48,18 @@ export const emailField = z
   .toLowerCase()
   .max(254, "Adresse e-mail trop longue.")
   .pipe(z.email("Adresse e-mail invalide."));
+
+export const phoneField = z
+  .string()
+  .max(30, "Numéro de téléphone trop long.")
+  .transform((v, ctx) => {
+    const phone = normalizePhone(v);
+    if (!phone) {
+      ctx.addIssue({ code: "custom", message: "Numéro invalide. Exemple : 06 12 34 56 78 ou +32 470 12 34 56." });
+      return z.NEVER;
+    }
+    return phone;
+  });
 
 export const passwordField = z
   .string({ error: "Mot de passe requis." })
@@ -119,6 +132,7 @@ export const personFields = {
   firstName: nameField("Prénom"),
   lastName: nameField("Nom"),
   email: optional(emailField),
+  phone: optional(phoneField),
   joinedOn: optional(dateField),
 };
 

@@ -19,15 +19,16 @@ afterAll(closeAll);
 describe("members", () => {
   it("crée, liste, recherche (littéralement), modifie, archive et restaure", async () => {
     const id = await asUser(w.alice, (tx) =>
-      members.createPerson(tx, w.academyA, { firstName: "Léa", lastName: "Dupont", email: "lea@example.invalid", joinedOn: "2024-09-02" }),
+      members.createPerson(tx, w.academyA, { firstName: "Léa", lastName: "Dupont", email: "lea@example.invalid", phone: "+33612345678", joinedOn: "2024-09-02" }),
     );
     const list = await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "dupo", status: "active", page: 1 }));
     expect(list.rows.map((r) => r.id)).toContain(id);
     expect(list.rows[0]?.joinedOn).toBe("2024-09-02"); // date en chaîne, sans décalage de fuseau
+    expect(list.rows[0]?.phone).toBe("+33612345678");
     // les jokers LIKE sont littéraux
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "%", status: "all", page: 1 }))).rows).toHaveLength(0);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "'; drop table people; --", status: "all", page: 1 }))).total).toBe(0);
-    expect(await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyA, id, { firstName: "Léa", lastName: "Durand", email: null, joinedOn: null }))).toBe(true);
+    expect(await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyA, id, { firstName: "Léa", lastName: "Durand", email: null, phone: null, joinedOn: null }))).toBe(true);
     expect(await asUser(w.alice, (tx) => members.setPersonArchived(tx, w.academyA, id, true))).toBe(true);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { status: "active", page: 1, q: "durand" }))).total).toBe(0);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { status: "archived", page: 1, q: "durand" }))).total).toBe(1);
@@ -52,7 +53,7 @@ describe("members", () => {
   it("une fiche d'une autre académie est introuvable (getPerson / update retournent null/false)", async () => {
     expect(await asUser(w.alice, (tx) => members.getPerson(tx, w.academyA, w.personB))).toBeNull();
     expect(await asUser(w.alice, (tx) => members.getPerson(tx, w.academyB, w.personB))).toBeNull();
-    expect(await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyB, w.personB, { firstName: "X", lastName: "Y", email: null, joinedOn: null }))).toBe(false);
+    expect(await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyB, w.personB, { firstName: "X", lastName: "Y", email: null, phone: null, joinedOn: null }))).toBe(false);
   });
 
   it("import : analyse -> plan -> insertion, sans doublons ni double import", async () => {

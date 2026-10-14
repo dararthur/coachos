@@ -10,7 +10,7 @@ describe("migrations : reproductibilité sur PostgreSQL standard", () => {
     const files = migrationFiles();
     expect(files.map((f) => f.name)[0]).toMatch(/^20261013000000_platform_bootstrap/);
     expect(files.map((f) => f.name).some((n) => /better_auth_adaptation/.test(n))).toBe(true);
-    expect(files.at(-1)?.name).toMatch(/role_markers/);
+    expect(files.map((f) => f.name).some((n) => /role_markers/.test(n))).toBe(true);
 
     await adminSql().unsafe("create database coachos_replay");
     const url = new URL(process.env.TEST_ADMIN_DATABASE_URL!);

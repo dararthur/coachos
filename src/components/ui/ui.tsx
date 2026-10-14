@@ -4,8 +4,8 @@ import { buttonClasses, type ButtonVariant } from "./button-classes";
 import { Icon, type IconName } from "./icons";
 
 export function LinkButton({
-  href, children, variant = "primary", className, download, icon,
-}: { href: string; children: ReactNode; variant?: ButtonVariant; className?: string; download?: boolean; icon?: IconName }) {
+  href, children, variant = "primary", className, download, icon, newTab,
+}: { href: string; children: ReactNode; variant?: ButtonVariant; className?: string; download?: boolean; icon?: IconName; newTab?: boolean }) {
   const content = (
     <>
       {icon && <Icon name={icon} size={18} />}
@@ -15,7 +15,12 @@ export function LinkButton({
   // Téléchargement ou lien externe (mailto:) : <a> natif (une navigation client Next.js vers un fichier laisserait le routeur en attente).
   if (download || !href.startsWith("/")) {
     return (
-      <a href={href} download={download || undefined} className={buttonClasses({ variant, className })}>
+      <a
+        href={href}
+        download={download || undefined}
+        target={newTab ? "_blank" : undefined}
+        rel={newTab ? "noopener noreferrer" : undefined}
+        className={buttonClasses({ variant, className })}>
         {content}
       </a>
     );

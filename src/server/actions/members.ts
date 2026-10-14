@@ -24,6 +24,7 @@ export async function createMemberAction(academyId: string, _prev: FormState, fo
           firstName: input.firstName,
           lastName: input.lastName,
           email: input.email ?? null,
+          phone: input.phone ?? null,
           joinedOn: input.joinedOn ?? null,
         }),
       );
@@ -49,6 +50,7 @@ export async function updateMemberAction(academyId: string, personId: string, _p
           firstName: input.firstName,
           lastName: input.lastName,
           email: input.email ?? null,
+          phone: input.phone ?? null,
           joinedOn: input.joinedOn ?? null,
         }),
       );

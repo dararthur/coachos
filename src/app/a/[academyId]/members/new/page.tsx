@@ -19,6 +19,7 @@ export default async function NewMemberPage({ params }: { params: Promise<{ acad
             <TextField label="Nom" name="lastName" required maxLength={80} autoComplete="off" />
           </div>
           <TextField label="E-mail" name="email" type="email" maxLength={254} autoComplete="off" hint="Facultatif. Sert à éviter les doublons et à inviter le membre à se connecter." />
+          <TextField label="Téléphone" name="phone" type="tel" inputMode="tel" maxLength={30} autoComplete="off" hint="Facultatif. Pour le recontacter sur WhatsApp. Ex. : 06 12 34 56 78." />
           <TextField label="Date d'inscription" name="joinedOn" type="date" hint="Facultatif." />
           <CheckboxField
             label="Je confirme que ce membre est majeur."

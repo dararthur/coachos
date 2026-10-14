@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { formatCalendarDate } from "@/domain/dates";
+import { formatPhone, whatsappHref } from "@/domain/phone";
 import { can } from "@/domain/roles";
 import { Alert, BackLink, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
@@ -45,10 +46,19 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
           </>
         }
         actions={
-          person.email && !person.anonymizedAt ? (
-            <LinkButton href={`mailto:${person.email}`} variant="secondary" icon="mail">
-              Écrire
-            </LinkButton>
+          !person.anonymizedAt && (person.email || person.phone) ? (
+            <>
+              {person.phone && (
+                <LinkButton href={whatsappHref(person.phone, `Bonjour ${person.firstName}, `)} newTab variant="secondary" icon="chat">
+                  WhatsApp
+                </LinkButton>
+              )}
+              {person.email && (
+                <LinkButton href={`mailto:${person.email}`} variant="secondary" icon="mail">
+                  Écrire
+                </LinkButton>
+              )}
+            </>
           ) : undefined
         }
       />
@@ -81,6 +91,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                 <TextField label="Prénom" name="firstName" defaultValue={person.firstName} required maxLength={80} />
                 <TextField label="Nom" name="lastName" defaultValue={person.lastName} required maxLength={80} />
                 <TextField label="E-mail" name="email" type="email" defaultValue={person.email} maxLength={254} />
+                <TextField label="Téléphone" name="phone" type="tel" inputMode="tel" defaultValue={person.phone ? formatPhone(person.phone) : null} maxLength={30} hint="Pour le recontacter sur WhatsApp." />
                 <TextField label="Date d'inscription" name="joinedOn" type="date" defaultValue={person.joinedOn} />
                 <SubmitButton>Enregistrer</SubmitButton>
               </ActionForm>
@@ -89,6 +100,10 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                 <div>
                   <dt className="text-ink-soft">E-mail</dt>
                   <dd>{person.email ?? "—"}</dd>
+                </div>
+                <div>
+                  <dt className="text-ink-soft">Téléphone</dt>
+                  <dd>{person.phone ? formatPhone(person.phone) : "—"}</dd>
                 </div>
                 <div>
                   <dt className="text-ink-soft">Inscription</dt>

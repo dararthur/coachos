@@ -15,6 +15,7 @@ const PATHS = {
   upload: "M12 15V4M7.5 8.5 12 4l4.5 4.5M4 15v5h16v-5",
   download: "M12 4v11M7.5 10.5 12 15l4.5-4.5M4 15v5h16v-5",
   mail: "M4 6h16v12H4zM4 7l8 6 8-6",
+  chat: "M4 5h16v11H9l-5 4V5ZM8 9.5h8M8 12.5h5",
   back: "M10 6l-6 6 6 6M4 12h16",
   prev: "M14.5 6 8.5 12l6 6",
   next: "M9.5 6l6 6-6 6",

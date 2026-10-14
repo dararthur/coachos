@@ -8,6 +8,7 @@ export interface PersonRow {
   firstName: string;
   lastName: string;
   email: string | null;
+  phone: string | null;
   joinedOn: string | null;
   externalRef: string | null;
   archivedAt: Date | null;
@@ -48,7 +49,7 @@ export async function listPeople(
   const [{ total }] = await tx<[{ total: number }]>`
     select count(*)::int as total from public.people p where p.academy_id = ${academyId} ${status} ${search}`;
   const rows = await tx<PersonRow[]>`
-    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.joined_on as "joinedOn",
+    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            (select max(s.starts_at) from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
              where a.person_id = p.id and a.academy_id = p.academy_id and a.status in ('present', 'late')) as "lastAttendedAt"
@@ -62,7 +63,7 @@ export async function listPeople(
 
 export async function getPerson(tx: Tx, academyId: string, personId: string): Promise<PersonRow | null> {
   const rows = await tx<PersonRow[]>`
-    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.joined_on as "joinedOn",
+    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.id = ${personId} and p.academy_id = ${academyId}`;
@@ -73,20 +74,21 @@ export interface PersonInput {
   firstName: string;
   lastName: string;
   email: string | null;
+  phone: string | null;
   joinedOn: string | null;
 }
 
 export async function createPerson(tx: Tx, academyId: string, input: PersonInput): Promise<string> {
   const [row] = await tx<{ id: string }[]>`
-    insert into public.people (academy_id, first_name, last_name, email, joined_on)
-    values (${academyId}, ${input.firstName}, ${input.lastName}, ${input.email}, ${input.joinedOn})
+    insert into public.people (academy_id, first_name, last_name, email, phone, joined_on)
+    values (${academyId}, ${input.firstName}, ${input.lastName}, ${input.email}, ${input.phone}, ${input.joinedOn})
     returning id`;
   return row!.id;
 }
 
 export async function updatePerson(tx: Tx, academyId: string, personId: string, input: PersonInput): Promise<boolean> {
   const r = await tx`
-    update public.people set first_name = ${input.firstName}, last_name = ${input.lastName}, email = ${input.email}, joined_on = ${input.joinedOn}
+    update public.people set first_name = ${input.firstName}, last_name = ${input.lastName}, email = ${input.email}, phone = ${input.phone}, joined_on = ${input.joinedOn}
     where id = ${personId} and academy_id = ${academyId} and anonymized_at is null`;
   return r.count === 1;
 }
@@ -150,7 +152,7 @@ export async function recordEvent(tx: Tx, academyId: string, action: "members.im
 
 export async function listAllForExport(tx: Tx, academyId: string): Promise<PersonRow[]> {
   const rows = await tx<PersonRow[]>`
-    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.joined_on as "joinedOn",
+    select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.academy_id = ${academyId} and p.anonymized_at is null

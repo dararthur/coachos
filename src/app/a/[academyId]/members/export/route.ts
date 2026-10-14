@@ -21,8 +21,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ aca
       return list;
     });
     const csv = toCsv(
-      ["Prénom", "Nom", "E-mail", "Date d'inscription", "Identifiant d'origine", "Statut"],
-      rows.map((p) => [p.firstName, p.lastName, p.email, p.joinedOn, p.externalRef, p.archivedAt ? "archivé" : "actif"]),
+      ["Prénom", "Nom", "E-mail", "Téléphone", "Date d'inscription", "Identifiant d'origine", "Statut"],
+      rows.map((p) => [p.firstName, p.lastName, p.email, p.phone, p.joinedOn, p.externalRef, p.archivedAt ? "archivé" : "actif"]),
     );
     const name = safeFilename(`membres-${ctx.academy.name}-${localDate(new Date(), ctx.academy.timezone)}`, "csv");
     return new NextResponse(csv, {

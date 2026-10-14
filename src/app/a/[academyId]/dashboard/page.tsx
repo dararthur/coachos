@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { formatTime, localDate, formatDateTime, formatDay } from "@/domain/dates";
+import { whatsappHref } from "@/domain/phone";
 import { can } from "@/domain/roles";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { buttonClasses } from "@/components/ui/button-classes";
@@ -112,6 +113,17 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
                       <span className="text-xs font-normal text-ink-soft">{m.lastAttendedAt ? `Dernière venue : ${formatDateTime(m.lastAttendedAt, tz)}` : "Jamais venu(e)"}</span>
                     </Link>
                   </div>
+                  {m.phone && (
+                    <LinkButton
+                      href={whatsappHref(m.phone, `Salut ${m.firstName}, on ne t'a pas vu(e) au club depuis un moment. Tout va bien ?`)}
+                      newTab
+                      variant="ghost"
+                      icon="chat"
+                      className="px-3"
+                    >
+                      WhatsApp<span className="sr-only"> à {m.firstName} {m.lastName}</span>
+                    </LinkButton>
+                  )}
                   {m.email && (
                     <LinkButton href={`mailto:${m.email}`} variant="ghost" icon="mail" className="px-3">
                       Écrire<span className="sr-only"> à {m.firstName} {m.lastName}</span>
