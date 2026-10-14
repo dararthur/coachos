@@ -18,12 +18,18 @@ type FormState = ActionResult<unknown> | null;
 /** Les limites de débit (inscription, connexion, réinitialisation) sont appliquées dans Better Auth (hook), pour tout chemin. */
 const apiStatus = apiErrorInfo; // lecture par la forme de l'erreur : voir src/server/auth/api-error.ts
 
+/** Après confirmation de l'e-mail, la connexion reprend le parcours d'inscription à un club (lien /join/<code>). */
+function verifiedCallback(formData: FormData): string {
+  const next = safeNext(formData.get("next"), "");
+  return next.startsWith("/join/") ? `/login?verified=1&next=${encodeURIComponent(next)}` : "/login?verified=1";
+}
+
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("signUp", async () => {
     const input = parseForm(signupSchema, formData);
     try {
       await getAuth().api.signUpEmail({
-        body: { name: input.displayName ?? "", email: input.email, password: input.password, callbackURL: "/login?verified=1" },
+        body: { name: input.displayName ?? "", email: input.email, password: input.password, callbackURL: verifiedCallback(formData) },
         headers: await headers(),
       });
     } catch (error) {

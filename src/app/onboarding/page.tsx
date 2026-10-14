@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CURRENCIES } from "@/domain/validation";
 import { CURRENCY_LABELS, TIMEZONE_OPTIONS } from "@/domain/options";
+import Link from "next/link";
 import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { createAcademyAction } from "@/server/actions/academy";
 import { StandaloneFrame } from "@/components/layout/standalone";
@@ -36,6 +37,9 @@ export default async function OnboardingPage() {
           <SubmitButton pendingLabel="Création…">Créer le club</SubmitButton>
         </ActionForm>
       </div>
+      <p className="mt-5 text-sm">
+        Vous êtes membre d&apos;un club ? <Link href="/join">Rejoindre avec le code du club</Link>
+      </p>
     </StandaloneFrame>
   );
 }

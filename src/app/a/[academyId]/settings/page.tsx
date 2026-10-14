@@ -13,6 +13,10 @@ import { changeRoleAction, removeMemberAction, revokeInvitationAction } from "@/
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listClassTypes, listDisciplines } from "@/server/repositories/academies";
 import { listAudit, listInvitations, listTeam } from "@/server/repositories/team";
+import { getJoinCode } from "@/server/repositories/join";
+import { formatJoinCode } from "@/domain/join-code";
+import { env } from "@/server/env";
+import { regenerateJoinCodeAction } from "@/server/actions/join";
 import { listPeople } from "@/server/repositories/members";
 import { InviteForm } from "./invite-form";
 
@@ -45,6 +49,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
     classTypes: await listClassTypes(tx, academyId, { includeArchived: true }),
     team: await listTeam(tx, academyId),
     invitations: await listInvitations(tx, academyId),
+    joinCode: await getJoinCode(tx, academyId),
     audit: await listAudit(tx, academyId, 30),
     members: (await listPeople(tx, academyId, { status: "active", page: 1, q: "" })).rows,
   }));
@@ -60,6 +65,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           ["disciplines", "Disciplines"],
           ["cours", "Types de cours"],
           ["equipe", "Équipe"],
+          ["inscription", "Inscription"],
           ...(can(ctx.role, "audit.read") ? [["journal", "Journal"]] : []),
           ...(can(ctx.role, "academy.delete") ? [["suppression", "Suppression"]] : []),
         ].map(([id, label]) => (
@@ -162,6 +168,30 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
               <SubmitButton>Ajouter</SubmitButton>
             </div>
           </ActionForm>
+        </Card>
+
+        <Card id="inscription" title="Inscription des membres" description="Vos adhérents s'inscrivent seuls avec ce code ou ce lien : leur fiche est créée automatiquement, sans action de votre part.">
+          {data.joinCode && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Code du club</p>
+                <p data-testid="join-code" className="mt-1 font-mono text-2xl font-bold tracking-widest">{formatJoinCode(data.joinCode)}</p>
+                <p className="mt-1 text-xs text-ink-soft">Valable sans limite de durée pour toutes les inscriptions à venir. Les membres le saisissent sur « Rejoindre un club ».</p>
+              </div>
+              <div>
+                <label htmlFor="join-link" className="text-sm font-medium">Lien de partage</label>
+                <input id="join-link" readOnly value={`${env().SITE_URL}/join/${data.joinCode}`} className="mt-1 block w-full max-w-xl rounded-sm border border-line bg-surface px-3 py-2 font-mono text-xs" />
+                <p className="mt-1 text-xs text-ink-soft">Le code est déjà renseigné : à envoyer par message ou à afficher au club.</p>
+              </div>
+              <ConfirmAction
+                action={regenerateJoinCodeAction.bind(null, academyId)}
+                trigger="Générer un nouveau code"
+                title="Générer un nouveau code ?"
+                description="L'ancien code et l'ancien lien cesseront immédiatement de fonctionner. Les membres déjà inscrits ne sont pas affectés."
+                confirmLabel="Générer un nouveau code"
+              />
+            </div>
+          )}
         </Card>
 
         <Card id="equipe" title="Équipe" description="Propriétaires, administrateurs, coachs et membres connectés.">

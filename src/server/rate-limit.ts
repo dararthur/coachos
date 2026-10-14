@@ -48,6 +48,7 @@ export const LIMITS = {
   passwordReset: { max: 5, window: 60 * 60 },
   invitation: { max: 30, window: 60 * 60 },
   invitationAccept: { max: 10, window: 15 * 60 },
+  joinCode: { max: 10, window: 15 * 60 },
   importCsv: { max: 10, window: 60 * 60 },
   exportCsv: { max: 30, window: 60 * 60 },
   personalExport: { max: 20, window: 60 * 60 },
