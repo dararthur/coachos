@@ -90,6 +90,24 @@ export async function personHistory(tx: Tx, academyId: string, personId: string,
     order by s.starts_at desc limit ${limit}`;
 }
 
+/**
+ * Après un pointage : la présence de l'utilisateur connecté pour la séance commençant à `startsAt` (club, fiche, fuseau).
+ * Sous RLS, un membre ne lit que ses propres présences ; la jointure sur `people.user_id` exclut celles d'autrui pour le staff.
+ * `::text` d'abord : un paramètre typé timestamptz serait arrondi à la milliseconde par le pilote (la base garde la microseconde).
+ */
+export async function myAttendanceAt(tx: Tx, startsAt: string): Promise<{ academyId: string; personId: string; timezone: string } | null> {
+  const [row] = await tx<{ academyId: string; personId: string; timezone: string }[]>`
+    select a.academy_id as "academyId", a.person_id as "personId", ac.timezone
+    from public.attendance a
+    join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
+    join public.people p on p.id = a.person_id and p.academy_id = a.academy_id
+    join public.academies ac on ac.id = a.academy_id
+    where p.user_id = (select auth.uid()) and s.starts_at = ${startsAt}::text::timestamptz and a.status <> 'absent'
+    order by a.recorded_at desc
+    limit 1`;
+  return row ?? null;
+}
+
 /** Statut de présence d'une personne pour des séances données (ex. le planning d'une semaine vu par l'adhérent). */
 export async function personAttendanceFor(tx: Tx, academyId: string, personId: string, sessionIds: string[]): Promise<Map<string, AttendanceStatus>> {
   if (sessionIds.length === 0) return new Map();

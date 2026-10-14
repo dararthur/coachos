@@ -40,15 +40,24 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
   return (
     <StandaloneFrame width="sm">
       <div className="rounded-sm border border-line bg-surface p-6">
-        <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
         {preview ? (
-          <>
-            <p className="mb-1 text-xl font-bold">{preview.className}</p>
-            <p className="mb-4 text-sm text-ink-soft">{formatDateTime(preview.startsAt, preview.timezone)}</p>
-            <ConfirmCheckin token={token} className={preview.className} alreadyStatus={preview.alreadyRecorded ? preview.status : null} booking={preview.booking} />
-          </>
+          <ConfirmCheckin
+            token={token}
+            className={preview.className}
+            startsAt={preview.startsAt}
+            alreadyStatus={preview.alreadyRecorded ? preview.status : null}
+            booking={preview.booking}
+            header={
+              <>
+                <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
+                <p className="mb-1 text-xl font-bold">{preview.className}</p>
+                <p className="mb-4 text-sm text-ink-soft">{formatDateTime(preview.startsAt, preview.timezone)}</p>
+              </>
+            }
+          />
         ) : (
           <>
+            <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
             <Alert tone="danger" title={problem === "checkin_no_profile" ? "Compte non rattaché" : problem === "rate_limited" ? "Trop de tentatives" : "QR code invalide ou expiré"}>
               {problem === "checkin_no_profile"
                 ? "Votre fiche n'est pas active dans ce club : contactez le coach."

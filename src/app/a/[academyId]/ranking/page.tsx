@@ -26,6 +26,10 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   }));
   const me = rows.find((r) => r.isMe);
   const total = rows[0]?.rankedTotal ?? 0;
+  // Rangs partagés (classement « 1, 2, 2, 4 ») : dit « ex æquo » plutôt que de laisser dix lignes « 4e » sans explication.
+  const perRank = new Map<number, number>();
+  for (const r of rows) if (r.rank !== null && r.visits > 0) perRank.set(r.rank, (perRank.get(r.rank) ?? 0) + 1);
+  const tied = (rank: number | null) => rank !== null && (perRank.get(rank) ?? 0) > 1;
   const base = `/a/${academyId}/ranking`;
 
   return (
@@ -42,10 +46,13 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       </div>
 
       {!staff && (
-        <StatGrid cols={3} className="mb-6">
-          <Stat label="Mon rang" value={me?.rank ? ordinal(me.rank) : "—"} hint={me?.rank ? `sur ${total} membre${total > 1 ? "s" : ""} venu${total > 1 ? "s" : ""}` : "Aucune venue sur la période"} />
+        <StatGrid cols={2} className="mb-6">
+          <Stat
+            label="Mon rang"
+            value={me?.rank ? ordinal(me.rank) : "—"}
+            hint={me?.rank ? `${tied(me.rank) ? "ex æquo, " : ""}sur ${total} membre${total > 1 ? "s" : ""} venu${total > 1 ? "s" : ""}` : "Aucune venue sur la période"}
+          />
           <Stat label="Mes venues" value={me?.visits ?? 0} />
-          <Stat label="Membres venus" value={total} />
         </StatGrid>
       )}
 
@@ -56,7 +63,10 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           <DataTable bare caption={`Classement ${RANKING_LABELS[period].toLowerCase()}`} headers={["Rang", "Membre", "Venues"]} numeric={[2]}>
             {rows.filter((r) => r.visits > 0).map((r) => (
               <tr key={r.personId} className={r.isMe ? "bg-accent-soft/40" : undefined}>
-                <td className="px-4 py-2.5 font-bold">{r.rank ? ordinal(r.rank) : "—"}</td>
+                <td className="px-4 py-2.5 whitespace-nowrap">
+                  <span className="font-bold">{r.rank ? ordinal(r.rank) : "—"}</span>
+                  {tied(r.rank) && <span className="block text-xs text-ink-soft">ex æquo</span>}
+                </td>
                 <td className="px-4 py-2">
                   <span className="flex items-center gap-3">
                     <Avatar academyId={academyId} personId={r.personId} avatarStyle={r.avatarStyle} hasPhoto={r.hasPhoto} size="sm" />

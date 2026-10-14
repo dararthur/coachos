@@ -155,8 +155,8 @@ export function EmptyState({ title, children, action, level = 2, framed = false 
 }
 
 /** Bande de compteurs : un seul panneau divisé par des filets (et non une rangée de cartes). */
-export function StatGrid({ children, className, cols = 4 }: { children: ReactNode; className?: string; cols?: 3 | 4 }) {
-  const grid = cols === 3 ? "grid-cols-3" : "grid-cols-2 lg:grid-cols-4";
+export function StatGrid({ children, className, cols = 4 }: { children: ReactNode; className?: string; cols?: 2 | 3 | 4 }) {
+  const grid = cols === 2 ? "grid-cols-2" : cols === 3 ? "grid-cols-3" : "grid-cols-2 lg:grid-cols-4";
   return <dl className={`grid gap-px overflow-hidden rounded-sm border border-line bg-line ${grid} ${className ?? ""}`}>{children}</dl>;
 }
 

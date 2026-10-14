@@ -38,11 +38,18 @@ export default async function ClubCheckinPage({ params }: { params: Promise<{ ke
   return (
     <StandaloneFrame width="sm">
       <div className="rounded-sm border border-line bg-surface p-6">
-        <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
         {data ? (
-          <ConfirmClubCheckin clubKey={key} timezone={data.timezone} sessions={data.sessions} next={data.next} beforeMinutes={data.beforeMinutes} />
+          <ConfirmClubCheckin
+            clubKey={key}
+            timezone={data.timezone}
+            sessions={data.sessions}
+            next={data.next}
+            beforeMinutes={data.beforeMinutes}
+            header={<h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>}
+          />
         ) : (
           <>
+            <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
             <Alert tone="danger" title={problem === "checkin_no_profile" ? "Compte non rattaché" : problem === "rate_limited" ? "Trop de tentatives" : "QR code invalide"}>
               {problem === "checkin_no_profile"
                 ? "Votre fiche n'est pas active dans ce club : contactez le coach."

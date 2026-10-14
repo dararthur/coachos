@@ -233,4 +233,32 @@
     width: 5px;
     height: 14px;
   }
+  /* Grande barrette : écran de pointage réussi. */
+  .tally-lg {
+    gap: 4px;
+    padding: 6px;
+  }
+  .tally-lg > span {
+    width: 14px;
+    height: 36px;
+  }
+  /* La bande gagnée au pointage se pose de haut en bas, comme un ruban qu'on colle sur la ceinture. */
+  .tally > span[data-taped="true"] {
+    background: var(--color-bar-text);
+    animation: tape-on 560ms cubic-bezier(0.16, 1, 0.3, 1) 180ms both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tally > span[data-taped="true"] {
+      animation: none;
+    }
+  }
+}
+
+@keyframes tape-on {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
 }

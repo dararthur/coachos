@@ -6,7 +6,14 @@ import { SCAN_PATH } from "@/domain/checkin";
 import type { AttendanceStatus } from "@/domain/validation";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
 import { BookingControls, occupancyLabel, WAITLIST_HINT } from "@/components/ui/booking";
-import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
+import { Assiduity, Tally, weeksAttended } from "@/components/ui/assiduity";
+import { Avatar } from "@/components/ui/avatar";
+import { BeltLabel } from "@/components/ui/belt";
+import { assiduityLabel, myRank, type MonthRank } from "@/domain/assiduity";
+import { ordinal, rankingRange } from "@/domain/ranking";
+import type { MyProfile } from "@/server/repositories/profile";
+import { photoVersions } from "@/server/repositories/photos";
+import { attendanceRanking } from "@/server/repositories/ranking";
 import { AttendanceBadge, AttendanceHistory } from "@/components/ui/attendance-history";
 import { Icon } from "@/components/ui/icons";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
@@ -33,10 +40,13 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
   const tz = ctx.academy.timezone;
   const now = new Date();
   const today = localDate(now, tz);
-  const { upcoming, mine, profile, checkin } = await inAcademy(ctx, async (tx) => {
+  const month = rankingRange("mois", today);
+  const { upcoming, mine, profile, checkin, photoVersion, rank } = await inAcademy(ctx, async (tx) => {
     const profile = await getMyProfile(tx, academyId);
     return {
       profile,
+      photoVersion: profile ? (await photoVersions(tx, academyId)).get(profile.personId) : undefined,
+      rank: profile ? myRank(await attendanceRanking(tx, academyId, month.from, month.to)) : null,
       checkin: await getCheckinSettings(tx, academyId),
       upcoming: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) })),
       // Ses propres présences, filtrées sur sa fiche (la RLS laisserait voir au staff celles de tout le club).
@@ -81,7 +91,11 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
           </EmptyState>
         )}
 
-        <Assiduity weeks={weeksAttended(mine, tz)} />
+        {profile && rank ? (
+          <MyBelt academyId={academyId} profile={profile} photoVersion={photoVersion} weeks={weeksAttended(mine, tz)} rank={rank} />
+        ) : (
+          <Assiduity weeks={weeksAttended(mine, tz)} />
+        )}
 
         {others.length > 0 && (
           <Card
@@ -133,6 +147,42 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
         </Card>
       </div>
     </>
+  );
+}
+
+/** Ma ceinture : qui je suis au club (photo ou silhouette, grade), mon assiduité et mon rang du mois. */
+function MyBelt({ academyId, profile, photoVersion, weeks, rank }: { academyId: string; profile: MyProfile; photoVersion: number | undefined; weeks: boolean[]; rank: MonthRank }) {
+  return (
+    <section aria-labelledby="ma-ceinture" className="rounded-sm border border-line bg-surface">
+      <div className="flex items-center gap-4 px-4 py-4 sm:px-5">
+        <Avatar academyId={academyId} personId={profile.personId} avatarStyle={profile.avatarStyle} hasPhoto={photoVersion !== undefined} version={photoVersion} />
+        <div className="min-w-0 flex-1">
+          <h2 id="ma-ceinture" className="text-lg font-bold leading-6">
+            {profile.firstName} {profile.lastName}
+          </h2>
+          <BeltLabel belt={profile.belt} stripes={profile.beltStripes} />
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-line px-4 py-3.5 sm:px-5">
+        <Tally weeks={weeks} />
+        <p className="text-sm">
+          <span className="block font-semibold">Assiduité</span>
+          <span className="text-ink-soft">{assiduityLabel(weeks)}</span>
+        </p>
+        <p className="text-sm sm:ml-auto sm:text-right">
+          <span className="block">
+            {rank.rank !== null ? (
+              <>
+                <strong className="text-lg font-bold font-stretch-[80%] tabular-nums">{ordinal(rank.rank)}</strong> ce mois-ci{rank.tied ? " (ex æquo)" : ""}
+              </>
+            ) : (
+              <span className="text-ink-soft">Pas encore de venue ce mois-ci</span>
+            )}
+          </span>
+          <Link href={`/a/${academyId}/ranking`}>Voir le classement</Link>
+        </p>
+      </div>
+    </section>
   );
 }
 

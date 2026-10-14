@@ -117,7 +117,11 @@ test.describe("pointage par QR code", () => {
       await expect(c.getByText("Pointé par QR", { exact: true })).toHaveCount(0); // l'ouverture du lien n'a rien enregistré
       await expect(rowFor(c, "Alice Pointe").getByRole("button", { name: "Présent", exact: true })).toHaveAttribute("aria-pressed", "false");
       await alice.page.getByRole("button", { name: "Confirmer ma présence" }).tap();
-      await expect(alice.page.getByTestId("checkin-success")).toContainText("Présence enregistrée pour « JJB — Tous niveaux »");
+      const success = alice.page.getByTestId("checkin-success");
+      await expect(success.getByRole("heading", { name: "Présence enregistrée" })).toBeVisible();
+      await expect(success).toContainText("Pour « JJB — Tous niveaux ».");
+      // La progression est lue après la confirmation : la venue du mois compte déjà.
+      await expect(success).toContainText("venue ce mois-ci");
     });
 
     await test.step("la liste du coach se met à jour d'elle-même, avec l'origine QR", async () => {
