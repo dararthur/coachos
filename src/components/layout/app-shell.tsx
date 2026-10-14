@@ -32,8 +32,9 @@ export function AppShell({ academy, role, userLabel, children }: { academy: { id
       <MobileTopBar academy={academy} role={role} />
       <div className="min-w-0">
         <main id="contenu" className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 sm:px-6 md:px-8 md:pb-12 md:pt-8 print:max-w-none print:p-0" tabIndex={-1}>
-          <InstallApp banner />
           {children}
+          {/* Après le contenu : sur téléphone, le bandeau ne repousse plus la première information sous la barre d'onglets. */}
+          <InstallApp banner />
         </main>
       </div>
       <MobileTabBar items={items} />

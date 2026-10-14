@@ -40,7 +40,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <TextField label="Mot de passe actuel" name="currentPassword" type="password" autoComplete="current-password" required />
           <TextField label="Nouveau mot de passe" name="password" type="password" autoComplete="new-password" minLength={12} required />
           <TextField label="Confirmation" name="confirm" type="password" autoComplete="new-password" minLength={12} required />
-          <SubmitButton>Changer le mot de passe</SubmitButton>
+          <SubmitButton variant="secondary">Changer le mot de passe</SubmitButton>
         </ActionForm>
       </Card>
       <Card title="Mes données personnelles" description="Droits d'accès, de portabilité et d'effacement (RGPD).">

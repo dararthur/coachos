@@ -23,7 +23,7 @@ test.describe("application installable et session longue", () => {
     await createClub(page, "Club Mobile");
     const banner = page.getByRole("complementary", { name: "Installer l'application" });
     await expect(banner).toContainText("Sur l'écran d'accueil");
-    await banner.getByRole("button", { name: "Masquer ce message" }).click();
+    await banner.getByRole("button", { name: "Plus tard" }).click();
     await expect(banner).toBeHidden();
     await page.reload();
     await expect(page.getByRole("complementary", { name: "Installer l'application" })).toHaveCount(0);

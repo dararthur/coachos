@@ -86,7 +86,7 @@ export function InstallApp({ banner = false }: { banner?: boolean }) {
 
   const body =
     platform === "installable" ? (
-      <button type="button" className={buttonClasses({ variant: banner ? "secondary" : "primary" })} onClick={install}>
+      <button type="button" className={buttonClasses({ variant: "secondary" })} onClick={install}>
         Installer l&apos;application
       </button>
     ) : platform === "ios" ? (
@@ -100,14 +100,13 @@ export function InstallApp({ banner = false }: { banner?: boolean }) {
   if (!banner) return <div className="space-y-3">{body}</div>;
 
   return (
-    <aside aria-label="Installer l'application" className="mb-4 flex items-start gap-3 rounded-sm border border-line bg-surface px-4 py-3 print:hidden">
-      <div className="min-w-0 flex-1 space-y-2">
-        <p className="text-sm font-bold">Matnexa sur votre écran d&apos;accueil</p>
-        <p className="text-sm text-ink-soft">Ouverture en un geste, plein écran, et vous restez connecté.</p>
-        {body}
-      </div>
-      <button type="button" onClick={close} className="-mr-2 -mt-1 inline-flex min-h-11 min-w-11 items-center justify-center rounded-sm text-ink-soft hover:bg-sunken" aria-label="Masquer ce message">
-        <Icon name="x" size={18} />
+    <aside aria-label="Installer l'application" className="mt-6 space-y-2 rounded-sm border border-line bg-surface px-4 py-3 print:hidden">
+      <p className="text-sm font-bold">Matnexa sur votre écran d&apos;accueil</p>
+      <p className="text-sm text-ink-soft">Ouverture en un geste, plein écran, et vous restez connecté.</p>
+      {body}
+      {/* Fermeture en bas, à portée du pouce, plutôt qu'une croix dans le coin supérieur. */}
+      <button type="button" onClick={close} className={buttonClasses({ variant: "quiet", className: "-ml-3" })}>
+        Plus tard
       </button>
     </aside>
   );
