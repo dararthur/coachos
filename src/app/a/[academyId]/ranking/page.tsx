@@ -84,6 +84,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
           )}
         </Card>
       )}
+      {!staff && visible === null && <Alert tone="info">Votre compte n&apos;est pas encore relié à une fiche membre du club : demandez au coach de le faire pour apparaître dans le classement.</Alert>}
       {staff && <Alert tone="info">Les membres choisissent eux-mêmes d&apos;apparaître ou non dans le classement des autres ; vous les voyez tous ici.</Alert>}
     </>
   );

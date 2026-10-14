@@ -157,7 +157,7 @@ test.describe("parcours mobiles", () => {
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
-  test("adhérent : espace personnel et navigation à trois onglets", async ({ browser }) => {
+  test("adhérent : espace personnel et navigation à quatre onglets", async ({ browser }) => {
     const ctx = () => browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" });
     const ownerCtx = await ctx();
     const owner = await ownerCtx.newPage();
@@ -183,13 +183,19 @@ test.describe("parcours mobiles", () => {
     await member.getByRole("button", { name: "Accepter l'invitation" }).tap();
     await expect(member).toHaveURL(new RegExp(`/a/${club}/me`));
     const tabs = member.getByRole("navigation", { name: "Navigation principale" });
-    await expect(tabs.getByRole("link")).toHaveCount(3);
+    await expect(tabs.getByRole("link")).toHaveCount(4);
     await expect(tabs.getByRole("link", { name: "Pointer ma présence" })).toBeVisible();
     await noHorizontalOverflow(member, "mon espace");
     expect(await smallTargets(member), "mon espace").toEqual([]);
     await tabs.getByRole("link", { name: "Planning" }).tap();
     await expect(member).toHaveURL(/\/schedule/);
     await noHorizontalOverflow(member, "planning membre");
+    await tabs.getByRole("link", { name: "Classement" }).tap();
+    await expect(member).toHaveURL(/\/ranking/);
+    await expect(member.getByText("Mon rang")).toBeVisible();
+    await noHorizontalOverflow(member, "classement membre");
+    expect(await smallTargets(member), "classement membre").toEqual([]);
+    await expect(member.getByText("pas encore relié à une fiche membre")).toBeVisible();
     await ownerCtx.close();
     await memberCtx.close();
   });
