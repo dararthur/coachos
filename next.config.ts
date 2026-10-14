@@ -14,8 +14,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   experimental: {
-    // L'import CSV est limité à 1 Mo côté domaine ; marge pour l'enveloppe multipart.
-    serverActions: { bodySizeLimit: "2mb" },
+    // Photo ou logo jusqu'à 2 Mo et import CSV de 1 Mo côté domaine ; marge pour l'enveloppe multipart (Nginx : 3m, ops/nginx/coachos.conf).
+    serverActions: { bodySizeLimit: "3mb" },
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
