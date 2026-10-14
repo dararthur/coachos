@@ -299,6 +299,10 @@ Centrés, sans cadre pointillé : quatre bâtons gris (glyphe de comptage), titr
 - **Présences par semaine :** barres SVG noires remplies de ruban blanc, un filet noir tous les 10 présents ; la semaine en cours, incomplète, en `sunken` / `line-strong`.
 - **Feuille d'appel :** trois boutons de statut de 44 px par membre (filet `line-strong` au repos, plein vert / ambre / rouge quand actif) ; barre collante au bas avec progression segmentée (vert, ambre, rouge sur `line`), compteurs en texte et bouton « Valider ».
 
+### Grade et silhouettes
+- **Ceinture (`BeltIcon`, `BeltLabel`) :** ceinture de JJB vue de dessus, 72 × 18, toile avec deux coutures, barre de grade à droite (noire ; rouge pour la ceinture noire) et 0 à 4 barrettes blanches. Teintes sombres et saturées (bleu `#1f56a8`, violet `#6d3fa8`, marron `#6b4226`) ; la blanche porte un filet `line-strong`. Hauteurs 14 / 18 / 24 px. Nom accessible « Ceinture bleue, 2 barrettes » ; décorative quand le libellé est écrit à côté.
+- **Silhouettes (`Silhouette`, `Avatar`) :** tuile `sunken` à coins de 4 px, buste en deux tons (`ink-faint` pour cheveux et vêtement, `scrollbar` pour la peau), sans visage : femme (cheveux mi-longs, épaules étroites), homme (cheveux courts, épaules larges), neutre (tête ronde). Remplacent la photo tant qu'il n'y en a pas ; mêmes tailles 36 / 48 / 96 px.
+
 ### Marque
 - Nom écrit exactement **« Matnexa »** (jamais « MatNexa », « Mat Nexa »), en texte réel : Archivo gras, chasse 87,5 %, -0,015em.
 - **Symbole :** carré noir `#16191d` à coins de 7/32, quatre bandes de ruban blanc verticales, barrées d'un trait orange `#ea6a2a` (le bâton de comptage) détouré de noir. Source vectorielle unique : `public/icons/icon.svg` ; les PNG en sont des rendus.

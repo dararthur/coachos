@@ -5,6 +5,7 @@ import { formatPhone } from "@/domain/phone";
 import { Alert, BackLink, Card, PageHeader } from "@/components/ui/ui";
 import { ActionForm, CheckboxField, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { Avatar } from "@/components/ui/avatar";
+import { BeltLabel } from "@/components/ui/belt";
 import { updateMyProfileAction } from "@/server/actions/members";
 import { removePhotoAction, setMyPhotoAction } from "@/server/actions/photos";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
@@ -39,8 +40,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
       )}
       <Card className="max-w-xl">
         <div className="mb-5 flex items-center gap-4 border-b border-line pb-5">
-          <Avatar academyId={academyId} personId={me.personId} firstName={me.firstName} lastName={me.lastName} hasPhoto={version !== undefined} version={version} size="lg" />
-          <PhotoField upload={setMyPhotoAction.bind(null, academyId)} remove={removePhotoAction.bind(null, academyId, me.personId)} hasPhoto={version !== undefined} />
+          <Avatar academyId={academyId} personId={me.personId} avatarStyle={me.avatarStyle} hasPhoto={version !== undefined} version={version} size="lg" />
+          <div className="min-w-0 space-y-3">
+            <BeltLabel belt={me.belt} stripes={me.beltStripes} />
+            <PhotoField upload={setMyPhotoAction.bind(null, academyId)} remove={removePhotoAction.bind(null, academyId, me.personId)} hasPhoto={version !== undefined} />
+          </div>
         </div>
         <ActionForm action={updateMyProfileAction.bind(null, academyId)} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">

@@ -1,0 +1,52 @@
+import { BELT_LABELS, beltLabel, MAX_STRIPES, type Belt } from "@/domain/profile";
+
+// Teintes des ceintures : sombres et saturées pour rester lisibles sur le fond blanc et le fond crème de Matnexa.
+// La ceinture blanche reçoit un filet gris (sinon elle disparaît sur le blanc) ; la noire porte la barrette rouge réglementaire.
+const BELT_STYLE: Record<Belt, { fill: string; edge: string; weave: string; bar: string }> = {
+  white: { fill: "#f7f5f0", edge: "#8a8378", weave: "#16191d", bar: "#16191d" },
+  blue: { fill: "#1f56a8", edge: "#173f7d", weave: "#ffffff", bar: "#16191d" },
+  purple: { fill: "#6d3fa8", edge: "#512d80", weave: "#ffffff", bar: "#16191d" },
+  brown: { fill: "#6b4226", edge: "#4c2e1a", weave: "#ffffff", bar: "#16191d" },
+  black: { fill: "#16191d", edge: "#16191d", weave: "#ffffff", bar: "#b42318" },
+};
+
+const SIZES = { sm: "h-3.5", md: "h-[18px]", lg: "h-6" } as const;
+
+/**
+ * Ceinture de JJB dessinée à plat, vue de dessus : toile, deux coutures, barre de grade (noire, rouge pour la ceinture noire) et
+ * jusqu'à 4 barrettes blanches. Texte alternatif complet (« Ceinture bleue, 2 barrettes ») ; `decorative` quand le libellé est déjà à côté.
+ */
+export function BeltIcon({ belt, stripes = 0, size = "md", decorative = false }: { belt: Belt; stripes?: number; size?: keyof typeof SIZES; decorative?: boolean }) {
+  const s = BELT_STYLE[belt];
+  const n = Math.max(0, Math.min(MAX_STRIPES, Math.trunc(stripes)));
+  return (
+    <svg
+      viewBox="0 0 72 18"
+      className={`${SIZES[size]} w-auto shrink-0`}
+      {...(decorative ? { "aria-hidden": true } : { role: "img", "aria-label": beltLabel(belt, n) })}
+      focusable="false"
+    >
+      <rect x="1" y="3" width="70" height="12" rx="2.5" fill={s.fill} stroke={s.edge} strokeWidth="1" />
+      <path d="M4 7.2H44M4 10.8H44" stroke={s.weave} strokeOpacity={belt === "white" ? 0.14 : 0.2} strokeWidth="0.8" />
+      <rect x="46" y="3" width="16" height="12" fill={s.bar} />
+      {Array.from({ length: n }, (_, i) => (
+        <rect key={i} x={47.4 + i * 3.5} y="3" width="2" height="12" fill="#ffffff" />
+      ))}
+      <rect x="1" y="3" width="70" height="12" rx="2.5" fill="none" stroke={s.edge} strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** Ceinture + libellé écrit (« Bleue · 2 barrettes »), pour les listes et les fiches. Sans grade : tiret discret. */
+export function BeltLabel({ belt, stripes = 0, size = "md" }: { belt: Belt | null; stripes?: number; size?: keyof typeof SIZES }) {
+  if (!belt) return <span className="text-sm text-ink-faint">Grade non renseigné</span>;
+  return (
+    <span className="inline-flex items-center gap-2 text-sm text-ink">
+      <BeltIcon belt={belt} stripes={stripes} size={size} decorative />
+      <span>
+        {BELT_LABELS[belt]}
+        {stripes > 0 && <span className="text-ink-soft"> · {stripes} barrette{stripes > 1 ? "s" : ""}</span>}
+      </span>
+    </span>
+  );
+}

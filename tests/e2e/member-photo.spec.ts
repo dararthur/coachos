@@ -19,7 +19,7 @@ test.describe("photo de profil", () => {
     await completeProfile(member, club);
 
     await member.goto(`/a/${club}/profile`);
-    await expect(member.getByText("MP", { exact: true })).toBeVisible();
+    await expect(member.locator('img[src*="/photo/"]')).toHaveCount(0);
     await member.waitForLoadState("networkidle");
     await member.getByLabel("Ajouter une photo").setInputFiles({ name: "moi.png", mimeType: "image/png", buffer: png });
     await expect(member.getByText("Photo enregistrée.")).toBeVisible();
