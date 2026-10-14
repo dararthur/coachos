@@ -1,7 +1,7 @@
 # Réservations, liste d'attente et e-mail de place confirmée
 
 Règles des réservations (migration `20261014001300_session_bookings.sql`) et notification de l'adhérent promu depuis la liste
-d'attente (migration `20261014001800_booking_promotion_notifications.sql`).
+d'attente (migration `20261014002200_booking_promotion_notifications.sql`).
 
 ## Règles
 

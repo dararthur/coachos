@@ -197,6 +197,8 @@ sudo systemctl daemon-reload && sudo systemctl enable --now coachos-purge.timer
 sudo systemctl start coachos-purge.service && systemctl status coachos-purge.service --no-pager
 ```
 
+La même tâche envoie ensuite les e-mails « place confirmée » restés en file (fournisseur indisponible, redémarrage) : la réponse contient `booking_emails_sent` et `booking_emails_failed` (`docs/bookings.md`).
+
 ## 12. Vérifications finales
 
 ```bash
