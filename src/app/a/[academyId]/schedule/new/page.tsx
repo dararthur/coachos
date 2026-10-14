@@ -5,6 +5,7 @@ import { Card, EmptyState, LinkButton, PageHeader, BackLink } from "@/components
 import { ActionForm, CheckboxGroup, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { createSessionsAction } from "@/server/actions/schedule";
 import { RecurrenceEnd } from "./recurrence-end";
+import { SessionFields } from "./session-fields";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listClassTypes } from "@/server/repositories/academies";
 import { listInstructors } from "@/server/repositories/schedule";
@@ -30,26 +31,7 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
       ) : (
         <Card className="max-w-2xl">
           <ActionForm action={createSessionsAction.bind(null, academyId)} className="space-y-5">
-            <SelectField label="Type de cours" name="classTypeId" required>
-              {types.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.disciplineName} — {t.name} ({t.durationMinutes} min)
-                </option>
-              ))}
-            </SelectField>
-            <SelectField label="Coach" name="instructorId" hint="Facultatif. Un coach n'enregistre les présences que des séances qui lui sont affectées (ou sans coach).">
-              <option value="">Aucun coach assigné</option>
-              {instructors.map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-            </SelectField>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <TextField label="Date de la première séance" name="date" type="date" defaultValue={today} required />
-              <TextField label="Heure de début" name="time" type="time" defaultValue="18:30" required />
-              <TextField label="Durée (minutes)" name="durationMinutes" type="number" defaultValue={60} min={15} max={360} step={5} required />
-            </div>
+            <SessionFields types={types.map((t) => ({ id: t.id, label: `${t.disciplineName} — ${t.name} (${t.durationMinutes} min)`, durationMinutes: t.durationMinutes }))} instructors={instructors} today={today} />
             <TextField label="Capacité" name="capacity" type="number" min={1} max={500} hint="Facultatif." className="max-w-xs" />
 
             {/* Jours et date de fin n'apparaissent qu'en répétition hebdomadaire (CSS :has ; sans support, tout reste visible). */}

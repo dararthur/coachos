@@ -90,6 +90,7 @@ export const signupSchema = z
     email: emailField,
     password: passwordField,
     displayName: optional(z.string().trim().max(100, "100 caractères maximum.").regex(/^[^<>\u0000-\u001f]*$/, "Caractères non autorisés.")),
+    clubCode: optional(z.string().trim().max(20, "Code trop long.")),
   })
   .refine((v) => v.password.toLowerCase() !== v.email, { path: ["password"], message: "Le mot de passe ne peut pas être l'adresse e-mail." });
 
@@ -258,3 +259,13 @@ export const reportFilterSchema = z
 export function defaultReportRange(today: string): { from: string; to: string } {
   return { from: addDays(today, -29), to: today };
 }
+
+/** Demande de création de club (formulaire public, sans compte) : approuvée à la main par l'administrateur de la plateforme. */
+export const clubRequestSchema = academySchema.extend({
+  contactName: nameField("Votre nom"),
+  email: emailField,
+  note: optional(z.string().trim().max(500, "500 caractères maximum.").regex(/^[^\u0000-\u0008\u000b-\u001f\u007f<>]*$/, "Caractères non autorisés.")),
+});
+
+/** Création effective du club une fois la demande approuvée : le demandeur peut corriger le nom, le fuseau et la devise. */
+export const claimClubSchema = academySchema.extend({ requestId: uuidField });

@@ -62,7 +62,7 @@ export default async function JoinCodePage({ params }: { params: Promise<{ code:
         <>
           <ol className="mb-6 space-y-3 text-sm">
             {[
-              ["Créez votre compte", "avec vos prénom et nom, tels que le club les connaît."],
+              ["Créez votre compte", "avec le nom sous lequel le club vous connaît."],
               ["Confirmez votre adresse e-mail", "puis connectez-vous : vous revenez ici."],
               ["Rejoignez le club en un geste", "et complétez votre profil (ceinture, photo facultative)."],
             ].map(([title, detail], i) => (

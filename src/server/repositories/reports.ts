@@ -81,3 +81,39 @@ export async function attendanceForExport(tx: Tx, academyId: string, timezone: s
     limit ${EXPORT_MAX_ROWS}`;
   return [...rows];
 }
+
+export interface MemberCountRow {
+  personId: string;
+  firstName: string;
+  lastName: string;
+  present: number;
+  late: number;
+  absent: number;
+}
+
+/**
+ * Nombre de présences de CHAQUE membre actif du club sur la période (bornes incluses, dans le fuseau du club), du plus assidu au moins assidu.
+ * « Présences » compte les présents ET les retards ; les membres sans aucune présence figurent avec 0. Fiches archivées et anonymisées exclues.
+ */
+export async function attendanceCountsForExport(tx: Tx, academyId: string, timezone: string, f: { from: string; to: string; classTypeId?: string }): Promise<MemberCountRow[]> {
+  const rows = await tx<MemberCountRow[]>`
+    select p.id as "personId", p.first_name as "firstName", p.last_name as "lastName",
+           count(x.id) filter (where x.status in ('present', 'late'))::int as present,
+           count(x.id) filter (where x.status = 'late')::int as late,
+           count(x.id) filter (where x.status = 'absent')::int as absent
+    from public.people p
+    left join lateral (
+      select a.id, a.status
+      from public.attendance a
+      join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
+      where a.person_id = p.id and a.academy_id = p.academy_id
+        and s.starts_at >= (${f.from}::date)::timestamp at time zone ${timezone}
+        and s.starts_at < ((${f.to}::date) + 1)::timestamp at time zone ${timezone}
+        ${f.classTypeId ? tx`and s.class_type_id = ${f.classTypeId}` : tx``}
+    ) x on true
+    where p.academy_id = ${academyId} and p.archived_at is null and p.anonymized_at is null
+    group by p.id
+    order by present desc, lower(p.last_name), lower(p.first_name), p.id
+    limit ${EXPORT_MAX_ROWS}`;
+  return [...rows];
+}

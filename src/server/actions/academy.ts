@@ -4,22 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { academySchema, academySettingsSchema, classTypeSchema, disciplineSchema, uuidField } from "@/domain/validation";
-import { authorizeAcademy, authorizeUser, inAcademy, runAction } from "@/server/auth/guards";
-import { withUser } from "@/server/db/client";
+import { academySettingsSchema, classTypeSchema, disciplineSchema, uuidField } from "@/domain/validation";
+import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import * as academies from "@/server/repositories/academies";
 import { parseForm } from "./helpers";
 
 type FormState = ActionResult<unknown> | null;
-
-export async function createAcademyAction(_prev: FormState, formData: FormData): Promise<FormState> {
-  return runAction("createAcademy", async () => {
-    const user = await authorizeUser();
-    const input = parseForm(academySchema, formData);
-    const id = await withUser(user, (tx) => academies.createAcademy(tx, input));
-    redirect(`/a/${id}/dashboard`);
-  });
-}
 
 export async function updateAcademyAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("updateAcademy", async () => {

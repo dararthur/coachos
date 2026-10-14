@@ -17,11 +17,6 @@ export async function listAcademiesForUser(tx: Tx, userId: string): Promise<Acad
   return [...rows];
 }
 
-export async function createAcademy(tx: Tx, input: { name: string; timezone: string; currency: string }): Promise<string> {
-  const [row] = await tx<{ id: string }[]>`select public.create_academy(${input.name}, ${input.timezone}, ${input.currency}) as id`;
-  return row!.id;
-}
-
 export async function updateAcademy(
   tx: Tx,
   academyId: string,

@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { createClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, waitForMail } from "./support/helpers";
+import { approveClub, createClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, waitForMail } from "./support/helpers";
 import type { Page } from "@playwright/test";
 import { forgeToken } from "../support/forge";
 
@@ -7,12 +7,13 @@ const NEW_PASSWORD = `e2e-nouveau-${randomUUID()}`; // jetable, généré à cha
 const SESSION_COOKIE = /better-auth\.session_token/;
 
 async function register(page: Page, email: string) {
+  await approveClub(email);
   await page.goto("/signup");
   await page.getByLabel("Nom affiché").fill("Flux Auth");
   await page.getByLabel("Adresse e-mail").fill(email);
   await page.getByLabel("Mot de passe").fill(PASSWORD);
   await page.getByRole("button", { name: "Créer mon compte" }).click();
-  await expect(page.getByText("Compte créé.")).toBeVisible();
+  await expect(page.getByText(/Consultez votre boîte mail/)).toBeVisible();
 }
 
 async function confirmAndLogIn(page: Page, email: string) {
@@ -236,6 +237,7 @@ test.describe("authentification : abus et surface HTTP", () => {
   test("la validation applicative ne peut pas être contournée : formulaire strict, endpoint HTTP d'inscription fermé", async ({ page, request, baseURL }) => {
     // 1. Par le formulaire : un nom affiché avec du HTML est refusé par la validation (zod) et aucun e-mail n'est envoyé.
     const email = uniqueEmail("valid");
+    await approveClub(email);
     await page.goto("/signup");
     await page.getByLabel("Nom affiché").fill("<img src=x onerror=alert(1)>");
     await page.getByLabel("Adresse e-mail").fill(email);
@@ -254,7 +256,7 @@ test.describe("authentification : abus et surface HTTP", () => {
     await page.getByLabel("Nom affiché").fill("Nom Valide");
     await page.getByLabel("Mot de passe").fill(PASSWORD); // jamais re-rempli après une erreur
     await page.getByRole("button", { name: "Créer mon compte" }).click();
-    await expect(page.getByText("Compte créé.")).toBeVisible();
+    await expect(page.getByText(/Consultez votre boîte mail/)).toBeVisible();
     expect((await waitForMail(email, "verification")).link).toContain("/api/auth/verify-email?token=");
   });
 });

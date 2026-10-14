@@ -16,10 +16,22 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
       {joining ? (
         <Alert tone="info">Vous allez rejoindre un club. Créez votre compte, confirmez votre e-mail, puis connectez-vous : votre inscription au club se termine alors en un clic.</Alert>
       ) : (
-        <p className="mb-5 text-sm text-ink-soft">Vous pourrez ensuite créer votre club ou rejoindre celui qui vous invite.</p>
+        <p className="mb-5 text-sm text-ink-soft">Le code de votre club vous est donné par votre coach. Vous avez été invité par e-mail ? Utilisez la même adresse ici.</p>
       )}
       <ActionForm action={signUpAction} className="space-y-4">
         {joining && <input type="hidden" name="next" value={joining} />}
+        {!joining && (
+          <TextField
+            label="Code du club"
+            name="clubCode"
+            maxLength={12}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
+            placeholder="ABCD-EFGH"
+            hint="8 caractères, lettres et chiffres. Inutile si vous avez reçu une invitation."
+          />
+        )}
         <TextField label="Nom affiché" name="displayName" autoComplete="name" hint="Visible par l'équipe de votre club." />
         <TextField label="Adresse e-mail" name="email" type="email" autoComplete="email" required />
         <TextField label="Mot de passe" name="password" type="password" autoComplete="new-password" required minLength={12} hint="12 caractères minimum." />
@@ -33,6 +45,11 @@ export default async function SignupPage({ searchParams }: { searchParams: Promi
       <p className="mt-5 text-sm">
         Déjà inscrit ? <Link href={joining ? `/login?next=${encodeURIComponent(joining)}` : "/login"}>Se connecter</Link>
       </p>
+      {!joining && (
+        <p className="mt-2 text-xs text-ink-soft">
+          Vous dirigez un club ? <Link href="/request-club">Demander la création de votre club</Link>.
+        </p>
+      )}
     </>
   );
 }

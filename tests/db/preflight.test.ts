@@ -64,9 +64,9 @@ describe("préflight : contrôles base de données (réels)", () => {
 
   it("la liste attendue vient des migrations réelles", () => {
     const exp = expectedObjects(migrationsDir);
-    expect(exp.files).toHaveLength(18);
+    expect(exp.files).toHaveLength(22);
     expect(exp.tables).toEqual(expect.arrayContaining(["academies", "people", "attendance", "session_checkins", "checkin_tokens"]));
-    expect(exp.functions).toEqual(expect.arrayContaining(["create_academy", "checkin_redeem", "erase_person"]));
+    expect(exp.functions).toEqual(expect.arrayContaining(["claim_academy_request", "checkin_redeem", "erase_person"]));
   });
 });
 
@@ -103,7 +103,7 @@ describe("préflight : configuration", () => {
   const good = () => ({
     DATABASE_URL: `postgresql://app_server:${rand()}@127.0.0.1:5432/coachos`,
     AUTH_DATABASE_URL: `postgresql://auth_runtime:${rand()}@127.0.0.1:5432/coachos`,
-    SITE_URL: "https://pilote.exemple.fr", APP_SECRET: rand(), BETTER_AUTH_SECRET: rand(), CRON_SECRET: rand(), APP_ENV: "staging",
+    SITE_URL: "https://pilote.exemple.fr", APP_SECRET: rand(), BETTER_AUTH_SECRET: rand(), CRON_SECRET: rand(), APP_ENV: "staging", PLATFORM_ADMIN_EMAIL: "admin@pilote.exemple.fr",
     MAIL_PROVIDER: "resend", RESEND_API_KEY: "re_" + rand(), MAIL_FROM: "Coach OS <no-reply@exemple.fr>",
   });
 
@@ -209,7 +209,7 @@ describe("préflight : SSL des URL de base de données", () => {
   const base = () => ({
     DATABASE_URL: `postgresql://app_server:${rand()}@db.exemple.fr:5432/coachos?sslmode=require`,
     AUTH_DATABASE_URL: `postgresql://auth_runtime:${rand()}@db.exemple.fr:5432/coachos?sslmode=verify-full`,
-    SITE_URL: "https://pilote.exemple.fr", APP_SECRET: rand(), BETTER_AUTH_SECRET: rand(), CRON_SECRET: rand(), APP_ENV: "staging",
+    SITE_URL: "https://pilote.exemple.fr", APP_SECRET: rand(), BETTER_AUTH_SECRET: rand(), CRON_SECRET: rand(), APP_ENV: "staging", PLATFORM_ADMIN_EMAIL: "admin@pilote.exemple.fr",
     MAIL_PROVIDER: "resend", RESEND_API_KEY: "re_" + rand(), MAIL_FROM: "Coach OS <no-reply@exemple.fr>",
   });
   const chk = (patch: Record<string, string | undefined>) => checkEnv({ ...base(), ...patch }) as Check[];

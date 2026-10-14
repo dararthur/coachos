@@ -3,6 +3,7 @@ import Link from "next/link";
 import { addDays, formatDateTime, formatDay, formatTime, localDate, mondayOf, parseCalendarDate } from "@/domain/dates";
 import { can } from "@/domain/roles";
 import type { AttendanceStatus } from "@/domain/validation";
+import { viewingAsMember } from "@/server/view-mode";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
 import { Badge, EmptyState, LinkButton, Notice, PageHeader } from "@/components/ui/ui";
@@ -29,7 +30,9 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   const sunday = addDays(monday, 6);
 
   const now = new Date();
-  const isMember = ctx.role === "member";
+  // Mode membre de l'équipe : la page est celle d'un adhérent (réserver), sans les commandes de gestion.
+  const asMember = await viewingAsMember(ctx.role);
+  const isMember = ctx.role === "member" || asMember;
   const { sessions, myAttendance } = await inAcademy(ctx, async (tx) => {
     const sessions = await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: monday, to: sunday }));
     // L'adhérent voit le résultat de l'appel sur les séances passées (Présent / En retard / Absent) plutôt que sa seule réservation.
@@ -43,8 +46,8 @@ export default async function SchedulePage({ params, searchParams }: { params: P
     const key = localDate(s.startsAt, tz);
     byDay.set(key, [...(byDay.get(key) ?? []), s]);
   }
-  const canManage = can(ctx.role, "schedule.manage");
-  const canRecord = can(ctx.role, "attendance.record");
+  const canManage = can(ctx.role, "schedule.manage") && !asMember;
+  const canRecord = can(ctx.role, "attendance.record") && !asMember;
   const fmt = (d: string) => new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "long" }).format(new Date(`${d}T00:00:00Z`));
 
   return (

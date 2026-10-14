@@ -40,3 +40,27 @@ export function passwordResetEmail(to: string, link: string): MailMessage {
   );
   return { to, kind: "password_reset", subject: "Réinitialisation de votre mot de passe — Matnexa", link, ...body };
 }
+
+/** À l'administrateur de la plateforme : une demande de club attend sa décision. Le lien mène à la page d'administration (connexion requise). */
+export function clubRequestEmail(to: string, link: string, request: { clubName: string; contactName: string; contactEmail: string }): MailMessage {
+  const body = layout(
+    "Nouvelle demande de création de club",
+    `${request.contactName} (${request.contactEmail}) demande la création du club « ${request.clubName} ». Rien n'est créé tant que vous n'avez pas approuvé la demande.`,
+    "Examiner la demande",
+    link,
+    "Connexion avec votre compte administrateur requise. Si cette demande vous semble suspecte, refusez-la ou ignorez ce message.",
+  );
+  return { to, kind: "club_request", subject: "Demande de création de club — Matnexa", link, ...body };
+}
+
+/** Au demandeur : sa demande est approuvée, il peut créer son compte (ou se connecter s'il en a déjà un). */
+export function clubApprovedEmail(to: string, link: string, clubName: string): MailMessage {
+  const body = layout(
+    "Votre demande de club est approuvée",
+    `La création du club « ${clubName} » est approuvée. Créez votre compte avec cette adresse e-mail (ou connectez-vous si vous en avez déjà un), confirmez votre adresse, puis créez votre club.`,
+    "Créer mon compte",
+    link,
+    "Ce message n'est valable que pour l'adresse à laquelle il a été envoyé. Si vous n'êtes pas à l'origine de cette demande, ignorez-le.",
+  );
+  return { to, kind: "club_approved", subject: "Votre club est approuvé — Matnexa", link, ...body };
+}

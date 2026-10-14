@@ -43,7 +43,7 @@ Délai de réponse légal : **1 mois**. [Procédure interne de réception et de 
 
 ## Rétention et purge
 
-`app_private.purge_expired_data()` (appelée chaque jour par `POST /api/cron/purge`, authentifiée par `CRON_SECRET`) : anonymise les membres archivés depuis plus de `retention_months`, supprime les invitations périmées (+30 j), les événements d'audit de plus de 24 mois et les compteurs de débit de plus de 24 h. Testée dans `tests/db/privacy.test.ts`. **À planifier en production**, sinon la rétention n'est pas appliquée. [Vérifier la politique de rétention contractuelle de chaque club.]
+`app_private.purge_expired_data()` (appelée chaque jour par `POST /api/cron/purge`, authentifiée par `CRON_SECRET`) : anonymise les membres archivés depuis plus de `retention_months`, supprime les invitations périmées (+30 j), les événements d'audit de plus de 24 mois et les compteurs de débit de plus de 24 h. Les **demandes de création de club** (nom, adresse e-mail et nom du demandeur, note libre) sont supprimées par `app_private.purge_academy_requests()` (même tâche planifiée) : 90 jours pour une demande en attente, refusée ou approuvée non utilisée, 180 jours au plus pour toutes. L'adresse de l'administrateur de la plateforme n'est stockée nulle part (variable d'environnement du serveur). Testée dans `tests/db/privacy.test.ts` et `tests/db/club-gating.test.ts`. **À planifier en production**, sinon la rétention n'est pas appliquée. [Vérifier la politique de rétention contractuelle de chaque club.]
 
 ## Sous-traitants et transferts — à documenter avant la production
 

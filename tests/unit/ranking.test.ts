@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { ordinal, parseRankingPeriod, rankingRange } from "@/domain/ranking";
+import { competitionRanks, ordinal, parseRankingPeriod, rankingRange } from "@/domain/ranking";
+
+describe("rangs à égalité (export du classement par période)", () => {
+  it("des scores identiques partagent le rang, le suivant saute", () => {
+    expect(competitionRanks([12, 9, 9, 9, 4, 0, 0])).toEqual([1, 2, 2, 2, 5, 6, 6]);
+    expect(competitionRanks([])).toEqual([]);
+    expect(competitionRanks([3])).toEqual([1]);
+  });
+});
 
 describe("classement : périodes", () => {
   it("semaine ISO, mois et année civils, y compris en fin d'année", () => {

@@ -171,6 +171,7 @@ test.describe("pointage par QR code", () => {
       await c.getByRole("button", { name: "Rouvrir la feuille" }).click();
       await expect(c.getByRole("button", { name: "Ouvrir le pointage" })).toBeVisible();
       await c.reload();
+      await c.getByRole("button", { name: /^Tous/ }).click(); // le filtre par défaut est « Inscrits » dès que quelqu'un a réservé
       await expect(rowFor(c, "Cara Sanscompte").getByRole("button", { name: "En retard" })).toHaveAttribute("aria-pressed", "true"); // persistance
       await expect(rowFor(c, "Bob Pointe").getByRole("button", { name: "Présent", exact: true })).toHaveAttribute("aria-pressed", "true");
     });
