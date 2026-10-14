@@ -100,7 +100,7 @@ v0/, discovery/, ops/   moteur de brief hebdomadaire autonome et matériel de d�
 
 ## Documentation
 
-[Pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · [exploitation](docs/operations.md) · [Nginx](docs/nginx.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md) · audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
+[Pilote du club](docs/pilot.md) · [PWA mobile](docs/pwa.md) · [pointage QR](docs/qr-checkin.md) · [démarrage et migrations](docs/setup.md) · [sécurité](docs/security.md) · [RGPD](docs/privacy-gdpr.md) · [rôles](docs/roles.md) · [architecture](docs/architecture.md) · [exploitation](docs/operations.md) · [Nginx](docs/nginx.md) · [déploiement sur le VPS](docs/deploy-vps.md) · vision produit : [PRODUCT_ARCHITECTURE.md](PRODUCT_ARCHITECTURE.md) · audit : [AUDIT_INITIAL.md](AUDIT_INITIAL.md).
 
 ---
 
