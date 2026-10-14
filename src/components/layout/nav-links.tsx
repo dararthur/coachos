@@ -12,11 +12,14 @@ export interface NavItem {
   /** Nom accessible mobile quand le libellé court ne suffit pas ; il contient toujours le libellé visible (WCAG 2.5.3). */
   shortName?: string;
   icon: IconName;
+  /** Autres chemins qui rendent cette entrée active (ex. « Mon profil », ouvert depuis « Mon espace »). */
+  also?: string[];
 }
 
 function useActive() {
   const pathname = usePathname();
-  return (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const match = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  return (item: Pick<NavItem, "href" | "also">) => match(item.href) || (item.also ?? []).some(match);
 }
 
 /** Navigation latérale (≥ md) : la section active est une bande de ruban blanc posée en travers de la barre noire. */
@@ -26,7 +29,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
     <nav aria-label="Navigation principale" className="mt-2">
       <ul className="flex flex-col gap-px">
         {items.map((item) => {
-          const active = isActive(item.href);
+          const active = isActive(item);
           const tone = active ? "bg-white text-ink" : "text-bar-muted hover:bg-bar-raised hover:text-white";
           return (
             <li key={item.href}>
@@ -53,7 +56,7 @@ export function MobileTabBar({ items }: { items: NavItem[] }) {
     <nav aria-label="Navigation principale" data-surface="bar" className="fixed inset-x-0 bottom-0 z-40 bg-bar pb-[env(safe-area-inset-bottom)] md:hidden print:hidden">
       <ul className="mx-auto flex max-w-xl">
         {items.map((item) => {
-          const active = isActive(item.href);
+          const active = isActive(item);
           return (
             <li key={item.href} className="min-w-0 flex-1">
               <Link

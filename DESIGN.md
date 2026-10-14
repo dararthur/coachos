@@ -219,7 +219,7 @@ Neutres chauds et encre quasi noire ; un orange unique ; trois sémantiques ind�
 ## Layout
 
 - **Coquille ≥ 768 px (md) :** grille `15rem | 1fr` ; barre latérale noire collante pleine hauteur (logo, club et rôle, navigation, compte en pied). Contenu centré, largeur max 72rem (1152 px), marges 16 / 24 / 32 px selon la largeur, 32 px en haut.
-- **Coquille < 768 px :** bandeau blanc collant en haut (symbole, club, compte), barre d'onglets noire fixe en bas (56 px + zone de sécurité). La variable `--tabbar-h` donne sa hauteur ; les barres collantes du bas (feuille d'appel) se posent au-dessus.
+- **Coquille < 768 px :** bandeau blanc collant en haut (symbole, club, compte), barre d'onglets noire fixe en bas (56 px + zone de sécurité). La variable `--tabbar-h` donne sa hauteur ; les barres collantes du bas (feuille d'appel) se posent au-dessus. Le bandeau d'installation de l'application vient après le contenu et se ferme par « Plus tard », à hauteur de pouce.
 - **Pages hors club :** cadre autonome (bandeau blanc + logo, colonne de 28 à 48rem). Authentification : à partir de 1024 px (lg), volet noir de la ceinture à gauche (5/11), formulaire à droite dans un panneau.
 - **Rythme :** 24 px entre blocs de page ; panneau à 16 px de marge interne (20 px dès 640 px) ; lignes de liste 14 px vertical ; gouttières 8 à 16 px.
 - **Grilles du tableau de bord :** bande de compteurs 2 colonnes puis 4 dès 1024 px ; deux panneaux 7/5 dès 1024 px.
@@ -295,13 +295,22 @@ Centrés, sans cadre pointillé : quatre bâtons gris (glyphe de comptage), titr
 
 ### La barrette (signature)
 - **Assiduité :** barre noire de 2 px de rayon, marge 4 px, bandes de 8 × 20 px espacées de 3 px ; bande blanche (`bar-text`) = semaine avec au moins une venue, `bar-track` sinon. Fiche membre et espace adhérent (`Assiduity`).
-- **Assiduité en liste (`TallyBar`, `.tally-sm`) :** même barrette en cases de 5 × 14 px, dans chaque ligne de la liste des membres (colonne « Assiduité (8 sem.) », à droite de la ligne sur mobile) ; nom accessible « Venu(e) N semaines sur 8 ». Les membres qui décrochent se lisent sans ouvrir les fiches.
+- **Assiduité en liste (`TallyBar`, `.tally-sm`) :** même barrette en cases de 5 × 14 px, dans chaque ligne de la liste des membres (colonne « Assiduité (8 sem.) », à droite de la ligne sur mobile) ; nom accessible « N semaines sur 8 avec une venue ». Les membres qui décrochent se lisent sans ouvrir les fiches.
+- **Grande barrette (`Tally size="lg"`, `.tally-lg`) :** bandes de 14 × 36 px espacées de 4 px, marge 6 px, sur l'écran de pointage réussi.
+- **Bande posée (`data-taped`) :** à la première venue de la semaine, la dernière bande se pose de haut en bas comme un ruban qu'on colle (`clip-path`, 560 ms, sortie exponentielle, 180 ms de délai) ; aucune animation sous `prefers-reduced-motion`. C'est le seul mouvement mis en scène du produit.
 - **Présences par semaine :** barres SVG noires remplies de ruban blanc, un filet noir tous les 10 présents ; la semaine en cours, incomplète, en `sunken` / `line-strong`.
 - **Feuille d'appel :** trois boutons de statut de 44 px par membre (filet `line-strong` au repos, plein vert / ambre / rouge quand actif) ; barre collante au bas avec progression segmentée (vert, ambre, rouge sur `line`), compteurs en texte et bouton « Valider ».
 
 ### Grade et silhouettes
-- **Ceinture (`BeltIcon`, `BeltLabel`) :** ceinture de JJB vue de dessus, 72 × 18, toile avec deux coutures, barre de grade à droite (noire ; rouge pour la ceinture noire) et 0 à 4 barrettes blanches. Teintes sombres et saturées (bleu `#1f56a8`, violet `#6d3fa8`, marron `#6b4226`) ; la blanche porte un filet `line-strong`. Hauteurs 14 / 18 / 24 px. Nom accessible « Ceinture bleue, 2 barrettes » ; décorative quand le libellé est écrit à côté.
+- **Ceinture (`BeltIcon`, `BeltLabel`) :** ceinture de JJB vue de dessus, 72 × 18, toile avec deux coutures, barre de grade à droite (noire ; rouge pour la ceinture noire) et 0 à 4 barrettes blanches. Teintes sombres et saturées, chacune avec son filet plus sombre (bleu `#1f56a8` / `#173f7d`, violet `#6d3fa8` / `#512d80`, marron `#6b4226` / `#4c2e1a`) : couleurs du grade, hors palette d'interface ; la blanche porte un filet `line-strong`. Hauteurs 14 / 18 / 24 px. Nom accessible « Ceinture bleue, 2 barrettes » ; décorative quand le libellé est écrit à côté.
 - **Silhouettes (`Silhouette`, `Avatar`) :** tuile `sunken` à coins de 4 px, buste en deux tons (`ink-faint` pour cheveux et vêtement, `scrollbar` pour la peau), sans visage : femme (cheveux mi-longs, épaules étroites), homme (cheveux courts, épaules larges), neutre (tête ronde). Remplacent la photo tant qu'il n'y en a pas ; mêmes tailles 36 / 48 / 96 px.
+
+### Parcours adhérent
+- **Prochain cours (Mon espace) :** panneau en tête, heure en chiffres condensés (`figure`, chasse 75 %) avec « Aujourd'hui » / « Demain » / le jour, cours et occupation à droite ; pied à filet portant **la seule action orange de l'écran**, qui dépend du moment : « Pointer ma présence » pendant la fenêtre de pointage, sinon « Réserver » le prochain cours ; rien d'orange quand il n'y a rien à faire.
+- **Ma ceinture :** panneau à deux bandes : photo ou silhouette 48 px, nom et `BeltLabel` ; puis barrette, assiduité et rang du mois (« 4e ce mois-ci (ex æquo) », lien vers le classement).
+- **Réservation (`BookingControls`) :** « Réserver » en secondaire dans les listes ; séance complète : « Rejoindre la liste d'attente » ; badge « Inscrit » / « Liste d'attente · n°N » ; « Quitter la liste » et « Annuler » discrets, confirmés quand un rang ou la place d'un autre est en jeu ; nom accessible complété du cours et de l'heure.
+- **Pointage réussi (`CheckinSuccess`) :** titre « Présence enregistrée » (`title`), cours, puis sous un filet la grande barrette, les venues du mois et le rang ; lu après la confirmation du serveur, jamais supposé.
+- **Historique :** replié par mois (`<details>`), en-tête `sunken` de 44 px avec chevron, total des venues et des absences à droite ; le mois en cours ouvert.
 
 ### Marque
 - Nom écrit exactement **« Matnexa »** (jamais « MatNexa », « Mat Nexa »), en texte réel : Archivo gras, chasse 87,5 %, -0,015em.
@@ -319,7 +328,7 @@ Centrés, sans cadre pointillé : quatre bâtons gris (glyphe de comptage), titr
 - **Do** laisser le focus visible : contour orange de 2 px décalé de 2 px, blanc sur la barre noire.
 - **Do** passer les dimensions calculées par des attributs SVG ou des classes : aucun `style` en ligne (CSP).
 - **Do** réutiliser la barrette (bandes blanches sur barre noire) pour tout ce qui se compte.
-- **Do** respecter `prefers-reduced-motion` ; les transitions restent des changements de couleur de 100 à 150 ms.
+- **Do** respecter `prefers-reduced-motion` ; les transitions restent des changements de couleur de 100 à 150 ms (chevrons : rotation de 150 ms). Seule exception : la bande posée au pointage.
 
 ### Don't:
 - **Don't** mettre d'ombre ailleurs que sur un dialogue.

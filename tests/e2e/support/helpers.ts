@@ -88,7 +88,7 @@ export async function createClub(page: Page, name: string): Promise<string> {
 /** Après l'acceptation d'une invitation, la fiche est créée automatiquement : « Mon espace » renvoie vers « Mon profil » jusqu'à sa validation. */
 export async function completeProfile(page: Page, club: string) {
   await expect(page).toHaveURL(new RegExp(`/a/${club}/profile`));
-  const adult = page.getByLabel("Je confirme être majeur(e).");
+  const adult = page.getByLabel("Je confirme avoir 18 ans ou plus.");
   if (await adult.count()) await adult.check();
   await page.getByRole("button", { name: "Valider mon profil" }).click();
   await expect(page.getByText("Profil enregistré.")).toBeVisible();

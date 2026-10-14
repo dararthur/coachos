@@ -56,6 +56,25 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         </StatGrid>
       )}
 
+      {!staff && visible !== null && (
+        <Card className="mb-6" title="Ma visibilité" description="Votre rang vous reste toujours visible. Vous choisissez si les autres membres voient aussi votre nom dans ce classement ; vous pouvez changer d'avis à tout moment.">
+          {visible ? (
+            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, false)}>
+              <p className="mb-3 text-sm">
+                <Badge tone="success">Visible</Badge> Votre nom apparaît dans le classement des autres membres.
+              </p>
+              <SubmitButton variant="secondary">Me retirer du classement des autres</SubmitButton>
+            </ActionForm>
+          ) : (
+            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, true)}>
+              <p className="mb-3 text-sm">
+                <Badge>Masqué</Badge> Les autres membres ne voient pas votre nom. Le coach, lui, voit les présences comme d&apos;habitude.
+              </p>
+              <SubmitButton>Apparaître dans le classement</SubmitButton>
+            </ActionForm>
+          )}
+        </Card>
+      )}
       <Card title={RANKING_LABELS[period]} flush className="mb-6">
         {rows.filter((r) => r.visits > 0).length === 0 ? (
           <EmptyState level={3} title="Aucune venue sur cette période">Le classement se remplira dès les prochains appels.</EmptyState>
@@ -85,25 +104,6 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         )}
       </Card>
 
-      {!staff && visible !== null && (
-        <Card title="Ma visibilité" description="Votre rang vous reste toujours visible. Vous choisissez si les autres membres voient aussi votre nom dans ce classement ; vous pouvez changer d'avis à tout moment.">
-          {visible ? (
-            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, false)}>
-              <p className="mb-3 text-sm">
-                <Badge tone="success">Visible</Badge> Votre nom apparaît dans le classement des autres membres.
-              </p>
-              <SubmitButton variant="secondary">Me retirer du classement des autres</SubmitButton>
-            </ActionForm>
-          ) : (
-            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, true)}>
-              <p className="mb-3 text-sm">
-                <Badge>Masqué</Badge> Les autres membres ne voient pas votre nom. Le coach, lui, voit les présences comme d&apos;habitude.
-              </p>
-              <SubmitButton>Apparaître dans le classement</SubmitButton>
-            </ActionForm>
-          )}
-        </Card>
-      )}
       {!staff && visible === null && <Alert tone="info">Votre fiche n&apos;est pas active dans ce club : contactez le coach.</Alert>}
       {staff && <Alert tone="info">Les membres choisissent eux-mêmes d&apos;apparaître ou non dans le classement des autres ; vous les voyez tous ici.</Alert>}
     </>

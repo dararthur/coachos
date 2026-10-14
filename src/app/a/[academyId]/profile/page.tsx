@@ -51,7 +51,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
               addLabel="Ajouter une photo"
               changeLabel="Changer la photo"
               removeLabel="Retirer la photo"
-              hint="Facultatif. Tout format d'image : la photo est recadrée en carré et allégée automatiquement."
+              hint="Facultatif. Visible de vous et de l'équipe du club, et des autres membres si vous apparaissez dans le classement. Tout format d'image : la photo est recadrée en carré et allégée automatiquement."
             />
           </div>
         </div>
@@ -94,7 +94,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
               </option>
             ))}
           </SelectField>
-          {!me.adultAttested && <CheckboxField label="Je confirme être majeur(e)." name="adultConfirmed" required hint="Matnexa est réservé aux adultes." />}
+          {!me.adultAttested && <CheckboxField label="Je confirme avoir 18 ans ou plus." name="adultConfirmed" required hint="Matnexa est réservé aux adultes." />}
           <SubmitButton>{me.completed ? "Enregistrer" : "Valider mon profil"}</SubmitButton>
         </ActionForm>
       </Card>

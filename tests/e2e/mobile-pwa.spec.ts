@@ -190,7 +190,7 @@ test.describe("parcours mobiles", () => {
     await member.getByLabel("Barrettes").selectOption("2");
     await member.getByLabel("Silhouette").selectOption("woman");
     await member.getByRole("textbox", { name: /^Nom/ }).fill("Adhérent");
-    await member.getByLabel("Je confirme être majeur(e).").check();
+    await member.getByLabel("Je confirme avoir 18 ans ou plus.").check();
     await member.getByRole("button", { name: "Valider mon profil" }).tap();
     await expect(member.getByText("Profil enregistré.")).toBeVisible();
     await member.goto(`/a/${club}/me`);

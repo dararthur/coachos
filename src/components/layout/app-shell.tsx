@@ -14,9 +14,9 @@ export function AppShell({ academy, role, viewAsMember = false, userLabel, child
   const base = `/a/${academy.id}`;
   // En mode membre, l'équipe voit la navigation d'un adhérent ; ses droits réels ne changent pas (ils sont vérifiés côté serveur et par la base).
   const shown: Role = viewAsMember ? "member" : role;
-  const items = [
+  const entries: (NavItem | false)[] = [
     can(shown, "dashboard.read") && { href: `${base}/dashboard`, label: "Tableau de bord", short: "Accueil", icon: "home" },
-    shown === "member" && { href: `${base}/me`, label: "Mon espace", short: "Espace", icon: "home" },
+    shown === "member" && { href: `${base}/me`, label: "Mon espace", short: "Espace", icon: "home", also: [`${base}/profile`] },
     can(shown, "members.read") && { href: `${base}/members`, label: "Membres", short: "Membres", icon: "users" },
     { href: `${base}/schedule`, label: "Planning", short: "Planning", icon: "calendar" },
     shown === "member" && { href: `${base}/ranking`, label: "Classement", short: "Classement", icon: "trophy" },
@@ -24,7 +24,8 @@ export function AppShell({ academy, role, viewAsMember = false, userLabel, child
     can(shown, "attendance.record") && { href: `${base}/attendance`, label: "Présences", short: "Présences", icon: "roll" },
     can(shown, "reports.read") && { href: `${base}/reports`, label: "Rapports", short: "Rapports", icon: "chart" },
     can(shown, "academy.update") && { href: `${base}/settings`, label: "Paramètres", short: "Réglages", icon: "settings" },
-  ].filter((i): i is NavItem => Boolean(i));
+  ];
+  const items = entries.filter((i): i is NavItem => Boolean(i));
 
   return (
     <div className="min-h-dvh md:grid md:grid-cols-[15rem_minmax(0,1fr)] print:block">
@@ -77,7 +78,7 @@ function SideBar({ academy, role, viewAsMember, userLabel, items }: Shell & { us
             <p className="line-clamp-2 break-words text-base font-bold leading-tight" title={academy.name}>
               {academy.name}
             </p>
-            <p className="text-xs font-medium text-bar-muted">{ROLE_LABELS[role]}{viewAsMember ? " · mode membre" : ""}</p>
+            {role !== "member" && <p className="text-xs font-medium text-bar-muted">{ROLE_LABELS[role]}{viewAsMember ? " · mode membre" : ""}</p>}
           </div>
         </div>
       </div>
@@ -115,7 +116,7 @@ function MobileTopBar({ academy, role, viewAsMember }: Shell) {
           <AcademyLogo academy={academy} size={32} />
           <div className="min-w-0">
           <p className="line-clamp-2 break-words text-sm font-bold leading-tight">{academy.name}</p>
-          <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}{viewAsMember ? " · mode membre" : ""}</p>
+          {role !== "member" && <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}{viewAsMember ? " · mode membre" : ""}</p>}
           </div>
         </div>
         {role !== "member" && <ViewSwitch academyId={academy.id} viewAsMember={viewAsMember} compact />}

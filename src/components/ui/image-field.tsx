@@ -83,7 +83,7 @@ export function ImageField({
       <div className="flex flex-wrap items-start gap-2">
         <ActionForm action={upload}>
           <input id="image" name="photo" type="file" accept="image/*" className="peer sr-only" onChange={onPick} />
-          <label htmlFor="image" className={`${buttonClasses({ variant: "secondary" })} cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink`}>
+          <label htmlFor="image" className={`${buttonClasses({ variant: "secondary" })} cursor-pointer peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent`}>
             {hasImage ? changeLabel : addLabel}
           </label>
         </ActionForm>
