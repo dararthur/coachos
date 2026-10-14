@@ -158,7 +158,7 @@ export function StatGrid({ children, className, cols = 4 }: { children: ReactNod
 export function Stat({ label, value, hint, href }: { label: string; value: ReactNode; hint?: string; href?: string }) {
   // Structure valide d'une liste de définitions : <div><dt/><dd/></div>. Le lien étend sa zone cliquable à toute la cellule.
   return (
-    <div className={`relative bg-surface px-4 py-3.5 ${href ? "transition-colors hover:bg-[#fbfaf8]" : ""}`}>
+    <div className={`relative bg-surface px-4 py-3.5 ${href ? "transition-colors hover:bg-hover" : ""}`}>
       <dt className="text-sm font-medium text-ink-soft">
         {href ? (
           <Link href={href} className="no-underline after:absolute after:inset-0 hover:text-ink">
@@ -194,7 +194,7 @@ export function DataTable({ caption, headers, children, bare = false, numeric = 
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-line [&>tr:hover]:bg-[#fbfaf8]">{children}</tbody>
+        <tbody className="divide-y divide-line [&>tr:hover]:bg-hover">{children}</tbody>
       </table>
     </div>
   );

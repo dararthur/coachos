@@ -7,7 +7,7 @@ import * as members from "@/server/repositories/members";
 import * as reports from "@/server/repositories/reports";
 import * as schedule from "@/server/repositories/schedule";
 import * as team from "@/server/repositories/team";
-import { addMember, adminSql, asUser, buildWorld, closeAll, firstClassType, type World } from "./support";
+import { addMember, adminSql, asUser, buildWorld, closeAll, createPerson, createSession, firstClassType, type World } from "./support";
 
 let w: World;
 const TZ = "Europe/Paris";
@@ -32,6 +32,21 @@ describe("members", () => {
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { status: "active", page: 1, q: "durand" }))).total).toBe(0);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { status: "archived", page: 1, q: "durand" }))).total).toBe(1);
     expect(await asUser(w.alice, (tx) => members.setPersonArchived(tx, w.academyA, id, false))).toBe(true);
+  });
+
+  it("assiduité de la liste : semaines (lundi local) avec une venue, absences et venues anciennes exclues, colonne optionnelle", async () => {
+    const person = await createPerson(w.academyA, "Assidu", "Barrette");
+    const recent = await createSession(w.academyA, { startsAt: new Date(Date.now() - 3 * 86_400_000).toISOString() });
+    const old = await createSession(w.academyA, { startsAt: new Date(Date.now() - 80 * 86_400_000).toISOString() });
+    const missed = await createSession(w.academyA, { startsAt: new Date(Date.now() - 20 * 86_400_000).toISOString() });
+    await adminSql()`insert into public.attendance (academy_id, session_id, person_id, status) values
+      (${w.academyA}, ${recent}, ${person}, 'late'), (${w.academyA}, ${old}, ${person}, 'present'), (${w.academyA}, ${missed}, ${person}, 'absent')`;
+    const [expected] = await adminSql()<{ monday: string }[]>`
+      select to_char(date_trunc('week', starts_at at time zone ${TZ}), 'YYYY-MM-DD') as monday from public.sessions where id = ${recent}`;
+    const withWeeks = await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "barrette", status: "active", page: 1, assiduityTimezone: TZ }));
+    expect(withWeeks.rows[0]?.attendedWeeks).toEqual([expected!.monday]);
+    const plain = await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "barrette", status: "active", page: 1 }));
+    expect(plain.rows[0]?.attendedWeeks).toBeUndefined();
   });
 
   it("une fiche d'une autre académie est introuvable (getPerson / update retournent null/false)", async () => {

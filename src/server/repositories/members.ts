@@ -14,6 +14,8 @@ export interface PersonRow {
   anonymizedAt: Date | null;
   createdAt: Date;
   lastAttendedAt: Date | null;
+  /** Présent seulement si listPeople reçoit `assiduityTimezone` (lundis AAAA-MM-JJ des semaines avec une venue). */
+  attendedWeeks?: string[];
 }
 
 export type MemberStatus = "active" | "archived" | "all";
@@ -27,7 +29,8 @@ export function escapeLike(input: string): string {
 export async function listPeople(
   tx: Tx,
   academyId: string,
-  opts: { q?: string; status: MemberStatus; page: number },
+  /** `assiduityTimezone` : ajoute `attendedWeeks` (lundis, dans ce fuseau, des semaines avec une venue sur ~9 semaines). */
+  opts: { q?: string; status: MemberStatus; page: number; assiduityTimezone?: string },
 ): Promise<{ rows: PersonRow[]; total: number }> {
   const pattern = opts.q ? `%${escapeLike(opts.q.trim().toLowerCase())}%` : null;
   const search = pattern
@@ -35,6 +38,13 @@ export async function listPeople(
     : tx``;
   const status =
     opts.status === "active" ? tx`and p.archived_at is null` : opts.status === "archived" ? tx`and p.archived_at is not null` : tx``;
+  // Semaines (lundi local, ISO) avec au moins une venue : 63 jours couvrent les 8 semaines affichées, même en début de semaine.
+  const weeks = opts.assiduityTimezone
+    ? tx`, array(select distinct to_char(date_trunc('week', s.starts_at at time zone ${opts.assiduityTimezone}), 'YYYY-MM-DD')
+               from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
+               where a.person_id = p.id and a.academy_id = p.academy_id and a.status in ('present', 'late')
+                 and s.starts_at >= now() - interval '63 days') as "attendedWeeks"`
+    : tx``;
   const [{ total }] = await tx<[{ total: number }]>`
     select count(*)::int as total from public.people p where p.academy_id = ${academyId} ${status} ${search}`;
   const rows = await tx<PersonRow[]>`
@@ -42,6 +52,7 @@ export async function listPeople(
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            (select max(s.starts_at) from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
              where a.person_id = p.id and a.academy_id = p.academy_id and a.status in ('present', 'late')) as "lastAttendedAt"
+           ${weeks}
     from public.people p
     where p.academy_id = ${academyId} ${status} ${search}
     order by lower(p.last_name), lower(p.first_name), p.id

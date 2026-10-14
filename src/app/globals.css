@@ -14,6 +14,9 @@
   --color-sunken: #eeebe5; /* en-têtes de tableau, zones en retrait */
   --color-line: #ddd8cf; /* filets */
   --color-line-strong: #8a8378; /* bordures de champs : 3,75:1 sur blanc */
+  --color-hover: #fbfaf8; /* survol des lignes de tableau et des cellules cliquables */
+  --color-selection: #f8d3bd; /* texte sélectionné (orange ceinture très clair) */
+  --color-scrollbar: #b9b2a6; /* curseur des barres de défilement */
 
   /* Encre */
   --color-ink: #16191d;
@@ -25,6 +28,7 @@
   --color-bar-raised: #23272d;
   --color-bar-text: #ffffff;
   --color-bar-muted: #a3a9b1; /* 7,4:1 sur la barre */
+  --color-bar-track: #3b4047; /* case vide de la barrette (semaine sans venue) */
 
   /* Accent : orange ceinture. Action principale et focus uniquement. */
   --color-accent: #c2410c;
@@ -83,7 +87,7 @@
     -webkit-text-size-adjust: 100%;
     background: var(--color-canvas);
     accent-color: var(--color-ink);
-    scrollbar-color: #b9b2a6 transparent;
+    scrollbar-color: var(--color-scrollbar) transparent;
   }
   body {
     /* Zones de sécurité (encoche, barre d'accueil iOS) en mode plein écran. */
@@ -99,7 +103,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
   ::selection {
-    background: #f8d3bd;
+    background: var(--color-selection);
     color: var(--color-ink);
   }
   /* Les liens se distinguent du texte par le soulignement (WCAG 1.4.1), pas seulement par la couleur. */
@@ -215,9 +219,18 @@
     width: 8px;
     height: 20px;
     border-radius: 1px;
-    background: #3b4047;
+    background: var(--color-bar-track);
   }
   .tally > span[data-on="true"] {
-    background: #ffffff;
+    background: var(--color-bar-text);
+  }
+  /* Variante compacte, pour une ligne de liste (même grammaire, cases plus fines). */
+  .tally-sm {
+    gap: 2px;
+    padding: 3px;
+  }
+  .tally-sm > span {
+    width: 5px;
+    height: 14px;
   }
 }

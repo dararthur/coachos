@@ -5,6 +5,7 @@ import { can } from "@/domain/roles";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
 import { Badge, DataTable, EmptyState, LinkButton, Notice, PageHeader, Pagination, TabNav } from "@/components/ui/ui";
+import { TallyBar, weeksFromMondays } from "@/components/ui/assiduity";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listPeople, PAGE_SIZE, type MemberStatus } from "@/server/repositories/members";
 
@@ -24,7 +25,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
   const status = STATUS_TABS.some((t) => t.value === sp.status) ? (sp.status as MemberStatus) : "active";
   const page = Math.max(1, Number.parseInt(typeof sp.page === "string" ? sp.page : "1", 10) || 1);
 
-  const { rows, total } = await inAcademy(ctx, (tx) => listPeople(tx, academyId, { q, status, page }));
+  const { rows, total } = await inAcademy(ctx, (tx) => listPeople(tx, academyId, { q, status, page, assiduityTimezone: ctx.academy.timezone }));
   const tz = ctx.academy.timezone;
   // Sous le filtre « Actifs », le statut est le même pour toutes les lignes : la colonne n'apporte rien.
   const showStatus = status !== "active";
@@ -107,7 +108,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
       ) : (
         <>
           <div className="hidden md:block">
-            <DataTable caption="Liste des membres" headers={["Nom", "Dernière présence", "Inscription", "E-mail", ...(showStatus ? ["Statut"] : [])]}>
+            <DataTable caption="Liste des membres" headers={["Nom", "Assiduité (8 sem.)", "Dernière présence", "Inscription", "E-mail", ...(showStatus ? ["Statut"] : [])]}>
               {rows.map((p) => (
                 <tr key={p.id}>
                   <th scope="row" className="px-4 py-1 font-semibold">
@@ -115,6 +116,9 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
                       {p.lastName.toUpperCase()} {p.firstName}
                     </Link>
                   </th>
+                  <td className="px-4 py-1">
+                    <TallyBar weeks={weeksFromMondays(p.attendedWeeks, tz)} />
+                  </td>
                   <td className="px-4 py-1">{p.lastAttendedAt ? formatDateTime(p.lastAttendedAt, tz) : <span className="text-ink-soft">Jamais</span>}</td>
                   <td className="px-4 py-1 text-ink-soft">{p.joinedOn ? formatCalendarDate(p.joinedOn) : "—"}</td>
                   <td className="max-w-64 truncate px-4 py-1 text-ink-soft">{p.email ?? "—"}</td>
@@ -133,7 +137,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
                     </span>
                     <span className="block text-xs text-ink-soft">{p.lastAttendedAt ? `Dernière venue : ${formatDateTime(p.lastAttendedAt, tz)}` : "Jamais venu(e)"}</span>
                   </span>
-                  {p.archivedAt ? <Badge>Archivé</Badge> : <Icon name="next" size={18} className="text-ink-soft" />}
+                  {p.archivedAt ? <Badge>Archivé</Badge> : <TallyBar weeks={weeksFromMondays(p.attendedWeeks, tz)} />}
                 </Link>
               </li>
             ))}

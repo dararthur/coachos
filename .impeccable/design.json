@@ -171,6 +171,22 @@
       "danger-ink": {
         "role": "semantic",
         "displayName": "Rouge encre"
+      },
+      "hover": {
+        "role": "neutral",
+        "displayName": "Survol de ligne"
+      },
+      "selection": {
+        "role": "neutral",
+        "displayName": "Sélection"
+      },
+      "scrollbar": {
+        "role": "neutral",
+        "displayName": "Défilement"
+      },
+      "bar-track": {
+        "role": "neutral",
+        "displayName": "Piste de barrette"
       }
     },
     "typographyMeta": {
@@ -320,7 +336,7 @@
       "kind": "custom",
       "description": "Signature : bandes de ruban blanc sur barre noire, une par semaine avec venue.",
       "html": "<div class=\"ds-tally\"><span class=\"on\"></span><span class=\"on\"></span><span></span><span class=\"on\"></span><span class=\"on\"></span><span></span><span class=\"on\"></span><span class=\"on\"></span></div>",
-      "css": ".ds-tally{display:inline-flex;gap:3px;padding:4px;border-radius:2px;background:#16191d}.ds-tally>span{display:block;width:8px;height:20px;border-radius:1px;background:#3b4047}.ds-tally>span.on{background:#fff}"
+      "css": ".ds-tally{display:inline-flex;gap:3px;padding:4px;border-radius:2px;background:#16191d}.ds-tally>span{display:block;width:8px;height:20px;border-radius:1px;background:var(--color-bar-track, #3b4047)}.ds-tally>span.on{background:#fff}"
     }
   ],
   "narrative": {

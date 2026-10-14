@@ -7,6 +7,9 @@ colors:
   sunken: "#eeebe5"
   line: "#ddd8cf"
   line-strong: "#8a8378"
+  hover: "#fbfaf8"
+  selection: "#f8d3bd"
+  scrollbar: "#b9b2a6"
   ink: "#16191d"
   ink-soft: "#585d64"
   ink-faint: "#6a6f76"
@@ -14,6 +17,7 @@ colors:
   bar-raised: "#23272d"
   bar-text: "#ffffff"
   bar-muted: "#a3a9b1"
+  bar-track: "#3b4047"
   accent: "#c2410c"
   accent-strong: "#a3360a"
   accent-bright: "#ea6a2a"
@@ -174,6 +178,8 @@ Neutres chauds et encre quasi noire ; un orange unique ; trois sémantiques ind�
 - **Coton** (`canvas`) : fond de page, pied des dialogues, fond de la barre d'appel collante sur mobile.
 - **Blanc panneau** (`surface`) : panneaux, tableaux, champs, boutons secondaires.
 - **Retrait** (`sunken`) : en-têtes de tableau, badge neutre, survol des boutons secondaires et fantômes, champ désactivé.
+- **Survol de ligne** (`hover`) : lignes de tableau et cellules de compteur cliquables, à peine plus chaud que le blanc.
+- **Sélection** (`selection`) et **défilement** (`scrollbar`) : texte sélectionné (orange très clair) et curseur des barres de défilement. Surfaces du navigateur thématisées, jamais laissées par défaut.
 - **Filet** (`line`) : bordures de panneau, séparateurs de liste et de tableau.
 - **Filet fort** (`line-strong`) : bordures de champs et de boutons de statut (3,75:1 sur blanc, seuil des composants d'interface).
 - **Encre** (`ink`) : texte principal, onglet de filtre courant, segment actif.
@@ -266,7 +272,7 @@ Bandes nettes, 44 px de haut minimum, libellé 14 px graisse 600, icône 18 px o
 Un seul panneau divisé par des filets de 1 px (grille sur fond `line`), jamais une rangée de cartes. Cellule : libellé 14 px `ink-soft`, chiffre condensé 32 px, indication 12 px. Une cellule peut être un lien qui couvre toute la surface.
 
 ### Tables
-Cadre panneau ; en-tête `sunken`, 12 px graisse 600 `ink-soft`, filet bas ; lignes séparées par filets, survol très clair ; colonnes numériques alignées à droite ; légende masquée pour les lecteurs d'écran ; défilement horizontal si nécessaire. Première cellule en `th scope="row"` avec lien de 44 px.
+Cadre panneau ; en-tête `sunken`, 12 px graisse 600 `ink-soft`, filet bas ; lignes séparées par filets, survol `hover` ; colonnes numériques alignées à droite ; légende masquée pour les lecteurs d'écran ; défilement horizontal si nécessaire. Première cellule en `th scope="row"` avec lien de 44 px.
 
 ### Badges
 Bande rectangulaire de 2 px de rayon, 12 px graisse 600, marge 2 × 8 px. Tons : neutre, succès, avertissement, danger, marque, encre.
@@ -288,7 +294,8 @@ Filet + fond `-soft` + texte `-ink` du ton, icône 18 px, 14 px ; titre en gras.
 Centrés, sans cadre pointillé : quatre bâtons gris (glyphe de comptage), titre 16 px gras, explication 14 px, puis l'action qui remplit le vide.
 
 ### La barrette (signature)
-- **Assiduité :** barre noire de 2 px de rayon, marge 4 px, bandes de 8 × 20 px espacées de 3 px ; bande blanche = semaine avec au moins une venue, `#3b4047` sinon.
+- **Assiduité :** barre noire de 2 px de rayon, marge 4 px, bandes de 8 × 20 px espacées de 3 px ; bande blanche (`bar-text`) = semaine avec au moins une venue, `bar-track` sinon. Fiche membre et espace adhérent (`Assiduity`).
+- **Assiduité en liste (`TallyBar`, `.tally-sm`) :** même barrette en cases de 5 × 14 px, dans chaque ligne de la liste des membres (colonne « Assiduité (8 sem.) », à droite de la ligne sur mobile) ; nom accessible « Venu(e) N semaines sur 8 ». Les membres qui décrochent se lisent sans ouvrir les fiches.
 - **Présences par semaine :** barres SVG noires remplies de ruban blanc, un filet noir tous les 10 présents ; la semaine en cours, incomplète, en `sunken` / `line-strong`.
 - **Feuille d'appel :** trois boutons de statut de 44 px par membre (filet `line-strong` au repos, plein vert / ambre / rouge quand actif) ; barre collante au bas avec progression segmentée (vert, ambre, rouge sur `line`), compteurs en texte et bouton « Valider ».
 
