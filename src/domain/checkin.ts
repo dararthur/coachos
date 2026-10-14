@@ -20,6 +20,9 @@ export function isCheckinToken(value: unknown): value is string {
   return typeof value === "string" && CHECKIN_TOKEN_PATTERN.test(value);
 }
 
+/** Scanner ouvert depuis « Pointer ma présence » : la caméra démarre sans second appui (le geste explicite vient d'avoir lieu). */
+export const SCAN_PATH = "/checkin?scan=1";
+
 export function checkinPath(token: string): string {
   return `/checkin/${token}`;
 }

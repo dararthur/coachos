@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
 import { personHistory } from "@/server/repositories/attendance";
+import { getCheckinSettings } from "@/server/repositories/checkin";
+import { SCAN_PATH } from "@/domain/checkin";
 import { attachBookings } from "@/server/repositories/bookings";
 import { listSessions } from "@/server/repositories/schedule";
 
@@ -20,10 +22,11 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
   const tz = ctx.academy.timezone;
   const now = new Date();
   const today = localDate(now, tz);
-  const { upcoming, mine, profile } = await inAcademy(ctx, async (tx) => {
+  const { upcoming, mine, profile, checkinMode } = await inAcademy(ctx, async (tx) => {
     const profile = await getMyProfile(tx, academyId);
     return {
       profile,
+      checkinMode: (await getCheckinSettings(tx, academyId)).mode,
       upcoming: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) })),
       // Ses propres présences, filtrées sur sa fiche (la RLS laisserait voir au staff celles de tout le club).
       mine: profile ? await personHistory(tx, academyId, profile.personId, 100) : [],
@@ -41,8 +44,8 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
         actions={profile ? <LinkButton href={`/a/${academyId}/profile`} variant="secondary" icon="user">Mon profil</LinkButton> : undefined}
       />
       <div className="space-y-6">
-        <Card title="Pointer ma présence" description="Au début du cours, scannez le QR code affiché par le coach." className="border-bar! bg-bar! text-white [&_h2]:text-white [&_p]:text-bar-muted">
-          <LinkButton href="/checkin" icon="qr" className="w-full sm:w-auto">Scanner le QR code</LinkButton>
+        <Card title="Pointer ma présence" description={checkinMode === "fixed" ? "À votre arrivée, scannez l'affiche du club." : "Au début du cours, scannez le QR code affiché par le coach."} className="border-bar! bg-bar! text-white [&_h2]:text-white [&_p]:text-bar-muted">
+          <LinkButton href={SCAN_PATH} icon="qr" className="w-full sm:w-auto">Scanner le QR code</LinkButton>
         </Card>
         <Assiduity weeks={weeksAttended(mine, tz)} />
         <Card title="Prochaines séances" description="14 prochains jours. Réservez votre place : elle est nécessaire pour pointer votre présence." flush>

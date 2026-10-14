@@ -13,7 +13,7 @@ test.describe("application installable et session longue", () => {
 
     const manifest = await (await page.request.get("/manifest.webmanifest")).json();
     expect(manifest.display).toBe("standalone");
-    expect(manifest.shortcuts?.[0]?.url).toBe("/checkin");
+    expect(manifest.shortcuts?.[0]?.url).toBe("/checkin?scan=1");
   });
 
   test("sur iPhone, un bandeau explique l'installation ; il se ferme et ne revient pas", async ({ browser }) => {

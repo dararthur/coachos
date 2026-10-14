@@ -88,13 +88,25 @@ export interface FixedCandidate {
   status: "present" | "late" | "absent" | null;
 }
 
-/** Séances que ce QR fixe permet de pointer maintenant (réservées d'abord). */
-export async function peekFixedCheckin(tx: Tx, key: string): Promise<{ timezone: string; sessions: FixedCandidate[] }> {
-  const [row] = await tx<{ r: { timezone: string; sessions: { session_id: string; class_name: string; starts_at: string; ends_at: string; booking: FixedCandidate["booking"]; status: FixedCandidate["status"] }[] } }[]>`
-    select public.checkin_fixed_peek(${key}) as r`;
+export interface FixedPeek {
+  timezone: string;
+  sessions: FixedCandidate[];
+  /** Ouverture du pointage, en minutes avant le début du cours (réglage du club). */
+  beforeMinutes: number;
+  /** Prochain cours dont le pointage n'est pas encore ouvert. */
+  next: { className: string; startsAt: string } | null;
+}
+
+/** Séances que ce QR fixe permet de pointer maintenant (réservées d'abord), et le prochain cours sinon. */
+export async function peekFixedCheckin(tx: Tx, key: string): Promise<FixedPeek> {
+  const [row] = await tx<
+    { r: { timezone: string; before_minutes: number; next: { class_name: string; starts_at: string } | null; sessions: { session_id: string; class_name: string; starts_at: string; ends_at: string; booking: FixedCandidate["booking"]; status: FixedCandidate["status"] }[] } }[]
+  >`select public.checkin_fixed_peek(${key}) as r`;
   const r = row!.r;
   return {
     timezone: r.timezone,
+    beforeMinutes: r.before_minutes,
+    next: r.next ? { className: r.next.class_name, startsAt: r.next.starts_at } : null,
     sessions: r.sessions.map((s) => ({ sessionId: s.session_id, className: s.class_name, startsAt: s.starts_at, endsAt: s.ends_at, booking: s.booking, status: s.status })),
   };
 }

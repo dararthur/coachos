@@ -324,7 +324,9 @@ test.describe("scanner côté adhérent (mobile)", () => {
     expect(["denied", "unavailable", "error"]).toContain(await problem.getAttribute("data-phase"));
     await expect(m.page.getByRole("button", { name: "Réessayer la caméra" })).toBeVisible();
 
-    // alternative : saisie du lien
+    // Repli : le coach marque présent à l'appel ; le lien de pointage reste possible, replié.
+    await expect(m.page.getByText("il vous marque présent à l'appel")).toBeVisible();
+    await m.page.getByText("J'ai un lien de pointage").tap();
     const manual = m.page.getByLabel("Lien ou code de pointage");
     await manual.fill("https://evil.example/checkin/" + randomBytes(32).toString("base64url"));
     await m.page.getByRole("button", { name: "Continuer" }).tap();

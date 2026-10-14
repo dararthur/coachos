@@ -11,9 +11,9 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 4. *Fermer le pointage* (révoque immédiatement tous les QR) ou *Valider la feuille d'appel* (ferme + révoque ; réversible par *Rouvrir la feuille*).
 
 **Adhérent** (compte rattaché à sa fiche membre par l'invitation « fiche membre liée ») :
-1. **Recommandé : le scanner intégré** — *Mon espace → Scanner le QR code* (ou l'onglet « Pointer »). Il fonctionne dans l'application installée et garde votre session.
-   **Secours** : (a) l'application *Appareil photo* du téléphone — le lien s'ouvre dans le **navigateur par défaut** (Safari sur iOS, même si Matnexa est installé : sur iOS la session de l'app installée est séparée de celle de Safari ; sur Android, l'ouverture dans l'app installée n'est pas garantie). Il faut alors se connecter dans ce navigateur ; la connexion ramène au pointage, à condition que le QR n'ait pas expiré (sinon rescanner) ; (b) coller le lien affiché par le coach dans le scanner intégré.
-2. La caméra n'est demandée qu'après le clic ; le décodage se fait dans le navigateur (aucune image n'est envoyée ni conservée).
+1. **Recommandé : le scanner intégré** — *Mon espace → Pointer ma présence* (ou l'onglet « Pointer », ou le raccourci de l'application installée). Ces entrées ouvrent `/checkin?scan=1` : la caméra démarre sans second appui. Il fonctionne dans l'application installée et garde votre session.
+   **Secours** : l'écran ne propose plus l'appareil photo natif (session séparée sur iOS, lien qui sort de l'application). Si la caméra est bloquée, il donne la marche à suivre iPhone ou Android ; sinon, le membre se signale au coach, qui le marque présent à l'appel. Le lien de pointage texte reste accepté, replié sous « J'ai un lien de pointage ».
+2. La caméra n'est demandée qu'après un geste explicite (bouton du scanner, ou « Pointer ma présence » ailleurs dans l'application) : une simple visite de `/checkin` ne la sollicite pas. Le décodage se fait dans le navigateur (aucune image n'est envoyée ni conservée).
 3. Un écran affiche le cours concerné ; **rien n'est enregistré avant « Confirmer ma présence »**. La confirmation « Présence enregistrée » n'apparaît qu'après la réponse du serveur confirmant l'écriture.
 
 ## États et règles (migration `20261013000600_qr_checkin.sql`)
@@ -64,5 +64,6 @@ En plus du QR tournant (un jeton court par séance, affiché par le coach), un c
 
 - Le QR encode `<SITE_URL>/checkin/club/<clé>` ; la clé (96 bits) est un secret du club, lisible du staff seulement (`academy_checkin_keys`). **Régénérer le QR** invalide immédiatement les affiches déjà imprimées.
 - Au scan, la base retrouve les séances atteignables par l'heure : de `checkin_before_minutes` avant le début à `checkin_after_minutes` après (45 / 30 par défaut, réglables de 0 à 240), hors séances annulées ou dont la feuille est validée. Plusieurs séances qui se chevauchent : l'adhérent choisit, les cours qu'il a réservés en premier.
+- Si aucune séance n'est pointable, la page indique le prochain cours et l'heure d'ouverture du pointage (`checkin_fixed_peek` renvoie `next` et `before_minutes`, après les mêmes contrôles de clé et d'appartenance).
 - Mêmes règles que le QR tournant : l'identité est celle de la session, **la réservation est obligatoire** (« Réserver et confirmer ma présence » réserve puis pointe ; séance pleine : liste d'attente, pas de pointage), un pointage existant n'est jamais écrasé, et la page d'ouverture ne modifie rien avant confirmation.
 - Compromis à connaître : un QR fixe peut être photographié ; il ne fonctionne que pour un adhérent connecté, réservé, dans la fenêtre horaire. Pour un contrôle plus strict, garder le QR tournant.

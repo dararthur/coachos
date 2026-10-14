@@ -66,6 +66,32 @@ describe("pointage par QR fixe du club", () => {
     expect((await peek(a.user, key)).sessions).toHaveLength(4);
   });
 
+  it("sans cours pointable, indique le prochain cours et l'ouverture du pointage (jamais à un non-membre)", async () => {
+    const owner = await createUser("fx5-owner");
+    const academy = await createAcademy(owner);
+    const a = await member(academy, "fx5-a");
+    const key = await keyOf(academy);
+    await setFixed(academy, 45, 30);
+    await createSession(academy, { startsAt: at(300), status: "cancelled" });
+    const later = await createSession(academy, { startsAt: at(240) });
+    await createSession(academy, { startsAt: at(480) });
+    type Peek = { sessions: unknown[]; before_minutes: number; next: { class_name: string; starts_at: string } | null };
+    const r = (await peek(a.user, key)) as unknown as Peek;
+    expect(r.sessions).toHaveLength(0);
+    expect(r.before_minutes).toBe(45);
+    const starts_at = (await adminSql()<{ starts_at: Date }[]>`select starts_at from public.sessions where id = ${later}`)[0]!.starts_at;
+    expect(new Date(r.next!.starts_at).getTime()).toBe(starts_at.getTime());
+    expect(r.next!.class_name).toBeTruthy();
+    // Un cours déjà pointable n'est pas « le prochain » : il figure dans les séances.
+    await createSession(academy, { startsAt: at(10) });
+    const open = (await peek(a.user, key)) as unknown as Peek;
+    expect(open.sessions).toHaveLength(1);
+    expect(new Date(open.next!.starts_at).getTime()).toBe(starts_at.getTime());
+    // Les contrôles d'accès précèdent toute lecture du planning.
+    const stranger = await createUser("fx5-stranger");
+    await expect(failing(() => peek(stranger, key))).resolves.toMatchObject({ message: expect.stringContaining("coachos:checkin_invalid") });
+  });
+
   it("la réservation est obligatoire ; une réservation existante est respectée ; le choix se fait entre séances qui se chevauchent", async () => {
     const owner = await createUser("fx4-owner");
     const academy = await createAcademy(owner);

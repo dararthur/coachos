@@ -6,8 +6,10 @@ import { Scanner } from "./scanner";
 
 export const metadata: Metadata = { title: "Pointer ma présence" };
 
-export default async function CheckinPage() {
+/** `?scan=1` : ouverte depuis « Pointer ma présence » (geste explicite), la caméra démarre sans second appui. */
+export default async function CheckinPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireUser();
+  const { scan } = await searchParams;
   return (
     <StandaloneFrame width="md">
       <PageHeader
@@ -15,7 +17,7 @@ export default async function CheckinPage() {
         back={<BackLink href="/">Retour</BackLink>}
         description="Votre présence n’est enregistrée qu’après confirmation à l’étape suivante."
       />
-      <Scanner />
+      <Scanner autoStart={scan === "1"} />
     </StandaloneFrame>
   );
 }

@@ -11,7 +11,7 @@ test("la caméra démarre après le clic, affiche l'aperçu et s'éteint à l'ar
   await createClub(page, "Club Cam");
   await page.goto("/checkin");
   await page.getByRole("button", { name: "Scanner un QR code" }).tap();
-  await expect(page.getByText("Cadrez le QR code affiché par le coach.")).toBeVisible();
+  await expect(page.getByText("Cadrez le QR code de l'affiche ou de l'écran du coach.")).toBeVisible();
   await expect(page.getByLabel("Aperçu de la caméra")).toBeVisible();
   await expect.poll(() => page.evaluate(() => (document.querySelector("video")?.srcObject as MediaStream | null)?.active ?? false)).toBe(true);
   await page.waitForTimeout(1500); // le motif de test ne contient aucun QR : aucune navigation
@@ -19,5 +19,18 @@ test("la caméra démarre après le clic, affiche l'aperçu et s'éteint à l'ar
   await page.getByRole("button", { name: "Arrêter la caméra" }).tap();
   await expect.poll(() => page.evaluate(() => document.querySelector("video")?.srcObject ?? null)).toBeNull();
   await expect(page.getByRole("button", { name: "Scanner un QR code" })).toBeVisible();
+  await context.close();
+});
+
+test("ouverte depuis « Pointer ma présence » (?scan=1), la caméra démarre sans second appui", async ({ browser }) => {
+  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+  const page = await context.newPage();
+  await signUp(page, uniqueEmail("cam-auto"), "Cam Auto");
+  await createClub(page, "Club Cam Auto");
+  await page.goto("/checkin?scan=1");
+  await expect(page.getByLabel("Aperçu de la caméra")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (document.querySelector("video")?.srcObject as MediaStream | null)?.active ?? false)).toBe(true);
+  await expect(page.getByRole("button", { name: "Scanner un QR code" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Arrêter la caméra" }).tap();
   await context.close();
 });

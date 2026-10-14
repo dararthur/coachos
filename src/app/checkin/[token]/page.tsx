@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { checkinPath, isCheckinToken } from "@/domain/checkin";
+import { checkinPath, isCheckinToken, SCAN_PATH } from "@/domain/checkin";
 import { AppError, type ErrorCode } from "@/domain/errors";
 import { formatDateTime } from "@/domain/dates";
 import { Alert, LinkButton } from "@/components/ui/ui";
@@ -57,7 +57,7 @@ export default async function CheckinTokenPage({ params }: { params: Promise<{ t
                   : "Ce QR code n'est plus valide (expiré, pointage fermé ou séance terminée). Demandez au coach d'afficher le QR code actuel et scannez-le à nouveau."}
             </Alert>
             <div className="flex flex-wrap gap-2">
-              <LinkButton href="/checkin">Scanner à nouveau</LinkButton>
+              <LinkButton href={SCAN_PATH}>Scanner à nouveau</LinkButton>
               <Link href="/" className="inline-flex min-h-11 items-center px-3">
                 Retour
               </Link>

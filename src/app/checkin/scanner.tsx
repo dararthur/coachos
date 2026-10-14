@@ -7,21 +7,37 @@ import { checkinPath, clubCheckinPath, extractCheckinToken, extractClubKey } fro
 import { buttonClasses } from "@/components/ui/button-classes";
 
 type Phase = "idle" | "starting" | "scanning" | "denied" | "unavailable" | "error";
+type Platform = "ios" | "android" | "other";
 
-const MESSAGES: Record<Exclude<Phase, "idle" | "starting" | "scanning">, string> = {
-  denied: "L'accès à la caméra a été refusé. Autorisez-le dans les réglages du navigateur, ou utilisez l'une des solutions ci-dessous.",
-  unavailable: "Aucune caméra utilisable sur cet appareil ou ce navigateur. Utilisez l'application Appareil photo du téléphone (le lien s'ouvrira dans votre navigateur, où il faudra peut-être vous reconnecter), ou saisissez le lien ci-dessous.",
-  error: "La caméra n'a pas pu démarrer. Réessayez, ou utilisez l'une des solutions ci-dessous.",
+const platformOf = (ua: string): Platform => (/iPhone|iPad|iPod/.test(ua) ? "ios" : /Android/.test(ua) ? "android" : "other");
+
+/** Marche à suivre pour débloquer la caméra, selon le téléphone (la caméra native n'est jamais proposée en remplacement). */
+const UNBLOCK_STEPS: Record<Platform, string[]> = {
+  ios: ["Ouvrez les Réglages de l'iPhone, puis Safari › Caméra.", "Choisissez « Autoriser » ou « Demander ».", "Revenez ici et touchez « Réessayer la caméra »."],
+  android: [
+    "Dans le navigateur : touchez l'icône à gauche de l'adresse, puis Autorisations › Caméra › Autoriser.",
+    "Application installée : appui long sur l'icône Matnexa › Infos sur l'appli › Autorisations › Caméra.",
+    "Revenez ici et touchez « Réessayer la caméra ».",
+  ],
+  other: ["Autorisez la caméra pour ce site dans les réglages du navigateur.", "Revenez ici et touchez « Réessayer la caméra »."],
+};
+
+const PROBLEMS: Record<Exclude<Phase, "idle" | "starting" | "scanning">, string> = {
+  denied: "L'accès à la caméra est bloqué.",
+  unavailable: "Aucune caméra utilisable sur cet appareil ou dans ce navigateur.",
+  error: "La caméra n'a pas pu démarrer. Fermez les autres applications qui l'utilisent, puis réessayez.",
 };
 
 /**
- * Scanner : la caméra n'est sollicitée qu'après un clic explicite. Le contenu décodé n'est jamais « suivi » aveuglément :
- * seul un jeton ou un lien de CE site vers /checkin/<jeton> est accepté (extractCheckinToken). Aucune image n'est
- * envoyée ni conservée : le décodage se fait entièrement dans le navigateur et le flux est coupé dès qu'un code est lu.
+ * Scanner : la caméra n'est sollicitée qu'après un geste explicite (bouton ici, ou « Pointer ma présence » ailleurs dans
+ * l'application, qui ouvre cette page avec `autoStart`). Le contenu décodé n'est jamais « suivi » aveuglément : seul un
+ * jeton ou un lien de CE site vers /checkin/<jeton> est accepté (extractCheckinToken). Aucune image n'est envoyée ni
+ * conservée : le décodage se fait entièrement dans le navigateur et le flux est coupé dès qu'un code est lu.
  */
-export function Scanner() {
+export function Scanner({ autoStart = false }: { autoStart?: boolean }) {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("idle");
+  const [platform, setPlatform] = useState<Platform>("other");
   const [hint, setHint] = useState<string | null>(null);
   const [manual, setManual] = useState("");
   const [manualError, setManualError] = useState<string | null>(null);
@@ -29,6 +45,7 @@ export function Scanner() {
   const stream = useRef<MediaStream | null>(null);
   const frame = useRef<number | null>(null);
   const done = useRef(false);
+  const autoStarted = useRef(false);
 
   const stop = useCallback(() => {
     if (frame.current !== null) cancelAnimationFrame(frame.current);
@@ -53,9 +70,10 @@ export function Scanner() {
     [router, stop],
   );
 
-  async function start() {
+  const start = useCallback(async () => {
     done.current = false;
     setHint(null);
+    setPlatform(platformOf(navigator.userAgent));
     if (!navigator.mediaDevices?.getUserMedia) {
       setPhase("unavailable");
       return;
@@ -104,12 +122,20 @@ export function Scanner() {
       }
     };
     frame.current = requestAnimationFrame(loop);
-  }
+  }, [go, stop]);
+
+  // Arrivée depuis « Pointer ma présence » : le geste vient d'être fait, inutile de le redemander (une seule fois, même
+  // si React rejoue l'effet en développement).
+  useEffect(() => {
+    if (!autoStart || autoStarted.current) return;
+    autoStarted.current = true;
+    void start();
+  }, [autoStart, start]);
 
   function submitManual(e: React.FormEvent) {
     e.preventDefault();
     setManualError(null);
-    if (!go(manual)) setManualError("Lien ou code non reconnu. Collez le lien de pointage affiché par le coach.");
+    if (!go(manual)) setManualError("Lien ou code non reconnu. Collez le lien de pointage complet, tel qu'il s'affiche sous le QR code.");
   }
 
   const failed = phase === "denied" || phase === "unavailable" || phase === "error";
@@ -117,29 +143,43 @@ export function Scanner() {
     <div className="space-y-5">
       <section aria-labelledby="scan-title" className="rounded-sm border border-line bg-surface p-5">
         <h2 id="scan-title" className="text-base font-semibold">
-          Scanner le QR code du coach
+          Scanner le QR code du cours
         </h2>
-        <p className="mb-4 mt-1 text-sm text-ink-soft">La caméra ne s&apos;active qu&apos;après votre accord. Aucune image n&apos;est envoyée ni enregistrée.</p>
+        <p className="mb-4 mt-1 text-sm text-ink-soft">
+          Celui de l&apos;affiche du club ou de l&apos;écran du coach. Votre téléphone demandera l&apos;accès à la caméra : touchez « Autoriser ». Aucune image n&apos;est envoyée ni enregistrée.
+        </p>
 
         {phase === "idle" || failed ? (
-          <button type="button" className={buttonClasses({ className: "w-full sm:w-auto" })} onClick={start}>
+          <button type="button" className={buttonClasses({ className: "w-full sm:w-auto" })} onClick={() => void start()}>
             {failed ? "Réessayer la caméra" : "Scanner un QR code"}
           </button>
         ) : null}
 
         {failed && (
-          <p role="alert" className="mt-3 rounded-sm border border-warning/35 bg-warning-soft px-3 py-2 text-sm text-warning-ink" data-testid="camera-problem" data-phase={phase}>
-            {MESSAGES[phase]}
-          </p>
+          <div role="alert" className="mt-3 rounded-sm border border-warning/35 bg-warning-soft px-3 py-2.5 text-sm text-warning-ink" data-testid="camera-problem" data-phase={phase}>
+            <p className="font-semibold">{PROBLEMS[phase]}</p>
+            {phase === "denied" && (
+              <ol className="mt-1.5 list-decimal space-y-1 pl-5">
+                {UNBLOCK_STEPS[platform].map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ol>
+            )}
+          </div>
         )}
 
         <div className={phase === "scanning" || phase === "starting" ? "mt-3" : "hidden"}>
           <div className="relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-sm bg-ink">
             <video ref={video} className="h-full w-full object-cover" playsInline muted aria-label="Aperçu de la caméra" />
-            {phase === "starting" && <p className="absolute inset-0 flex items-center justify-center text-sm text-white">Démarrage de la caméra…</p>}
+            {phase === "starting" && (
+              <p className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-6 text-center text-sm text-white">
+                <span className="font-semibold">Démarrage de la caméra…</span>
+                <span className="text-bar-muted">Si le téléphone le demande, touchez « Autoriser ».</span>
+              </p>
+            )}
           </div>
           <p className="mt-2 text-center text-sm text-ink-soft" aria-live="polite">
-            {hint ?? "Cadrez le QR code affiché par le coach."}
+            {hint ?? "Cadrez le QR code de l'affiche ou de l'écran du coach."}
           </p>
           <div className="mt-3 flex justify-center">
             <button
@@ -157,42 +197,48 @@ export function Scanner() {
         </div>
       </section>
 
-      <section aria-labelledby="manual-title" className="rounded-sm border border-line bg-surface p-5">
-        <h2 id="manual-title" className="text-base font-semibold">
-          Pas de caméra ? Saisir le lien
+      <section aria-labelledby="fallback-title" className="rounded-sm border border-line bg-surface p-5">
+        <h2 id="fallback-title" className="text-base font-semibold">
+          La caméra ne fonctionne pas ?
         </h2>
-        <p className="mb-3 mt-1 text-sm text-ink-soft">
-          Scannez le QR code avec l&apos;appareil photo du téléphone : le lien s&apos;ouvre dans le navigateur, où il faudra peut-être vous reconnecter. Ou collez ci-dessous le lien affiché par le coach.
-        </p>
-        <form onSubmit={submitManual} className="space-y-3">
-          <div>
-            <label htmlFor="manual-link" className="mb-1 block text-sm font-medium">
-              Lien ou code de pointage
-            </label>
-            <input
-              id="manual-link"
-              name="link"
-              type="text"
-              inputMode="url"
-              autoComplete="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              value={manual}
-              onChange={(e) => setManual(e.target.value)}
-              aria-invalid={manualError ? true : undefined}
-              aria-describedby={manualError ? "manual-error" : undefined}
-              className="block min-h-11 w-full rounded-sm border border-line-strong bg-white px-3 py-2 text-base"
-            />
-            {manualError && (
-              <p id="manual-error" role="alert" className="mt-1 text-sm font-medium text-danger-ink">
-                {manualError}
+        <p className="mt-1 text-sm text-ink-soft">Signalez-vous au coach au début du cours : il vous marque présent à l&apos;appel.</p>
+        <details className="mt-3">
+          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold underline decoration-ink/40 underline-offset-[3px] hover:decoration-ink">
+            J&apos;ai un lien de pointage
+          </summary>
+          <form onSubmit={submitManual} className="mt-2 space-y-3">
+            <div>
+              <label htmlFor="manual-link" className="mb-1.5 block text-sm font-semibold">
+                Lien ou code de pointage
+              </label>
+              <input
+                id="manual-link"
+                name="link"
+                type="text"
+                inputMode="url"
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                value={manual}
+                onChange={(e) => setManual(e.target.value)}
+                aria-invalid={manualError ? true : undefined}
+                aria-describedby={manualError ? "manual-hint manual-error" : "manual-hint"}
+                className="field"
+              />
+              <p id="manual-hint" className="mt-1.5 text-sm text-ink-soft">
+                Le lien qui s&apos;affiche sous le QR code, copié tel quel.
               </p>
-            )}
-          </div>
-          <button type="submit" className={buttonClasses({ variant: "secondary" })}>
-            Continuer
-          </button>
-        </form>
+              {manualError && (
+                <p id="manual-error" role="alert" className="mt-1.5 text-sm font-semibold text-danger">
+                  {manualError}
+                </p>
+              )}
+            </div>
+            <button type="submit" className={buttonClasses({ variant: "secondary" })}>
+              Continuer
+            </button>
+          </form>
+        </details>
       </section>
     </div>
   );

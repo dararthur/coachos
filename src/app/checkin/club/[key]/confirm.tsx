@@ -3,10 +3,24 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { redeemClubCheckinAction } from "@/server/actions/checkin";
-import { formatDateTime } from "@/domain/dates";
+import { formatDateTime, formatTime, localDate } from "@/domain/dates";
 import { ATTENDANCE_LABELS } from "@/domain/validation";
 import { buttonClasses } from "@/components/ui/button-classes";
-import type { FixedCandidate } from "@/server/repositories/checkin";
+import type { FixedCandidate, FixedPeek } from "@/server/repositories/checkin";
+
+/** « Le pointage de « JJB — Tous niveaux » (19:00) ouvre à 18:15. » : l'adhérent arrivé tôt sait quand revenir. */
+function NextSession({ next, timezone, beforeMinutes }: { next: NonNullable<FixedPeek["next"]>; timezone: string; beforeMinutes: number }) {
+  const opens = new Date(new Date(next.startsAt).getTime() - beforeMinutes * 60_000);
+  const sameDay = localDate(new Date(next.startsAt), timezone) === localDate(new Date(), timezone);
+  const when = sameDay ? formatTime(next.startsAt, timezone) : formatDateTime(next.startsAt, timezone);
+  return (
+    <>
+      Prochain cours : « {next.className} », {sameDay ? "à " : ""}
+      {when}. Le pointage ouvre {sameDay ? "à " : "le "}
+      <strong className="font-semibold">{sameDay ? formatTime(opens, timezone) : formatDateTime(opens, timezone)}</strong>.
+    </>
+  );
+}
 
 type Outcome =
   | { kind: "recorded" | "already"; className: string; status: keyof typeof ATTENDANCE_LABELS | null }
@@ -18,7 +32,19 @@ type Outcome =
  * Le choix du cours respecte les réservations : un seul cours réservé est présélectionné, sinon le membre choisit.
  * Le succès n'est affiché qu'après la réponse du serveur (même règle que le QR tournant).
  */
-export function ConfirmClubCheckin({ clubKey, timezone, sessions }: { clubKey: string; timezone: string; sessions: FixedCandidate[] }) {
+export function ConfirmClubCheckin({
+  clubKey,
+  timezone,
+  sessions,
+  next,
+  beforeMinutes,
+}: {
+  clubKey: string;
+  timezone: string;
+  sessions: FixedCandidate[];
+  next: FixedPeek["next"];
+  beforeMinutes: number;
+}) {
   const booked = sessions.filter((s) => s.booking === "booked");
   const [selected, setSelected] = useState<string | null>(sessions.length === 1 ? sessions[0]!.sessionId : booked.length === 1 ? booked[0]!.sessionId : null);
   const [outcome, setOutcome] = useState<Outcome>(null);
@@ -27,9 +53,10 @@ export function ConfirmClubCheckin({ clubKey, timezone, sessions }: { clubKey: s
   if (sessions.length === 0) {
     return (
       <div className="space-y-3">
-        <p className="rounded-sm border border-line bg-sunken px-3 py-3 text-sm">
-          Aucun cours à pointer en ce moment. Le pointage s&apos;ouvre un peu avant le début du cours et reste possible un court moment après.
-        </p>
+        <div className="rounded-sm border border-line bg-sunken px-3 py-3 text-sm" data-testid="checkin-none">
+          <p className="font-semibold">Aucun cours à pointer en ce moment.</p>
+          <p className="mt-1">{next ? <NextSession next={next} timezone={timezone} beforeMinutes={beforeMinutes} /> : "Aucun cours n'est prévu prochainement au planning du club."}</p>
+        </div>
         <Link href="/" className={buttonClasses({ variant: "secondary" })}>
           Terminer
         </Link>
@@ -83,7 +110,7 @@ export function ConfirmClubCheckin({ clubKey, timezone, sessions }: { clubKey: s
           return (
             <label
               key={s.sessionId}
-              className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-sm border px-3 py-2 ${on ? "border-ink bg-sunken" : "border-line-strong bg-surface"} has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ink`}
+              className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-sm border px-3 py-2 ${on ? "border-ink bg-sunken" : "border-line-strong bg-surface"} has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent`}
             >
               <input type="radio" name="session" className="size-5 accent-[var(--color-accent)]" checked={on} onChange={() => setSelected(s.sessionId)} />
               <span className="min-w-0 flex-1">
@@ -104,7 +131,12 @@ export function ConfirmClubCheckin({ clubKey, timezone, sessions }: { clubKey: s
       {current && current.booking === null && !current.status && (
         <p className="rounded-sm border border-line bg-sunken px-3 py-2 text-sm">Vous n&apos;avez pas encore réservé ce cours. Un seul geste réserve votre place et enregistre votre présence.</p>
       )}
-      <button type="button" className={buttonClasses({ className: "w-full" })} disabled={pending || !current} onClick={confirm}>
+      {!current && (
+        <p id="choose-session" className="text-sm font-semibold">
+          Choisissez votre cours ci-dessus pour confirmer.
+        </p>
+      )}
+      <button type="button" className={buttonClasses({ className: "w-full" })} disabled={pending || !current} aria-describedby={current ? undefined : "choose-session"} onClick={confirm}>
         {pending ? "Enregistrement…" : outcome?.kind === "error" ? "Réessayer" : current && current.booking === null && !current.status ? "Réserver et confirmer ma présence" : "Confirmer ma présence"}
       </button>
       <p className="text-xs text-ink-soft">Seule votre propre présence est enregistrée, au nom du compte connecté.</p>

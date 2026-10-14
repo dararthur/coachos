@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { clubCheckinPath, isClubKey } from "@/domain/checkin";
+import { clubCheckinPath, isClubKey, SCAN_PATH } from "@/domain/checkin";
 import { AppError, type ErrorCode } from "@/domain/errors";
 import { Alert, LinkButton } from "@/components/ui/ui";
 import { StandaloneFrame } from "@/components/layout/standalone";
@@ -40,7 +40,7 @@ export default async function ClubCheckinPage({ params }: { params: Promise<{ ke
       <div className="rounded-sm border border-line bg-surface p-6">
         <h1 className="mb-3 text-title font-bold font-stretch-[80%]">Pointer ma présence</h1>
         {data ? (
-          <ConfirmClubCheckin clubKey={key} timezone={data.timezone} sessions={data.sessions} />
+          <ConfirmClubCheckin clubKey={key} timezone={data.timezone} sessions={data.sessions} next={data.next} beforeMinutes={data.beforeMinutes} />
         ) : (
           <>
             <Alert tone="danger" title={problem === "checkin_no_profile" ? "Compte non rattaché" : problem === "rate_limited" ? "Trop de tentatives" : "QR code invalide"}>
@@ -51,7 +51,7 @@ export default async function ClubCheckinPage({ params }: { params: Promise<{ ke
                   : "Ce QR code n'est plus valide : il a peut-être été remplacé, ou votre club ne l'utilise plus. Demandez au coach l'affiche à jour."}
             </Alert>
             <div className="flex flex-wrap gap-2">
-              <LinkButton href="/checkin">Scanner à nouveau</LinkButton>
+              <LinkButton href={SCAN_PATH}>Scanner à nouveau</LinkButton>
               <Link href="/" className="inline-flex min-h-11 items-center px-3">
                 Retour
               </Link>
