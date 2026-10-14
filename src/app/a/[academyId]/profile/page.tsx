@@ -4,9 +4,13 @@ import { AVATAR_LABELS, AVATAR_STYLES, BELT_LABELS, BELTS, MAX_STRIPES } from "@
 import { formatPhone } from "@/domain/phone";
 import { Alert, BackLink, Card, PageHeader } from "@/components/ui/ui";
 import { ActionForm, CheckboxField, SelectField, SubmitButton, TextField } from "@/components/ui/form";
+import { Avatar } from "@/components/ui/avatar";
 import { updateMyProfileAction } from "@/server/actions/members";
+import { removePhotoAction, setMyPhotoAction } from "@/server/actions/photos";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
+import { photoVersions } from "@/server/repositories/photos";
+import { PhotoField } from "./photo-field";
 
 export const metadata: Metadata = { title: "Mon profil" };
 
@@ -14,7 +18,10 @@ export const metadata: Metadata = { title: "Mon profil" };
 export default async function ProfilePage({ params }: { params: Promise<{ academyId: string }> }) {
   const { academyId } = await params;
   const ctx = await requireAcademy(academyId);
-  const me = await inAcademy(ctx, (tx) => getMyProfile(tx, academyId));
+  const { me, version } = await inAcademy(ctx, async (tx) => {
+    const me = await getMyProfile(tx, academyId);
+    return { me, version: me ? (await photoVersions(tx, academyId)).get(me.personId) : undefined };
+  });
   // Les comptes d'équipe (propriétaire, administrateur, coach) n'ont pas de fiche membre.
   if (!me) notFound();
 
@@ -31,6 +38,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
         </Alert>
       )}
       <Card className="max-w-xl">
+        <div className="mb-5 flex items-center gap-4 border-b border-line pb-5">
+          <Avatar academyId={academyId} personId={me.personId} firstName={me.firstName} lastName={me.lastName} hasPhoto={version !== undefined} version={version} size="lg" />
+          <PhotoField upload={setMyPhotoAction.bind(null, academyId)} remove={removePhotoAction.bind(null, academyId, me.personId)} hasPhoto={version !== undefined} />
+        </div>
         <ActionForm action={updateMyProfileAction.bind(null, academyId)} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField label="Prénom" name="firstName" defaultValue={me.firstName} required maxLength={80} autoComplete="given-name" />

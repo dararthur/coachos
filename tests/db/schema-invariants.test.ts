@@ -73,7 +73,7 @@ describe("invariants du schéma", () => {
     expect(rows.map((r) => r.proname)).toEqual([
       "accept_invitation", "attendance_ranking", "book_session", "cancel_booking", "checkin_book_and_redeem", "checkin_close", "checkin_issue_token", "checkin_open", "checkin_peek", "checkin_redeem",
       "create_academy", "create_invitation", "delete_academy", "delete_my_account", "erase_person",
-      "export_my_data", "export_person_data", "join_academy_with_code", "preview_join_code", "promote_booking", "record_event", "regenerate_join_code", "remove_member", "roll_set_validated", "session_bookings_overview", "set_member_role", "set_my_ranking_visibility", "update_my_profile",
+      "export_my_data", "export_person_data", "join_academy_with_code", "preview_join_code", "promote_booking", "record_event", "regenerate_join_code", "remove_member", "remove_person_photo", "roll_set_validated", "session_bookings_overview", "set_member_role", "set_my_photo", "set_my_ranking_visibility", "update_my_profile",
     ]);
   });
 
