@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { addDays, formatDateTime, localDate } from "@/domain/dates";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
-import { BookingControls, occupancyLabel } from "@/components/ui/booking";
+import { BookingControls, occupancyLabel, WAITLIST_HINT } from "@/components/ui/booking";
 import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
-import { AttendanceHistory } from "@/components/ui/attendance-history";
+import { AttendanceBadge, AttendanceHistory } from "@/components/ui/attendance-history";
 import { redirect } from "next/navigation";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
+import { personHistory } from "@/server/repositories/attendance";
 import { attachBookings } from "@/server/repositories/bookings";
 import { listSessions } from "@/server/repositories/schedule";
 
@@ -19,20 +20,19 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
   const tz = ctx.academy.timezone;
   const now = new Date();
   const today = localDate(now, tz);
-  const { upcoming, mine, profile } = await inAcademy(ctx, async (tx) => ({
-    profile: await getMyProfile(tx, academyId),
-    upcoming: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) })),
-    mine: await tx<{ startsAt: Date; classTypeName: string; status: "present" | "late" | "absent" }[]>`
-      select s.starts_at as "startsAt", ct.name as "classTypeName", a.status
-      from public.attendance a
-      join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
-      join public.class_types ct on ct.id = s.class_type_id and ct.academy_id = s.academy_id
-      where a.academy_id = ${academyId}
-      order by s.starts_at desc limit 100`,
-  }));
+  const { upcoming, mine, profile } = await inAcademy(ctx, async (tx) => {
+    const profile = await getMyProfile(tx, academyId);
+    return {
+      profile,
+      upcoming: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) })),
+      // Ses propres présences, filtrées sur sa fiche (la RLS laisserait voir au staff celles de tout le club).
+      mine: profile ? await personHistory(tx, academyId, profile.personId, 100) : [],
+    };
+  });
   // Fiche créée automatiquement à l'arrivée : le membre la complète une première fois (grade, majorité).
   if (profile && !profile.completed) redirect(`/a/${academyId}/profile`);
   const comingUp = upcoming.filter((s) => s.endsAt > now);
+  const attendedBySession = new Map(mine.map((m) => [m.sessionId, m.status]));
   return (
     <>
       <PageHeader
@@ -57,11 +57,14 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
                       {formatDateTime(s.startsAt, tz)} · {s.classTypeName}
                     </p>
                     {s.status === "scheduled" && <p className="text-sm text-ink-soft">{occupancyLabel(s, s.capacity)}</p>}
+                    {s.myStatus === "waitlisted" && !attendedBySession.has(s.id) && <p className="mt-1 text-sm text-warning-ink">{WAITLIST_HINT}</p>}
                   </div>
                   {s.status === "cancelled" ? (
                     <Badge tone="danger">Annulée</Badge>
+                  ) : attendedBySession.has(s.id) ? (
+                    <AttendanceBadge status={attendedBySession.get(s.id)!} />
                   ) : (
-                    <BookingControls academyId={academyId} sessionId={s.id} myStatus={s.myStatus} myPosition={s.myPosition} bookable={true} />
+                    <BookingControls academyId={academyId} sessionId={s.id} label={`${s.classTypeName}, ${formatDateTime(s.startsAt, tz)}`} booking={s} capacity={s.capacity} bookable={true} />
                   )}
                 </li>
               ))}
@@ -72,7 +75,7 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
           {mine.length === 0 ? (
             <EmptyState level={3} title="Aucune présence enregistrée">Vos présences apparaîtront ici après vos prochains cours.</EmptyState>
           ) : (
-            <AttendanceHistory caption="Mes présences" tz={tz} rows={mine.map((m) => ({ key: `${m.startsAt.toISOString()}-${m.classTypeName}`, startsAt: m.startsAt, classTypeName: m.classTypeName, status: m.status }))} />
+            <AttendanceHistory caption="Mes présences" tz={tz} rows={mine.map((m) => ({ key: m.sessionId, startsAt: m.startsAt, classTypeName: m.classTypeName, status: m.status }))} />
           )}
         </Card>
       </div>

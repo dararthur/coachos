@@ -90,6 +90,15 @@ export async function personHistory(tx: Tx, academyId: string, personId: string,
     order by s.starts_at desc limit ${limit}`;
 }
 
+/** Statut de présence d'une personne pour des séances données (ex. le planning d'une semaine vu par l'adhérent). */
+export async function personAttendanceFor(tx: Tx, academyId: string, personId: string, sessionIds: string[]): Promise<Map<string, AttendanceStatus>> {
+  if (sessionIds.length === 0) return new Map();
+  const rows = await tx<{ sessionId: string; status: AttendanceStatus }[]>`
+    select session_id as "sessionId", status from public.attendance
+    where academy_id = ${academyId} and person_id = ${personId} and session_id = any(${sessionIds}::uuid[])`;
+  return new Map(rows.map((r) => [r.sessionId, r.status]));
+}
+
 export async function personTotals(
   tx: Tx,
   academyId: string,

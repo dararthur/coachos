@@ -31,7 +31,8 @@ export async function bookSessionAction(academyId: string, sessionId: string, _p
     return {
       ok: true,
       data: { status },
-      message: status === "booked" ? "Place réservée." : "Séance complète : vous êtes sur liste d'attente. Une place vous sera attribuée si elle se libère.",
+      // La promotion depuis la liste d'attente est automatique mais n'est pas encore notifiée : ne rien promettre de plus.
+      message: status === "booked" ? "Place réservée." : "Séance complète : vous êtes sur la liste d'attente. Si une place se libère, elle vous revient automatiquement, sans notification : vérifiez avant le cours.",
     };
   });
 }

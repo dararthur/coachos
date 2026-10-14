@@ -4,6 +4,11 @@ import { Badge, DataTable } from "./ui";
 
 const tone = (s: AttendanceStatus) => (s === "absent" ? "danger" : s === "late" ? "warning" : "success");
 
+/** Statut de présence en badge (Présent / En retard / Absent). */
+export function AttendanceBadge({ status }: { status: AttendanceStatus }) {
+  return <Badge tone={tone(status)}>{ATTENDANCE_LABELS[status]}</Badge>;
+}
+
 /**
  * Historique de présences (fiche membre, espace adhérent). Tableau à partir de 640 px ; en dessous, lignes empilées
  * (date et statut, puis cours) pour ne pas écraser trois colonnes sur un téléphone. Le tableau précède la liste dans le DOM.

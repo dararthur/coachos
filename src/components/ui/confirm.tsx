@@ -91,7 +91,8 @@ export function InlineAction({
   className,
 }: {
   action: (prev: State, formData: FormData) => Promise<State>;
-  label: string;
+  /** Libellé visible ; peut contenir une partie réservée aux lecteurs d'écran (sr-only). */
+  label: ReactNode;
   pendingLabel?: string;
   variant?: ButtonVariant;
   hidden?: Record<string, string>;

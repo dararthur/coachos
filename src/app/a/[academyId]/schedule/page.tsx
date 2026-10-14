@@ -1,13 +1,17 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { addDays, formatDay, formatTime, localDate, mondayOf, parseCalendarDate } from "@/domain/dates";
+import { addDays, formatDateTime, formatDay, formatTime, localDate, mondayOf, parseCalendarDate } from "@/domain/dates";
 import { can } from "@/domain/roles";
+import type { AttendanceStatus } from "@/domain/validation";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
 import { Badge, EmptyState, LinkButton, Notice, PageHeader } from "@/components/ui/ui";
-import { BookingControls, occupancyLabel } from "@/components/ui/booking";
+import { BookingControls, occupancyLabel, WAITLIST_HINT } from "@/components/ui/booking";
+import { AttendanceBadge } from "@/components/ui/attendance-history";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
+import { personAttendanceFor } from "@/server/repositories/attendance";
 import { attachBookings } from "@/server/repositories/bookings";
+import { getMyProfile } from "@/server/repositories/profile";
 import { listSessions } from "@/server/repositories/schedule";
 
 export const metadata: Metadata = { title: "Planning" };
@@ -25,7 +29,14 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   const sunday = addDays(monday, 6);
 
   const now = new Date();
-  const sessions = await inAcademy(ctx, async (tx) => attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: monday, to: sunday })));
+  const isMember = ctx.role === "member";
+  const { sessions, myAttendance } = await inAcademy(ctx, async (tx) => {
+    const sessions = await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: monday, to: sunday }));
+    // L'adhérent voit le résultat de l'appel sur les séances passées (Présent / En retard / Absent) plutôt que sa seule réservation.
+    const me = isMember ? await getMyProfile(tx, academyId) : null;
+    const myAttendance = me ? await personAttendanceFor(tx, academyId, me.personId, sessions.map((s) => s.id)) : new Map<string, AttendanceStatus>();
+    return { sessions, myAttendance };
+  });
   const days = Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   const byDay = new Map<string, typeof sessions>();
   for (const s of sessions) {
@@ -34,7 +45,6 @@ export default async function SchedulePage({ params, searchParams }: { params: P
   }
   const canManage = can(ctx.role, "schedule.manage");
   const canRecord = can(ctx.role, "attendance.record");
-  const isMember = ctx.role === "member";
   const fmt = (d: string) => new Intl.DateTimeFormat("fr-FR", { timeZone: "UTC", day: "numeric", month: "long" }).format(new Date(`${d}T00:00:00Z`));
 
   return (
@@ -88,14 +98,18 @@ export default async function SchedulePage({ params, searchParams }: { params: P
                         {s.status === "scheduled" && s.endsAt > now
                           ? ` · ${occupancyLabel(s, s.capacity)}`
                           : s.attended
-                            ? ` · ${s.attended} présent(s)`
+                            ? ` · ${s.attended} présent${s.attended > 1 ? "s" : ""}`
                             : ""}
                         {s.notes ? ` · ${s.notes}` : ""}
                       </p>
+                      {isMember && s.myStatus === "waitlisted" && s.endsAt > now && !myAttendance.has(s.id) && <p className="mt-1 text-sm text-warning-ink">{WAITLIST_HINT}</p>}
                     </div>
                     <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
                       {s.status === "cancelled" && <Badge tone="danger">Annulée</Badge>}
-                      {isMember && s.status === "scheduled" && <BookingControls academyId={academyId} sessionId={s.id} myStatus={s.myStatus} myPosition={s.myPosition} bookable={s.endsAt > now} />}
+                      {isMember && myAttendance.has(s.id) && <AttendanceBadge status={myAttendance.get(s.id)!} />}
+                      {isMember && s.status === "scheduled" && !myAttendance.has(s.id) && (
+                        <BookingControls academyId={academyId} sessionId={s.id} label={`${s.classTypeName}, ${formatDateTime(s.startsAt, tz)}`} booking={s} capacity={s.capacity} bookable={s.endsAt > now} />
+                      )}
                       {s.status === "scheduled" && canRecord && (
                         <Link href={`/a/${academyId}/attendance/${s.id}`} className={buttonClasses({ variant: "secondary" })}>
                           Appel

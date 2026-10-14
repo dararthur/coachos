@@ -43,8 +43,10 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     await expect(alice.getByText("Inscrit", { exact: true })).toBeVisible();
 
     await bruno.goto(`/a/${club}/schedule?week=${day}`);
-    await bruno.getByRole("button", { name: "Réserver" }).click();
+    // Séance pleine : le bouton annonce la liste d'attente avant l'inscription, et le rappel dit qu'aucune notification ne suivra.
+    await bruno.getByRole("button", { name: "Rejoindre la liste d'attente" }).click();
     await expect(bruno.getByText("Liste d'attente · n°1")).toBeVisible();
+    await expect(bruno.getByText(/sans notification/)).toBeVisible();
 
     // « Mon espace » propose la même réservation.
     await bruno.goto(`/a/${club}/me`);
@@ -66,7 +68,8 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     // Alice annule tant que la feuille n'est pas validée.
     await alice.goto(`/a/${club}/schedule?week=${day}`);
     await alice.getByRole("button", { name: "Annuler" }).click();
-    await expect(alice.getByRole("button", { name: "Réserver" })).toBeVisible();
+    // Bruno occupe désormais l'unique place : Alice ne peut plus que rejoindre la liste d'attente.
+    await expect(alice.getByRole("button", { name: "Rejoindre la liste d'attente" })).toBeVisible();
 
     // Validation : Bruno, inscrit sans présence, devient absent. La feuille prévient le coach.
     await coach.getByRole("button", { name: /Valider/ }).click();
