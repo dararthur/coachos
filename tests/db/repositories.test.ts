@@ -29,6 +29,13 @@ describe("members", () => {
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "%", status: "all", page: 1 }))).rows).toHaveLength(0);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { q: "'; drop table people; --", status: "all", page: 1 }))).total).toBe(0);
     expect(await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyA, id, { firstName: "Léa", lastName: "Durand", email: null, phone: null, joinedOn: null }))).toBe(true);
+    // Le grade n'est modifié que s'il est fourni ; sans grade, les barrettes retombent à 0.
+    const base = { firstName: "Léa", lastName: "Durand", email: null, phone: null, joinedOn: null };
+    await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyA, id, { ...base, belt: "brown", beltStripes: 3 }));
+    await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyA, id, base));
+    expect((await asUser(w.alice, (tx) => members.getPerson(tx, w.academyA, id)))).toMatchObject({ belt: "brown", beltStripes: 3 });
+    await asUser(w.alice, (tx) => members.updatePerson(tx, w.academyA, id, { ...base, belt: null, beltStripes: 2 }));
+    expect((await asUser(w.alice, (tx) => members.getPerson(tx, w.academyA, id)))).toMatchObject({ belt: null, beltStripes: 0 });
     expect(await asUser(w.alice, (tx) => members.setPersonArchived(tx, w.academyA, id, true))).toBe(true);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { status: "active", page: 1, q: "durand" }))).total).toBe(0);
     expect((await asUser(w.alice, (tx) => members.listPeople(tx, w.academyA, { status: "archived", page: 1, q: "durand" }))).total).toBe(1);

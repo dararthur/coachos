@@ -54,6 +54,8 @@ export async function updateMemberAction(academyId: string, personId: string, _p
           email: input.email ?? null,
           phone: input.phone ?? null,
           joinedOn: input.joinedOn ?? null,
+          belt: input.belt ?? null,
+          beltStripes: input.beltStripes ?? 0,
         }),
       );
     } catch (e) {

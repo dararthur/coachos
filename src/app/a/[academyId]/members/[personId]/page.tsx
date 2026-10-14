@@ -5,7 +5,10 @@ import { formatCalendarDate } from "@/domain/dates";
 import { formatPhone, whatsappHref } from "@/domain/phone";
 import { can } from "@/domain/roles";
 import { Alert, BackLink, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
-import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
+import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
+import { Avatar } from "@/components/ui/avatar";
+import { BeltLabel } from "@/components/ui/belt";
+import { BELT_LABELS, BELTS, MAX_STRIPES } from "@/domain/profile";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { eraseMemberAction, setMemberArchivedAction, updateMemberAction } from "@/server/actions/members";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
@@ -86,6 +89,10 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
 
         <div className="space-y-6">
           <Card title="Informations">
+            <div className="mb-4 flex items-center gap-3 border-b border-line pb-4">
+              <Avatar academyId={academyId} personId={personId} avatarStyle={person.avatarStyle} hasPhoto={person.hasPhoto} size="md" />
+              <BeltLabel belt={person.belt} stripes={person.beltStripes} />
+            </div>
             {canEdit ? (
               <ActionForm action={updateMemberAction.bind(null, academyId, personId)} className="space-y-4">
                 <TextField label="Prénom" name="firstName" defaultValue={person.firstName} required maxLength={80} />
@@ -93,6 +100,23 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                 <TextField label="E-mail" name="email" type="email" defaultValue={person.email} maxLength={254} />
                 <TextField label="Téléphone" name="phone" type="tel" inputMode="tel" defaultValue={person.phone ? formatPhone(person.phone) : null} maxLength={30} hint="Pour le recontacter sur WhatsApp." />
                 <TextField label="Date d'inscription" name="joinedOn" type="date" defaultValue={person.joinedOn} />
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+                  <SelectField label="Ceinture" name="belt" defaultValue={person.belt ?? ""}>
+                    <option value="">Non renseigné</option>
+                    {BELTS.map((b) => (
+                      <option key={b} value={b}>
+                        {BELT_LABELS[b]}
+                      </option>
+                    ))}
+                  </SelectField>
+                  <SelectField label="Barrettes" name="beltStripes" defaultValue={String(person.beltStripes)}>
+                    {Array.from({ length: MAX_STRIPES + 1 }, (_, n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </SelectField>
+                </div>
                 <SubmitButton>Enregistrer</SubmitButton>
               </ActionForm>
             ) : (

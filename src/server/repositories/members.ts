@@ -95,9 +95,11 @@ export async function createPerson(tx: Tx, academyId: string, input: PersonInput
   return row!.id;
 }
 
-export async function updatePerson(tx: Tx, academyId: string, personId: string, input: PersonInput): Promise<boolean> {
+/** `belt` absent : le grade n'est pas touché ; `null` : grade effacé. */
+export async function updatePerson(tx: Tx, academyId: string, personId: string, input: PersonInput & { belt?: Belt | null; beltStripes?: number }): Promise<boolean> {
+  const grade = input.belt === undefined ? tx`` : tx`, belt = ${input.belt}, belt_stripes = ${input.belt ? (input.beltStripes ?? 0) : 0}`;
   const r = await tx`
-    update public.people set first_name = ${input.firstName}, last_name = ${input.lastName}, email = ${input.email}, phone = ${input.phone}, joined_on = ${input.joinedOn}
+    update public.people set first_name = ${input.firstName}, last_name = ${input.lastName}, email = ${input.email}, phone = ${input.phone}, joined_on = ${input.joinedOn} ${grade}
     where id = ${personId} and academy_id = ${academyId} and anonymized_at is null`;
   return r.count === 1;
 }
