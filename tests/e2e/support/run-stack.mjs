@@ -13,8 +13,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../.
 const appPort = Number(process.env.E2E_PORT ?? 3100);
 const outbox = path.join(os.tmpdir(), `coachos-e2e-outbox-${appPort}.jsonl`);
 writeFileSync(outbox, "");
+// Accès administrateur à la base de test (fixtures des tests e2e : demandes de club approuvées), lu par tests/e2e/support/helpers.ts.
+const dbInfo = path.join(os.tmpdir(), `coachos-e2e-db-${appPort}.json`);
 
 const db = await startEmbeddedDb();
+
+writeFileSync(dbInfo, JSON.stringify({ adminUrl: db.adminUrl }));
 
 const env = {
   ...process.env,
@@ -30,6 +34,7 @@ const env = {
   DATABASE_SSL: "disable",
   APP_SECRET: randomBytes(32).toString("hex"),
   CRON_SECRET: randomBytes(32).toString("hex"),
+  PLATFORM_ADMIN_EMAIL: "admin-e2e@example.invalid",
   CHECKIN_TOKEN_TTL_SECONDS: "10", // jetons très courts : permet de tester l'expiration en quelques secondes
   PORT: String(appPort),
 };
@@ -46,6 +51,7 @@ async function shutdown(code = 0) {
   stopping = true;
   next.kill();
   rmSync(outbox, { force: true });
+  rmSync(dbInfo, { force: true });
   await db.stop().catch(() => {});
   process.exit(code);
 }

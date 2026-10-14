@@ -21,7 +21,7 @@ const testConfig = (): Record<string, string> => ({
 const prodConfig = (): Record<string, string> => {
   const cfg = testConfig();
   delete cfg.MAIL_OUTBOX_FILE;
-  return { ...cfg, APP_ENV: "production", SITE_URL: "https://coach.example.invalid", MAIL_PROVIDER: "resend", RESEND_API_KEY: `re_${rand()}`, MAIL_FROM: "Coach OS <no-reply@coach.example.invalid>" };
+  return { ...cfg, APP_ENV: "production", SITE_URL: "https://coach.example.invalid", MAIL_PROVIDER: "resend", RESEND_API_KEY: `re_${rand()}`, MAIL_FROM: "Coach OS <no-reply@coach.example.invalid>", PLATFORM_ADMIN_EMAIL: "admin@coach.example.invalid" };
 };
 
 const refusal = (patch: Record<string, string | undefined>, base = testConfig()): string => {
@@ -134,5 +134,20 @@ describe("configuration : SSL des bases de données dans les instances déployé
     expect(parseEnv(prodConfig()).APP_ENV).toBe("production"); // 127.0.0.1 sans sslmode
     expect(parseEnv({ ...prodConfig(), DATABASE_SSL: "disable" }).APP_ENV).toBe("production");
     expect(parseEnv({ ...testConfig(), ...remote() }).APP_ENV).toBe("test");
+  });
+});
+
+describe("configuration : administrateur de la plateforme", () => {
+  it("est obligatoire en staging et en production, optionnelle en développement et en test", () => {
+    expect(parseEnv(testConfig()).PLATFORM_ADMIN_EMAIL).toBeUndefined();
+    expect(parseEnv(prodConfig()).PLATFORM_ADMIN_EMAIL).toBe("admin@coach.example.invalid");
+    expect(refusal({ PLATFORM_ADMIN_EMAIL: undefined }, prodConfig())).toMatch(/PLATFORM_ADMIN_EMAIL/);
+    expect(refusal({ APP_ENV: "staging", PLATFORM_ADMIN_EMAIL: undefined }, prodConfig())).toMatch(/PLATFORM_ADMIN_EMAIL/);
+  });
+
+  it("une valeur invalide est refusée sans jamais être répétée dans le message", () => {
+    const message = refusal({ PLATFORM_ADMIN_EMAIL: "pas-une-adresse-secrete" }, prodConfig());
+    expect(message).toMatch(/PLATFORM_ADMIN_EMAIL/);
+    expect(message).not.toContain("pas-une-adresse-secrete");
   });
 });

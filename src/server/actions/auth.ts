@@ -1,16 +1,20 @@
 "use server";
 
+import { randomBytes, scrypt as scryptCallback } from "node:crypto";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
+import { normalizeJoinCode } from "@/domain/join-code";
 import { changePasswordSchema, loginSchema, profileSchema, resetPasswordSchema, resetRequestSchema, signupSchema } from "@/domain/validation";
 import { getAuth } from "@/server/auth/auth";
 import { apiErrorInfo } from "@/server/auth/api-error";
 import { authorizeUser, runAction } from "@/server/auth/guards";
+import { isConfiguredAdminEmail } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { env } from "@/server/env";
 import { logger } from "@/server/logger";
-import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
+import { clientIp, enforceRateLimit, LIMITS } from "@/server/rate-limit";
+import * as requests from "@/server/repositories/club-requests";
 import { parseForm, safeNext } from "./helpers";
 
 type FormState = ActionResult<unknown> | null;
@@ -19,17 +23,46 @@ type FormState = ActionResult<unknown> | null;
 const apiStatus = apiErrorInfo; // lecture par la forme de l'erreur : voir src/server/auth/api-error.ts
 
 /** Après confirmation de l'e-mail, la connexion reprend le parcours d'inscription à un club (lien /join/<code>). */
-function verifiedCallback(formData: FormData): string {
-  const next = safeNext(formData.get("next"), "");
+function verifiedCallback(next: string): string {
   return next.startsWith("/join/") ? `/login?verified=1&next=${encodeURIComponent(next)}` : "/login?verified=1";
 }
 
+/** Réponse de l'inscription SANS code de club : identique que l'adresse soit autorisée ou non (aucune adresse n'est devinable, pas même celle de l'administrateur). */
+const SIGNUP_NO_CODE_MESSAGE =
+  "Si cette adresse est autorisée à créer un compte (invitation de votre club ou demande de club approuvée), un e-mail de confirmation vient de vous être envoyé. Consultez votre boîte mail, puis connectez-vous.";
+
+
+/** Dépense un temps comparable à celui du hachage d'un mot de passe, pour qu'un refus ne soit pas plus rapide qu'une inscription acceptée. */
+async function spendHashingTime(): Promise<void> {
+  await new Promise<void>((resolve, reject) =>
+    scryptCallback(randomBytes(16), randomBytes(16), 64, { N: 16384, r: 16, p: 1, maxmem: 64 * 1024 * 1024 }, (error) => (error ? reject(error) : resolve())),
+  );
+}
+
+/**
+ * Un compte ne se crée qu'avec un « ticket » :
+ *   - un CODE de club (saisi, ou repris du lien /join/<code>) : évalué seul ; un code erroné est signalé (limite de débit par IP) ;
+ *   - sans code : une invitation en attente ou une demande de club approuvée pour cette adresse, ou l'adresse de l'administrateur de la plateforme.
+ * Sans ticket valide, la réponse est la même que pour une inscription acceptée et aucun compte n'est créé ni aucun e-mail envoyé.
+ */
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("signUp", async () => {
     const input = parseForm(signupSchema, formData);
+    await enforceRateLimit("signup-ticket", await clientIp(), LIMITS.joinCode.max, LIMITS.joinCode.window);
+    const next = safeNext(formData.get("next"), "");
+    const fromLink = next.startsWith("/join/") ? next.slice("/join/".length) : null;
+    const typedCode = Boolean(input.clubCode) || fromLink !== null;
+    const code = normalizeJoinCode(input.clubCode ?? fromLink);
+    if (typedCode && !(code && (await requests.joinCodeValid(code)))) {
+      return failure("join_code_invalid", { clubCode: "Ce code de club est inconnu. Vérifiez-le auprès de votre coach." });
+    }
+    if (!typedCode && !(isConfiguredAdminEmail(input.email) || (await requests.signupEmailAllowed(input.email)))) {
+      await spendHashingTime();
+      return { ok: true, data: { confirmEmail: true }, message: SIGNUP_NO_CODE_MESSAGE };
+    }
     try {
       await getAuth().api.signUpEmail({
-        body: { name: input.displayName ?? "", email: input.email, password: input.password, callbackURL: verifiedCallback(formData) },
+        body: { name: input.displayName ?? "", email: input.email, password: input.password, callbackURL: verifiedCallback(code ? `/join/${code}` : "") },
         headers: await headers(),
       });
     } catch (error) {
@@ -41,7 +74,11 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
       return failure("internal");
     }
     // Avec confirmation par e-mail, aucune session n'existe encore ; message identique que le compte existe ou non.
-    return { ok: true, data: { confirmEmail: true }, message: "Compte créé. Consultez votre boîte mail pour confirmer votre adresse, puis connectez-vous." };
+    return {
+      ok: true,
+      data: { confirmEmail: true },
+      message: code ? "Compte créé. Consultez votre boîte mail pour confirmer votre adresse, puis connectez-vous." : SIGNUP_NO_CODE_MESSAGE,
+    };
   });
 }
 

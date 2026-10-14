@@ -265,13 +265,13 @@ describe("création d'académie", () => {
     const [m] = await adminSql()<{ role: string }[]>`select role from public.academy_memberships where academy_id = ${id} and user_id = ${u.id}`;
     expect(m?.role).toBe("owner");
     for (let i = 0; i < 4; i++) await createAcademy(u, `Club ${i}`);
-    await expect(createAcademy(u, "Un de trop")).rejects.toMatchObject({ code: "academy_limit_reached" });
+    expect((await failing(() => createAcademy(u, "Un de trop"))).message).toContain("coachos:academy_limit_reached");
   });
 
   it("refuse un fuseau horaire inconnu et un nom trop court", async () => {
     const u = await createUser("tz");
-    await expect(asUser(u, (tx) => tx`select public.create_academy('Club', 'Mars/Olympus', 'EUR')`)).rejects.toMatchObject({ code: "invalid_timezone" });
-    await expect(asUser(u, (tx) => tx`select public.create_academy('X', 'Europe/Paris', 'EUR')`)).rejects.toMatchObject({ code: "validation" });
+    expect((await failing(() => adminSql()`select app_private.create_academy_for(${u.id}, 'Club', 'Mars/Olympus', 'EUR')`)).message).toContain("coachos:invalid_timezone");
+    expect((await failing(() => adminSql()`select app_private.create_academy_for(${u.id}, 'X', 'Europe/Paris', 'EUR')`)).message).toMatch(/check constraint|coachos:validation/);
   });
 
   it("les fiches membres respectent l'unicité d'e-mail et d'identifiant par académie, pas entre académies", async () => {

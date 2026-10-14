@@ -43,9 +43,18 @@ const schema = z
     CHECKIN_TOKEN_TTL_SECONDS: z.coerce.number().int().min(10).max(300).optional(),
     /** Jeton de la tâche planifiée de purge (optionnel : sans lui, la route de purge est désactivée). */
     CRON_SECRET: z.string().min(32).optional(),
+    /**
+     * Adresse de l'administrateur de la plateforme : reçoit les demandes de création de club, peut seule les approuver, et peut créer
+     * son compte sans ticket. Lue UNIQUEMENT ici (serveur) : jamais en base, jamais envoyée au navigateur, jamais écrite dans un journal,
+     * une URL ou un message d'erreur.
+     */
+    PLATFORM_ADMIN_EMAIL: z.email().max(254).optional(),
   })
   .superRefine((v, ctx) => {
     const issue = (path: string, message: string) => ctx.addIssue({ code: "custom", path: [path], message });
+    if ((v.APP_ENV === "staging" || v.APP_ENV === "production") && !v.PLATFORM_ADMIN_EMAIL) {
+      issue("PLATFORM_ADMIN_EMAIL", `requis avec APP_ENV=${v.APP_ENV} (sans administrateur, aucune demande de club ne peut être approuvée)`);
+    }
     if (v.APP_SECRET === v.BETTER_AUTH_SECRET) issue("BETTER_AUTH_SECRET", "doit être distinct d'APP_SECRET");
     if (v.MAIL_PROVIDER === "resend") {
       if (!v.RESEND_API_KEY) issue("RESEND_API_KEY", "requis avec MAIL_PROVIDER=resend");

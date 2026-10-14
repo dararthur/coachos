@@ -14,7 +14,7 @@ const fail = (id, label, detail) => ({ id, label, status: "fail", detail });
 const warn = (id, label, detail) => ({ id, label, status: "warn", detail });
 
 export const REQUIRED_ENV = ["DATABASE_URL", "AUTH_DATABASE_URL", "SITE_URL", "APP_SECRET", "BETTER_AUTH_SECRET", "MAIL_PROVIDER"];
-export const OPTIONAL_ENV = ["CRON_SECRET", "DATABASE_SSL", "DATABASE_POOL_SIZE", "CHECKIN_TOKEN_TTL_SECONDS", "APP_ENV", "RESEND_API_KEY", "MAIL_FROM", "MAIL_OUTBOX_FILE"];
+export const OPTIONAL_ENV = ["CRON_SECRET", "DATABASE_SSL", "DATABASE_POOL_SIZE", "CHECKIN_TOKEN_TTL_SECONDS", "APP_ENV", "RESEND_API_KEY", "MAIL_FROM", "MAIL_OUTBOX_FILE", "PLATFORM_ADMIN_EMAIL"];
 
 const isLocalHost = (h) => ["localhost", "127.0.0.1", "::1", "[::1]"].includes(h);
 
@@ -42,6 +42,7 @@ export function checkEnv(env, opts = {}) {
   }
   if (!env.CRON_SECRET) out.push(warn("env.CRON_SECRET", "CRON_SECRET défini", "absent : la purge de rétention planifiée est désactivée (obligatoire avant des données réelles)"));
   else if (env.CRON_SECRET.length < 32) out.push(fail("env.CRON_SECRET.length", "CRON_SECRET fait au moins 32 caractères"));
+  if ((env.APP_ENV === "staging" || env.APP_ENV === "production") && !env.PLATFORM_ADMIN_EMAIL) out.push(fail("env.PLATFORM_ADMIN_EMAIL", "PLATFORM_ADMIN_EMAIL est défini", "obligatoire en staging et production : sans administrateur de la plateforme, aucune demande de club ne peut être approuvée"));
   if (env.APP_ENV === "production" && !opts.allowProduction) out.push(fail("env.APP_ENV", "APP_ENV n'est pas « production »", "ce contrôle est destiné à la préproduction ; ajouter --production pour un contrôle délibéré de la production"));
   else if (!["development", "test", "staging", "production"].includes(env.APP_ENV ?? "")) out.push(fail("env.APP_ENV", "APP_ENV identifie explicitement l'environnement", "obligatoire : development | test | staging | production (le serveur refuse de démarrer sinon)"));
   else out.push(ok("env.APP_ENV", `APP_ENV = ${env.APP_ENV}`));
@@ -108,6 +109,8 @@ export function expectedObjects(migrationsDir) {
     const sql = readFileSync(path.join(migrationsDir, f), "utf8");
     for (const m of sql.matchAll(/create table (?:if not exists )?public\.(\w+)/gi)) tables.add(m[1]);
     for (const m of sql.matchAll(/create (?:or replace )?function public\.(\w+)/gi)) functions.add(m[1]);
+    // Une migration peut retirer une fonction (ex. create_academy, remplacée par la demande approuvée) : elle n'est alors plus attendue.
+    for (const m of sql.matchAll(/drop function (?:if exists )?public\.(\w+)/gi)) functions.delete(m[1]);
     for (const m of sql.matchAll(/create (?:or replace )?function app_private\.(\w+)/gi)) privateFunctions.add(m[1]);
     for (const m of sql.matchAll(/create table (?:if not exists )?auth\.(\w+)/gi)) authTables.add(m[1]);
     for (const m of sql.matchAll(/create (?:or replace )?function auth\.(\w+)/gi)) authFunctions.add(m[1]);

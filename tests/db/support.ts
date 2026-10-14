@@ -43,10 +43,9 @@ export function asUser<T>(user: TestUser | { id: string }, fn: (tx: Tx) => Promi
 }
 
 export async function createAcademy(owner: TestUser, name = "Club test"): Promise<string> {
-  return asUser(owner, async (tx) => {
-    const [row] = await tx<{ id: string }[]>`select public.create_academy(${name}, 'Europe/Paris', 'EUR') as id`;
-    return row!.id;
-  });
+  // La création libre n'existe plus (migration 0018) : les tests passent par la fonction interne, comme le fait l'approbation d'une demande.
+  const [row] = await adminSql()<{ id: string }[]>`select app_private.create_academy_for(${owner.id}, ${name}, 'Europe/Paris', 'EUR') as id`;
+  return row!.id;
 }
 
 export async function addMember(academyId: string, user: TestUser, role: "admin" | "coach" | "member") {

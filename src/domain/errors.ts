@@ -17,6 +17,7 @@ export const ERROR_MESSAGES = {
   invitation_limit_reached: "Trop d'invitations en attente. Révoquez-en avant d'en créer.",
   invitation_invalid: "Cette invitation est invalide, expirée ou destinée à un autre compte.",
   join_code_invalid: "Ce code de club est inconnu. Vérifiez-le auprès de votre coach.",
+  academy_request_limit: "Trop de demandes en attente pour cette adresse.",
   email_not_confirmed: "Confirmez d'abord votre adresse e-mail.",
   last_owner: "Une académie doit conserver au moins un propriétaire.",
   sole_owner:

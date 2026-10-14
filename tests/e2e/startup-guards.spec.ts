@@ -175,7 +175,7 @@ test.describe("HSTS : émetteur unique (l'application), prudent, lu dans l'envir
       rmSync(outbox, { force: true });
     }
   }
-  const site = { SITE_URL: "https://coach.example.invalid" };
+  const site = { SITE_URL: "https://coach.example.invalid", PLATFORM_ADMIN_EMAIL: "admin@coach.example.invalid" };
 
   test("production : max-age=86400 par défaut ; HSTS_MAX_AGE_SECONDS pour monter en charge ; 0 pour revenir en arrière", async () => {
     test.setTimeout(120_000);
