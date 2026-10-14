@@ -28,3 +28,17 @@ export async function photoVersions(tx: Tx, academyId: string): Promise<Map<stri
   const rows = await tx<{ personId: string; v: Date }[]>`select person_id as "personId", updated_at as v from public.person_photos where academy_id = ${academyId}`;
   return new Map(rows.map((r) => [r.personId, r.v.getTime()]));
 }
+
+export async function setAcademyLogo(tx: Tx, academyId: string, contentType: string, data: Buffer): Promise<void> {
+  await tx`select public.set_academy_logo(${academyId}, ${contentType}, ${data})`;
+}
+
+export async function removeAcademyLogo(tx: Tx, academyId: string): Promise<void> {
+  await tx`select public.remove_academy_logo(${academyId})`;
+}
+
+export async function getAcademyLogo(tx: Tx, academyId: string): Promise<StoredPhoto | null> {
+  const [row] = await tx<{ contentType: string; data: Buffer; updatedAt: Date }[]>`
+    select content_type as "contentType", data, updated_at as "updatedAt" from public.academy_logos where academy_id = ${academyId}`;
+  return row ?? null;
+}

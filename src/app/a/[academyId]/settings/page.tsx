@@ -19,12 +19,17 @@ import { env } from "@/server/env";
 import { regenerateJoinCodeAction } from "@/server/actions/join";
 import { listPeople } from "@/server/repositories/members";
 import { InviteForm } from "./invite-form";
+import { AcademyLogo } from "@/components/ui/academy-logo";
+import { ImageField } from "@/components/ui/image-field";
+import { removeAcademyLogoAction, setAcademyLogoAction } from "@/server/actions/photos";
 
 export const metadata: Metadata = { title: "Paramètres" };
 
 const AUDIT_LABELS: Record<string, string> = {
   "academy.created": "Club créé",
   "academy.settings_updated": "Paramètres du club modifiés",
+  "academy.logo_set": "Logo du club modifié",
+  "academy.logo_removed": "Logo du club retiré",
   "member.archived": "Membre archivé",
   "member.restored": "Membre restauré",
   "member.anonymized": "Membre anonymisé",
@@ -76,6 +81,25 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
       </nav>
       <div className="space-y-6">
         <Card id="club" title="Club">
+          <div className="mb-5 flex max-w-2xl items-center gap-4 border-b border-line pb-5">
+            {ctx.academy.logoVersion !== null ? (
+              <AcademyLogo academy={ctx.academy} size={64} className="bg-sunken" />
+            ) : (
+              <span aria-hidden="true" className="inline-flex size-16 shrink-0 items-center justify-center rounded-sm bg-sunken text-2xl font-bold text-ink-soft">
+                {ctx.academy.name.trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+            <ImageField
+              upload={setAcademyLogoAction.bind(null, academyId)}
+              remove={removeAcademyLogoAction.bind(null, academyId)}
+              hasImage={ctx.academy.logoVersion !== null}
+              fit="inside"
+              addLabel="Ajouter le logo"
+              changeLabel="Changer le logo"
+              removeLabel="Retirer le logo"
+              hint="Facultatif. Tout format d'image ; affiché à côté du nom du club, réduit automatiquement."
+            />
+          </div>
           <ActionForm action={updateAcademyAction.bind(null, academyId)} className="grid max-w-2xl gap-4 sm:grid-cols-2">
             <TextField label="Nom du club" name="name" defaultValue={ctx.academy.name} required minLength={2} maxLength={100} className="sm:col-span-2" />
             <SelectField label="Fuseau horaire" name="timezone" defaultValue={tz} required>

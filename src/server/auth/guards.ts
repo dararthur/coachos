@@ -21,13 +21,14 @@ export async function requireUser(): Promise<SessionUser> {
 export interface AcademyContext {
   user: SessionUser;
   role: Role;
-  academy: { id: string; name: string; timezone: string; currency: string; retentionMonths: number };
+  academy: { id: string; name: string; timezone: string; currency: string; retentionMonths: number; logoVersion: number | null };
 }
 
 const loadContext = cache(async (userId: string, academyId: string) => {
   return withUser({ id: userId }, async (tx) => {
-    const rows = await tx<{ role: string; id: string; name: string; timezone: string; currency: string; retention_months: number }[]>`
-      select m.role, a.id, a.name, a.timezone, a.currency, a.retention_months
+    const rows = await tx<{ role: string; id: string; name: string; timezone: string; currency: string; retention_months: number; logo_version: Date | null }[]>`
+      select m.role, a.id, a.name, a.timezone, a.currency, a.retention_months,
+             (select l.updated_at from public.academy_logos l where l.academy_id = a.id) as logo_version
       from public.academy_memberships m join public.academies a on a.id = m.academy_id
       where m.academy_id = ${academyId} and m.user_id = ${userId}`;
     return rows[0] ?? null;
@@ -45,7 +46,7 @@ export async function resolveAcademy(user: SessionUser, academyId: string): Prom
   return {
     user,
     role: row.role,
-    academy: { id: row.id, name: row.name, timezone: row.timezone, currency: row.currency, retentionMonths: row.retention_months },
+    academy: { id: row.id, name: row.name, timezone: row.timezone, currency: row.currency, retentionMonths: row.retention_months, logoVersion: row.logo_version?.getTime() ?? null },
   };
 }
 

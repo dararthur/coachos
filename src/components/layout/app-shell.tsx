@@ -3,10 +3,11 @@ import type { ReactNode } from "react";
 import { can, ROLE_LABELS, type Role } from "@/domain/roles";
 import { signOutAction } from "@/server/actions/auth";
 import { MatnexaLogo } from "@/components/brand/logo";
+import { AcademyLogo } from "@/components/ui/academy-logo";
 import { Icon } from "@/components/ui/icons";
 import { MobileTabBar, NavLinks, type NavItem } from "./nav-links";
 
-export function AppShell({ academy, role, userLabel, children }: { academy: { id: string; name: string }; role: Role; userLabel: string; children: ReactNode }) {
+export function AppShell({ academy, role, userLabel, children }: { academy: { id: string; name: string; logoVersion: number | null }; role: Role; userLabel: string; children: ReactNode }) {
   const base = `/a/${academy.id}`;
   const items = [
     can(role, "dashboard.read") && { href: `${base}/dashboard`, label: "Tableau de bord", short: "Accueil", icon: "home" },
@@ -36,7 +37,7 @@ export function AppShell({ academy, role, userLabel, children }: { academy: { id
     </div>
   );
 }
-type Shell = { academy: { id: string; name: string }; role: Role };
+type Shell = { academy: { id: string; name: string; logoVersion: number | null }; role: Role };
 
 /** Barre latérale (≥ md) : la barrette noire. Marque, club, navigation, puis le compte en pied. */
 function SideBar({ academy, role, userLabel, items }: Shell & { userLabel: string; items: NavItem[] }) {
@@ -46,11 +47,14 @@ function SideBar({ academy, role, userLabel, items }: Shell & { userLabel: strin
         <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 items-center no-underline">
           <MatnexaLogo tone="light" />
         </Link>
-        <div className="mt-5 border-t border-white/15 pt-4">
-          <p className="truncate text-base font-bold" title={academy.name}>
-            {academy.name}
-          </p>
-          <p className="text-xs font-medium text-bar-muted">{ROLE_LABELS[role]}</p>
+        <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-4">
+          <AcademyLogo academy={academy} size={40} className="bg-white" />
+          <div className="min-w-0">
+            <p className="truncate text-base font-bold" title={academy.name}>
+              {academy.name}
+            </p>
+            <p className="text-xs font-medium text-bar-muted">{ROLE_LABELS[role]}</p>
+          </div>
         </div>
       </div>
       <NavLinks items={items} />
@@ -82,9 +86,12 @@ function MobileTopBar({ academy, role }: Shell) {
         <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 shrink-0 items-center no-underline">
           <MatnexaLogo size="sm" />
         </Link>
-        <div className="min-w-0 flex-1 border-l border-line pl-3 leading-tight">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 border-l border-line pl-3 leading-tight">
+          <AcademyLogo academy={academy} size={32} />
+          <div className="min-w-0">
           <p className="truncate text-sm font-bold">{academy.name}</p>
           <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}</p>
+          </div>
         </div>
         <Link href="/account" className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm font-semibold no-underline hover:bg-sunken">
           <Icon name="user" size={20} />

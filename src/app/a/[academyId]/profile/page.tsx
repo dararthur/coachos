@@ -11,7 +11,7 @@ import { removePhotoAction, setMyPhotoAction } from "@/server/actions/photos";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
 import { photoVersions } from "@/server/repositories/photos";
-import { PhotoField } from "./photo-field";
+import { ImageField } from "@/components/ui/image-field";
 
 export const metadata: Metadata = { title: "Mon profil" };
 
@@ -43,7 +43,16 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
           <Avatar academyId={academyId} personId={me.personId} avatarStyle={me.avatarStyle} hasPhoto={version !== undefined} version={version} size="lg" />
           <div className="min-w-0 space-y-3">
             <BeltLabel belt={me.belt} stripes={me.beltStripes} />
-            <PhotoField upload={setMyPhotoAction.bind(null, academyId)} remove={removePhotoAction.bind(null, academyId, me.personId)} hasPhoto={version !== undefined} />
+            <ImageField
+              upload={setMyPhotoAction.bind(null, academyId)}
+              remove={removePhotoAction.bind(null, academyId, me.personId)}
+              hasImage={version !== undefined}
+              fit="cover"
+              addLabel="Ajouter une photo"
+              changeLabel="Changer la photo"
+              removeLabel="Retirer la photo"
+              hint="Facultatif. Tout format d'image : la photo est recadrée en carré et allégée automatiquement."
+            />
           </div>
         </div>
         <ActionForm action={updateMyProfileAction.bind(null, academyId)} className="space-y-4">
