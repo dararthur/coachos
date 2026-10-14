@@ -1,4 +1,4 @@
-# Déploiement de Matnexa sur le VPS (matnexa.fr, production)
+# Déploiement de Matnexa sur le VPS (app.matnexa.fr, production)
 
 > **Statut : guide écrit d'après l'inventaire réel du serveur (14 octobre 2026), jamais exécuté.** Chaque commande est à lancer par une personne, sur le serveur, dans l'ordre. Rien ici n'a été validé sur ce VPS : à la première exécution, noter tout écart dans ce fichier.
 > Complète `docs/setup.md`, `docs/operations.md`, `docs/nginx.md` et `docs/pilot.md` (les contrôles de ce dernier restent à valider **avant toute donnée réelle** de membres).
@@ -17,7 +17,7 @@
 
 ## 1. Avant de toucher au serveur
 
-1. **DNS** (chez le registrar de `matnexa.fr`) : enregistrement `A` `matnexa.fr` → `137.74.168.132`. Facultatif : `AAAA` → `2001:41d0:305:2100::1:41f4`. Attendre la propagation : `dig +short matnexa.fr`.
+1. **DNS** (chez le registrar de `matnexa.fr`) : enregistrement `A` `app` (soit `app.matnexa.fr`) → `137.74.168.132`. Facultatif : `AAAA` `app` → `2001:41d0:305:2100::1:41f4`. Attendre la propagation : `dig +short app.matnexa.fr`.
 2. **Resend** : ajouter le domaine `matnexa.fr`, publier les enregistrements demandés (SPF, DKIM) et attendre « Verified ». Désactiver le suivi des ouvertures et des clics. Créer une clé d'API à **envoi seul**, limitée à ce domaine. Expéditeur : `Matnexa <no-reply@matnexa.fr>`. Facultatif mais conseillé : `_dmarc` en `v=DMARC1; p=none; rua=mailto:<votre adresse>`.
 3. Garder la clé d'API sous la main (gestionnaire de mots de passe) : elle sera collée dans un fichier root, jamais dans Git ni dans le chat.
 
@@ -72,7 +72,7 @@ printf "alter role app_server login password '%s';\nalter role auth_runtime logi
 CRON=$(openssl rand -hex 32)
 sudo tee /etc/coachos/app.env >/dev/null <<EOF
 APP_ENV=production
-SITE_URL=https://matnexa.fr
+SITE_URL=https://app.matnexa.fr
 DATABASE_URL=postgresql://app_server:$APP_PW@127.0.0.1:5432/coachos
 DATABASE_SSL=disable
 AUTH_DATABASE_URL=postgresql://auth_runtime:$AUTH_PW@127.0.0.1:5432/coachos
@@ -143,13 +143,13 @@ sudo tee /etc/nginx/conf.d/matnexa-acme.conf >/dev/null <<'EOF'
 server {
     listen 80;
     listen [::]:80;
-    server_name matnexa.fr;
+    server_name app.matnexa.fr;
     location ^~ /.well-known/acme-challenge/ { root /var/www/certbot; }
     location / { return 404; }
 }
 EOF
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot certonly --webroot -w /var/www/certbot -d matnexa.fr --deploy-hook "systemctl reload nginx"
+sudo certbot certonly --webroot -w /var/www/certbot -d app.matnexa.fr --deploy-hook "systemctl reload nginx"
 ```
 
 **9.2 Configuration complète**
@@ -157,7 +157,7 @@ sudo certbot certonly --webroot -w /var/www/certbot -d matnexa.fr --deploy-hook 
 ```bash
 sudo rm /etc/nginx/conf.d/matnexa-acme.conf
 sudo cp /srv/coachos/releases/$ID/ops/nginx/proxy.inc /etc/nginx/coachos/proxy.inc
-sudo sed -e 's/coachos\.example\.invalid/matnexa.fr/g' -e 's/127\.0\.0\.1:3100/127.0.0.1:3400/' /srv/coachos/releases/$ID/ops/nginx/coachos.conf | sudo tee /etc/nginx/conf.d/coachos.conf >/dev/null
+sudo sed -e 's/coachos\.example\.invalid/app.matnexa.fr/g' -e 's/127\.0\.0\.1:3100/127.0.0.1:3400/' /srv/coachos/releases/$ID/ops/nginx/coachos.conf | sudo tee /etc/nginx/conf.d/coachos.conf >/dev/null
 sudo grep -rn "limit_req" /etc/nginx/sites-enabled /etc/nginx/nginx.conf
 sudo nginx -t && sudo systemctl reload nginx
 ```
@@ -199,15 +199,15 @@ sudo systemctl start coachos-purge.service && systemctl status coachos-purge.ser
 ## 12. Vérifications finales
 
 ```bash
-curl -s https://matnexa.fr/api/live; echo
-curl -s https://matnexa.fr/api/health; echo
-curl -sI https://matnexa.fr | grep -i -E "^(HTTP|strict-transport|content-security|x-frame)"
+curl -s https://app.matnexa.fr/api/live; echo
+curl -s https://app.matnexa.fr/api/health; echo
+curl -sI https://app.matnexa.fr | grep -i -E "^(HTTP|strict-transport|content-security|x-frame)"
 free -h; pm2 status
 ```
 
 À contrôler, dans l'ordre :
 - `/api/health` → `{"status":"ok"}`, HSTS présent **une seule fois** (86400 s au début), les autres sites inchangés (`pm2 status`).
-- Créer un compte sur `https://matnexa.fr/signup` : l'e-mail de confirmation doit arriver (sinon `journalctl -u coachos` cherche `auth.mail_failed`, et le tableau de bord Resend).
+- Créer un compte sur `https://app.matnexa.fr/signup` : l'e-mail de confirmation doit arriver (sinon `journalctl -u coachos` cherche `auth.mail_failed`, et le tableau de bord Resend).
 - Créer le club, ajouter le logo, tester l'envoi d'une photo de profil de 2 Mo (limite de 3 Mo à Nginx), ouvrir le site depuis un téléphone et installer l'application (`docs/pwa.md`).
 - Contrôles N1 à N6 de `docs/self-hosted-auth.md` §9 et `docs/nginx.md` « À valider ».
 
