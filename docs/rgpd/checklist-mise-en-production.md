@@ -5,7 +5,7 @@ Coché = vérifié par une preuve (test exécuté, document signé, configuratio
 ## Bloquant (ne pas saisir de données réelles sans cela)
 
 - [ ] Contrat de sous-traitance (art. 28) signé avec chaque club pilote.
-- [ ] Identité et coordonnées de l'éditeur renseignées dans `/privacy` (art. 13 §1.a) ; contact pour exercer les droits.
+- [x] Identité et coordonnées de l'éditeur renseignées dans `/privacy` (art. 13 §1.a) ; contact pour exercer les droits. Fait le 15/10/2026 : Arthur DARON, à titre personnel, contact@matnexa.fr (boîte à tester).
 - [ ] Hébergeur : OVHcloud, Gravelines (France), déclaré ; conditions de traitement des données (DPA OVHcloud) acceptées et archivées, localisation constatée dans l'espace client.
 - [ ] HTTPS public, Nginx de production validé (`docs/nginx.md`) ; en-tête `X-Real-IP` écrasé par le proxy.
 - [ ] Secrets de production générés et stockés hors du dépôt ; `BETTER_AUTH_SECRET` absent des sauvegardes.

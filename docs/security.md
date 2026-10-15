@@ -69,4 +69,4 @@ Détail, risques et limites : [`docs/self-hosted-auth.md`](self-hosted-auth.md).
 
 ## Signaler une vulnérabilité
 
-Ne pas ouvrir d'issue publique : contacter le responsable du projet par canal privé. [Adresse de contact sécurité : à définir.]
+Ne pas ouvrir d'issue publique : contacter le responsable du projet par canal privé. Adresse : contact@matnexa.fr.

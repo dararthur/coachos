@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Confidentialité" };
 
 /**
  * Notice d'information (art. 13 RGPD) — PROJET À FAIRE VALIDER JURIDIQUEMENT. Doit rester cohérente avec docs/rgpd/registre.md
- * (même liste de données, mêmes durées). Les éléments entre crochets (identité de l'éditeur, contact, hébergeur) sont à compléter.
+ * (même liste de données, mêmes durées). Éditeur : personne physique agissant à titre personnel. Les éléments entre crochets sont à compléter.
  */
 export default function PrivacyPage() {
   return (
@@ -22,7 +22,10 @@ export default function PrivacyPage() {
         <h2>Qui est responsable de vos données ?</h2>
         <p>
           Pour les fiches membres, les présences, les réservations et les photos, le <strong>club</strong> auquel vous appartenez est responsable du traitement ; l&apos;éditeur de Matnexa agit comme son sous-traitant (art. 28 RGPD).
-          Pour les comptes utilisateurs (connexion) et les demandes de création de club, l&apos;éditeur de Matnexa est responsable du traitement. [Identité et coordonnées de l&apos;éditeur, contact protection des données : à compléter.]
+          Pour les comptes utilisateurs (connexion) et les demandes de création de club, l&apos;éditeur de Matnexa est responsable du traitement.
+        </p>
+        <p className="mt-2">
+          Éditeur : <strong>Arthur DARON</strong>, à titre personnel. Contact, y compris pour toute question sur vos données : <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a>.
         </p>
       </section>
 
@@ -76,7 +79,7 @@ export default function PrivacyPage() {
         <h2>Vos droits</h2>
         <p>
           Vous pouvez demander l&apos;accès, la rectification, l&apos;effacement, la limitation, la portabilité, vous opposer à un traitement et retirer votre consentement à tout moment. Depuis <Link href="/account">Mon compte</Link>, vous pouvez
-          télécharger vos données et supprimer votre compte : votre photo et votre présence dans le classement disparaissent alors aussi. Votre fiche membre relève de votre club : adressez-vous à ses responsables, qui disposent d&apos;outils d&apos;export et d&apos;effacement. Vous pouvez introduire une réclamation auprès de la CNIL (cnil.fr).
+          télécharger vos données et supprimer votre compte : votre photo et votre présence dans le classement disparaissent alors aussi. Votre fiche membre relève de votre club : adressez-vous à ses responsables, qui disposent d&apos;outils d&apos;export et d&apos;effacement. Pour votre compte, écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a> : réponse sous un mois. Vous pouvez introduire une réclamation auprès de la CNIL (cnil.fr).
         </p>
       </section>
 

@@ -4,7 +4,7 @@
 
 **Entre**
 - le **Club** : [nom de l'association ou de la société], [forme], [adresse], [SIREN / RNA], représenté par [nom, qualité], ci-après « le Responsable » ;
-- l'**Éditeur** : [nom / raison sociale], [forme], [adresse], [SIREN], éditeur du service Matnexa, ci-après « le Sous-traitant ».
+- l'**Éditeur** : Arthur DARON, personne physique agissant à titre personnel, [adresse postale, si le club la demande], contact : contact@matnexa.fr, éditeur du service Matnexa, ci-après « le Sous-traitant ». (Si une entreprise est créée, remplacer par sa raison sociale, sa forme, son adresse et son SIREN, et faire signer un nouvel accord.)
 
 ## 1. Objet et durée
 

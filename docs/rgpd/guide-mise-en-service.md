@@ -213,5 +213,5 @@ Modèle : [modele-contrat-sous-traitance.md](modele-contrat-sous-traitance.md). 
 
 ## 5. Notice `/privacy` et information des membres
 
-1. Me transmettre (ou compléter vous-même dans `src/app/privacy/page.tsx`) : raison sociale ou nom de l'éditeur, forme (auto-entrepreneur, société…), adresse postale, SIREN, adresse e-mail de contact pour les données personnelles. Ces informations sont publiques par nature (art. 13 §1.a) : elles peuvent figurer dans le dépôt.
+1. Fait le 15/10/2026 : `/privacy` indique l'éditeur (Arthur DARON, à titre personnel) et le contact `contact@matnexa.fr`. **Vérifier que cette boîte reçoit bien les e-mails** et la consulter régulièrement : les demandes d'exercice des droits y arrivent, avec un délai de réponse d'un mois. Si une entreprise est créée, mettre à jour la notice, le registre et le contrat.
 2. Remettre au club le modèle [modele-information-membres.md](modele-information-membres.md), qu'il diffuse à ses membres (affichage, e-mail, bulletin d'adhésion) : c'est au club, responsable de traitement, d'informer ses adhérents.

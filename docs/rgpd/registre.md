@@ -4,7 +4,7 @@
 
 ## A. Traitements dont l'éditeur est responsable (art. 30 §1)
 
-Responsable : [raison sociale, adresse, SIREN de l'éditeur]. Contact protection des données : [à compléter]. DPO : [désigné ou non — l'art. 37 ne l'impose qu'en cas de suivi régulier et systématique à grande échelle ou de données sensibles à grande échelle ; à apprécier].
+Responsable : Arthur DARON, personne physique agissant à titre personnel (pas d'entreprise à ce jour). Contact protection des données : contact@matnexa.fr. DPO : [désigné ou non — l'art. 37 ne l'impose qu'en cas de suivi régulier et systématique à grande échelle ou de données sensibles à grande échelle ; à apprécier].
 
 | Traitement | Finalité | Base légale proposée | Personnes | Données | Destinataires | Durée | Transferts |
 |---|---|---|---|---|---|---|---|

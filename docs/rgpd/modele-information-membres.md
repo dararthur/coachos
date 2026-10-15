@@ -6,7 +6,7 @@
 
 **[Nom du club] et vos données personnelles**
 
-Pour gérer les adhésions, organiser les cours et suivre les présences, [nom du club] ([adresse], contact : [e-mail]) utilise l'application **Matnexa**, éditée par [éditeur] qui agit pour notre compte.
+Pour gérer les adhésions, organiser les cours et suivre les présences, [nom du club] ([adresse], contact : [e-mail]) utilise l'application **Matnexa**, éditée par Arthur DARON (contact@matnexa.fr), qui agit pour notre compte.
 
 **Ce que nous enregistrons** : vos prénom et nom, votre e-mail et votre téléphone si vous nous les donnez, votre date d'inscription, votre ceinture, vos réservations et vos présences aux cours. Si vous créez un compte, vous pouvez aussi ajouter une photo. Nous n'enregistrons aucune information sur votre santé ni votre date de naissance. L'application est réservée aux adultes.
 
