@@ -7,11 +7,14 @@ import { switchViewAction } from "@/server/actions/view-mode";
 import { MatnexaLogo } from "@/components/brand/logo";
 import { AcademyLogo } from "@/components/ui/academy-logo";
 import { InstallApp } from "@/components/ui/install-app";
+import { PushPrompt } from "@/components/ui/push-prompt";
+import { vapidPublicKey } from "@/server/push";
 import { Icon } from "@/components/ui/icons";
 import { MobileTabBar, NavLinks, type NavItem } from "./nav-links";
 
 export function AppShell({ academy, role, viewAsMember = false, userLabel, children }: { academy: { id: string; name: string; logoVersion: number | null }; role: Role; viewAsMember?: boolean; userLabel: string; children: ReactNode }) {
   const base = `/a/${academy.id}`;
+  const pushKey = vapidPublicKey();
   // En mode membre, l'équipe voit la navigation d'un adhérent ; ses droits réels ne changent pas (ils sont vérifiés côté serveur et par la base).
   const shown: Role = viewAsMember ? "member" : role;
   const entries: (NavItem | false)[] = [
@@ -37,6 +40,7 @@ export function AppShell({ academy, role, viewAsMember = false, userLabel, child
       <MobileTopBar academy={academy} role={role} viewAsMember={viewAsMember} />
       <div className="min-w-0">
         <main id="contenu" className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 sm:px-6 md:px-8 md:pb-12 md:pt-8 print:max-w-none print:p-0" tabIndex={-1}>
+          {pushKey && <PushPrompt publicKey={pushKey} />}
           {children}
           {/* Après le contenu : sur téléphone, le bandeau ne repousse plus la première information sous la barre d'onglets. */}
           <InstallApp banner />

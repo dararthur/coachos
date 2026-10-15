@@ -1,39 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { removePushSubscriptionAction, savePushSubscriptionAction, sendTestPushAction } from "@/server/actions/push";
+import { removePushSubscriptionAction, sendTestPushAction } from "@/server/actions/push";
 import { buttonClasses } from "./button-classes";
+import { detectPush, enablePush, type PushState } from "./push-client";
 
-type State = "loading" | "unsupported" | "needs-install" | "denied" | "off" | "on";
+type State = "loading" | PushState;
 type Notice = { tone: "ok" | "error"; text: string };
-
-function isStandalone(): boolean {
-  const nav = window.navigator as Navigator & { standalone?: boolean };
-  return window.matchMedia("(display-mode: standalone)").matches || Boolean(nav.standalone);
-}
-
-function isIos(): boolean {
-  const nav = window.navigator;
-  return /iPhone|iPad|iPod/.test(nav.userAgent) || (/Macintosh/.test(nav.userAgent) && nav.maxTouchPoints > 1);
-}
-
-async function detect(): Promise<State> {
-  const supported = "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
-  // Sur iPhone et iPad, Safari n'offre les notifications qu'aux applications installées sur l'écran d'accueil.
-  if (!supported) return isIos() && !isStandalone() ? "needs-install" : "unsupported";
-  if (Notification.permission === "denied") return "denied";
-  const registration = await navigator.serviceWorker.getRegistration("/");
-  const subscription = await registration?.pushManager.getSubscription();
-  return subscription && Notification.permission === "granted" ? "on" : "off";
-}
-
-function keyBytes(base64url: string): Uint8Array<ArrayBuffer> {
-  const padded = base64url.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(base64url.length / 4) * 4, "=");
-  const raw = atob(padded);
-  const bytes = new Uint8Array(new ArrayBuffer(raw.length));
-  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
-  return bytes;
-}
 
 /**
  * Activation des notifications sur CET appareil (chaque téléphone ou ordinateur s'abonne séparément). Rien n'est demandé au
@@ -46,7 +19,7 @@ export function PushToggle({ publicKey }: { publicKey: string }) {
 
   useEffect(() => {
     let alive = true;
-    detect()
+    detectPush()
       .then((s) => alive && setState(s))
       .catch(() => alive && setState("unsupported"));
     return () => {
@@ -57,27 +30,15 @@ export function PushToggle({ publicKey }: { publicKey: string }) {
   async function enable() {
     setBusy(true);
     setNotice(null);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setState(permission === "denied" ? "denied" : "off");
-        return;
-      }
-      const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-      await navigator.serviceWorker.ready;
-      const subscription = (await registration.pushManager.getSubscription()) ?? (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) }));
-      const result = await savePushSubscriptionAction(subscription.toJSON());
-      if (!result.ok) {
-        await subscription.unsubscribe();
-        setNotice({ tone: "error", text: "L'activation a échoué. Réessayez dans un instant." });
-        return;
-      }
+    const result = await enablePush(publicKey);
+    setBusy(false);
+    if (result.ok) {
       setState("on");
       setNotice({ tone: "ok", text: "Notifications activées sur cet appareil." });
-    } catch {
-      setNotice({ tone: "error", text: "Ce navigateur n'a pas pu activer les notifications." });
-    } finally {
-      setBusy(false);
+    } else if (result.state === "failed") {
+      setNotice({ tone: "error", text: "L'activation a échoué. Réessayez dans un instant." });
+    } else {
+      setState(result.state);
     }
   }
 

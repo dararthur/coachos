@@ -31,3 +31,30 @@ test("notifications : bloc sur « Mon compte », case sur la publication", async
   await page.getByRole("link", { name: /Modifier/ }).click();
   await expect(page.getByLabel("Prévenir les membres par notification")).toHaveCount(0);
 });
+
+test("proposition d'activer les notifications : seulement dans l'application installée, une fois, refermable", async ({ page }) => {
+  await signUp(page, uniqueEmail("pushprompt"), "Push Prompt");
+  const club = await createClub(page, "Club Prompt");
+  const prompt = page.getByRole("complementary", { name: "Activer les notifications" });
+
+  // Onglet de navigateur : rien n'est proposé.
+  await page.goto(`/a/${club}/dashboard`);
+  await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
+  await expect(prompt).toHaveCount(0);
+
+  // Application installée (mode d'affichage « standalone ») : la proposition apparaît.
+  await page.addInitScript(() => {
+    const original = window.matchMedia.bind(window);
+    window.matchMedia = (query: string) => (query.includes("display-mode: standalone") ? ({ ...original(query), matches: true } as MediaQueryList) : original(query));
+  });
+  await page.goto(`/a/${club}/dashboard`);
+  await expect(prompt).toBeVisible();
+  await expect(prompt.getByRole("button", { name: "Activer les notifications" })).toBeVisible();
+
+  // « Plus tard » : refermée, et ne revient pas au rechargement.
+  await prompt.getByRole("button", { name: "Plus tard" }).click();
+  await expect(prompt).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("heading", { name: "Tableau de bord" })).toBeVisible();
+  await expect(prompt).toHaveCount(0);
+});
