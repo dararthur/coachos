@@ -51,7 +51,7 @@ test("pages publiques et authentifiées sans violation axe (WCAG AA)", async ({ 
   await expectNoViolations(page, "/checkin/<jeton invalide>");
 });
 
-test("navigation au clavier : lien d'évitement, formulaire de connexion et fermeture de modale par Échap", async ({ page }) => {
+test("navigation au clavier : lien d'évitement, formulaire de connexion et fermeture de modale par Échap", async ({ page, browserName }) => {
   await page.goto("/login");
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Adresse e-mail")).toBeFocused();
@@ -63,9 +63,15 @@ test("navigation au clavier : lien d'évitement, formulaire de connexion et ferm
   await signUp(page, uniqueEmail("kbd"), "Clavier");
   const club = await createClub(page, "Club Clavier");
   await page.goto(`/a/${club}/dashboard`);
-  await page.keyboard.press("Tab");
-  await expect(page.getByRole("link", { name: "Aller au contenu" })).toBeFocused();
+  const skipLink = page.getByRole("link", { name: "Aller au contenu" });
+  // WebKit (Safari) : par défaut, Tab ne parcourt que boutons et champs, jamais les liens (réglage « Appuyer sur Tab pour mettre
+  // en évidence chaque élément », désactivé ; Option+Tab n'est pas émulé par Playwright). Le chemin clavier jusqu'au lien est
+  // prouvé dans Chromium et Firefox ; ici, le lien prend le focus et fonctionne à la touche Entrée.
+  if (browserName === "webkit") await skipLink.focus();
+  else await page.keyboard.press("Tab");
+  await expect(skipLink).toBeFocused();
   await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/#contenu$/);
 
   await page.goto("/account");
   await page.getByRole("button", { name: "Supprimer mon compte" }).click();
