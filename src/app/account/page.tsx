@@ -11,6 +11,7 @@ import { withUser } from "@/server/db/client";
 import { setChildRankingAction, withdrawChildConsentAction } from "@/server/actions/guardian";
 import { myChildren } from "@/server/repositories/guardian";
 import { formatCalendarDate } from "@/domain/dates";
+import { MinorAccountForm } from "./minor-account-form";
 import { InstallApp } from "@/components/ui/install-app";
 
 export const metadata: Metadata = { title: "Mon compte" };
@@ -57,6 +58,9 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                       confirmLabel="Retirer l'accord"
                     />
                   </div>
+                )}
+                {c.consentConfirmedAt && !c.consentWithdrawnAt && c.canHaveAccount && (
+                  c.hasAccount ? <p className="text-sm text-ink-soft">{c.firstName} a un compte propre.</p> : <MinorAccountForm childId={c.childId} firstName={c.firstName} />
                 )}
               </li>
             ))}

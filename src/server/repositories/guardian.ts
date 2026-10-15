@@ -29,19 +29,26 @@ export interface ChildRow {
   consentConfirmedAt: Date | null;
   consentWithdrawnAt: Date | null;
   lastAttendedAt: Date | null;
+  canHaveAccount: boolean;
+  hasAccount: boolean;
 }
 
 export async function myChildren(tx: Tx): Promise<ChildRow[]> {
   const rows = await tx<ChildRow[]>`
     select child_id as "childId", academy_name as "academyName", first_name as "firstName", last_name as "lastName",
            ranking_opt_in as "rankingOptIn", consent_confirmed_at as "consentConfirmedAt",
-           consent_withdrawn_at as "consentWithdrawnAt", last_attended_at as "lastAttendedAt"
+           consent_withdrawn_at as "consentWithdrawnAt", last_attended_at as "lastAttendedAt",
+           can_have_account as "canHaveAccount", has_account as "hasAccount"
     from public.my_children()`;
   return [...rows];
 }
 
 export async function setChildRanking(tx: Tx, childId: string, visible: boolean): Promise<void> {
   await tx`select public.set_child_ranking_visibility(${childId}, ${visible})`;
+}
+
+export async function inviteMinorAccount(tx: Tx, childId: string, email: string, tokenHash: string): Promise<void> {
+  await tx`select public.invite_minor_account(${childId}, ${email}, ${tokenHash})`;
 }
 
 export async function withdrawChildConsent(tx: Tx, childId: string): Promise<void> {

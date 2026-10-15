@@ -1,14 +1,17 @@
 "use server";
 
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { uuidField } from "@/domain/validation";
+import { emailField, uuidField } from "@/domain/validation";
 import { authorizeUser, runAction } from "@/server/auth/guards";
 import { getSessionUser } from "@/server/auth/session";
 import { withApp, withUser } from "@/server/db/client";
-import { clientIp, enforceRateLimit } from "@/server/rate-limit";
+import { env } from "@/server/env";
+import { clientIp, enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import * as guardian from "@/server/repositories/guardian";
-import { hashToken } from "./helpers";
+import { hashToken, parseForm } from "./helpers";
+import { z } from "zod";
 
 type FormState = ActionResult<unknown> | null;
 
@@ -36,6 +39,23 @@ export async function setChildRankingAction(childId: string, visible: boolean, _
     await withUser(user, (tx) => guardian.setChildRanking(tx, id.data, visible));
     revalidatePath("/account");
     return { ok: true, data: null, message: visible ? "Votre enfant apparaît au classement." : "Votre enfant n'apparaît plus au classement." };
+  });
+}
+
+/**
+ * Le responsable autorise un compte propre pour son enfant (15 ans et plus) : retourne le lien d'invitation, affiché une seule fois.
+ * Le compte ne fonctionne qu'avec l'adresse e-mail indiquée ; le lien expire dans 7 jours.
+ */
+export async function inviteMinorAccountAction(childId: string, _prev: FormState, formData: FormData): Promise<ActionResult<{ link: string; email: string }> | null> {
+  return runAction("inviteMinorAccount", async () => {
+    const user = await authorizeUser();
+    await enforceRateLimit("invite", user.id, LIMITS.invitation.max, LIMITS.invitation.window);
+    const id = uuidField.safeParse(childId);
+    if (!id.success) throw new AppError("not_found");
+    const input = parseForm(z.object({ email: emailField }), formData);
+    const token = randomBytes(32).toString("base64url");
+    await withUser(user, (tx) => guardian.inviteMinorAccount(tx, id.data, input.email, hashToken(token)));
+    return { ok: true, data: { link: `${env().SITE_URL}/invite/${token}`, email: input.email }, message: "Lien créé." };
   });
 }
 

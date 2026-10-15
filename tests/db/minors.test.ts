@@ -93,7 +93,10 @@ describe("adhérents mineurs", () => {
     const parent = await createUser("parent-d");
     await appSql()`select * from app_private.confirm_guardian_consent(${hash(token)}, ${parent.id})`;
     await adminSql()`update public.people set ranking_opt_in = true where id = ${id}`;
+    // état hérité : une photo posée avant la règle (le déclencheur la refuserait aujourd'hui)
+    await adminSql()`alter table public.person_photos disable trigger person_photos_minor_guard`;
     await adminSql()`insert into public.person_photos (person_id, academy_id, content_type, data) values (${id}, ${w.academyA}, 'image/png', ${Buffer.from([0x89, 0x50, 0x4e, 0x47])})`;
+    await adminSql()`alter table public.person_photos enable trigger person_photos_minor_guard`;
     await asUser(parent, (tx) => tx`select public.withdraw_guardian_consent(${id})`);
     const [p] = await adminSql()<{ archived_at: Date | null; ranking_opt_in: boolean }[]>`select archived_at, ranking_opt_in from public.people where id = ${id}`;
     expect(p?.archived_at).not.toBeNull();
@@ -137,5 +140,57 @@ describe("ceintures enfants IBJJF", () => {
       await adminSql()`update public.people set belt = ${belt} where id = ${p!.id}`;
     }
     await expect(adminSql()`update public.people set belt = 'pink' where id = ${p!.id}`).rejects.toThrow();
+  });
+});
+
+describe("compte propre d'un mineur de 15 ans et plus", () => {
+  async function consentedChild(age: number) {
+    const { id, token } = await createMinor(w.carl, undefined, age);
+    const parent = await createUser(`parent-own-${randomBytes(3).toString("hex")}`);
+    await appSql()`select * from app_private.confirm_guardian_consent(${hash(token)}, ${parent.id})`;
+    return { id, parent };
+  }
+  const invite = (u: { id: string }, child: string, email: string, t = randomBytes(16).toString("hex")) =>
+    asUser(u, (tx) => tx`select public.invite_minor_account(${child}, ${email}, ${hash(t)})`).then(() => t);
+
+  it("exige l'accord confirmé, 15 ans révolus et un responsable ou administrateur", async () => {
+    const young = await consentedChild(13);
+    expect((await failing(() => invite(young.parent, young.id, "ado@example.invalid"))).message).toContain("minor_too_young");
+    const teen = await consentedChild(16);
+    expect((await failing(() => invite(w.mia, teen.id, "ado@example.invalid"))).message).toContain("not_found");
+    const pending = await createMinor(w.carl, undefined, 16);
+    expect((await failing(() => invite(w.adam, pending.id, "ado@example.invalid"))).message).toContain("consent_required");
+    await invite(teen.parent, teen.id, "ado@example.invalid");
+  });
+
+  it("le mineur accepte l'invitation, valide son profil sans attester sa majorité, et ne peut ni classement ni photo", async () => {
+    const { id, parent } = await consentedChild(16);
+    const teen = await createUser("teen-own");
+    const token = await invite(parent, id, "ado2@example.invalid");
+    await adminSql()`update auth.users set email = 'ado2@example.invalid' where id = ${teen.id}`;
+    await asUser(teen, (tx) => tx`select public.accept_invitation(${hash(token)})`);
+    const [p] = await adminSql()<{ user_id: string | null; adult_attested_at: Date | null; birth_date: string | null }[]>`select user_id, adult_attested_at, birth_date::text from public.people where id = ${id}`;
+    expect(p?.user_id).toBe(teen.id);
+    expect(await adminSql()`select 1 from public.people where user_id = ${teen.id}`).toHaveLength(1);
+    await asUser(teen, (tx) => tx`select public.update_my_profile(${w.academyA}, 'Léo', 'Petit', null, 'blue', 0, 'neutral', false)`);
+    const [after] = await adminSql()<{ adult_attested_at: Date | null; birth_date: string | null; profile_completed_at: Date | null }[]>`select adult_attested_at, birth_date::text, profile_completed_at from public.people where id = ${id}`;
+    expect(after?.adult_attested_at).toBeNull();
+    expect(after?.birth_date).not.toBeNull();
+    expect(after?.profile_completed_at).not.toBeNull();
+    expect((await failing(() => asUser(teen, (tx) => tx`select public.set_my_ranking_visibility(${w.academyA}, true)`))).message).toContain("guardian_required");
+    expect((await failing(() => asUser(teen, (tx) => tx`select public.set_my_photo(${w.academyA}, 'image/png', ${Buffer.from([1, 2, 3])})`))).message).toContain("guardian_required");
+    // le parent garde la main sur le classement
+    await asUser(parent, (tx) => tx`select public.set_child_ranking_visibility(${id}, true)`);
+    expect((await adminSql()`select ranking_opt_in from public.people where id = ${id}`)[0]?.ranking_opt_in).toBe(true);
+    // retrait de l'accord : compte délié, appartenance retirée
+    await asUser(parent, (tx) => tx`select public.withdraw_guardian_consent(${id})`);
+    expect((await adminSql()`select user_id from public.people where id = ${id}`)[0]?.user_id).toBeNull();
+    expect(await adminSql()`select 1 from public.academy_memberships where user_id = ${teen.id}`).toHaveLength(0);
+  });
+
+  it("l'invitation d'équipe classique ne peut pas lier un compte à une fiche de mineur", async () => {
+    const { id } = await consentedChild(16);
+    const err = await failing(() => asUser(w.adam, (tx) => tx`select public.create_invitation(${w.academyA}, 'x@example.invalid', 'member', ${id}, ${hash("zz")})`));
+    expect(err.message).toContain("invalid_person");
   });
 });
