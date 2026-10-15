@@ -15,7 +15,14 @@ self.addEventListener("push", (event) => {
   const title = typeof data.title === "string" && data.title ? data.title.slice(0, 120) : "Matnexa";
   const body = typeof data.body === "string" ? data.body.slice(0, 200) : "";
   // Uniquement un chemin de l'application, jamais une adresse externe.
-  const url = typeof data.url === "string" && data.url.startsWith("/") && !data.url.startsWith("//") ? data.url : "/";
+  // On compare l'origine RÉSOLUE : « /\autre.site » est lu « //autre.site » par l'analyseur d'URL.
+  let url = "/";
+  try {
+    const resolved = typeof data.url === "string" && data.url.startsWith("/") ? new URL(data.url, self.location.origin) : null;
+    if (resolved && resolved.origin === self.location.origin) url = resolved.pathname + resolved.search + resolved.hash;
+  } catch {
+    url = "/";
+  }
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
