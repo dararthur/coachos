@@ -63,6 +63,25 @@ describe("réservation, capacité et liste d'attente", () => {
     expect(await status(session, b.person)).toBe("booked");
   });
 
+  it("concurrence : 8 membres visent les 3 dernières places en même temps ; jamais plus d'inscrits que la capacité", async () => {
+    const owner = await createUser("bk-race-owner");
+    const academy = await createAcademy(owner);
+    const session = await createSession(academy, { startsAt: future() });
+    await setCapacity(session, 3);
+    const members = await Promise.all(Array.from({ length: 8 }, (_, i) => member(academy, `bk-race-${i}`)));
+    const results = await Promise.all(members.map((m) => book(m.user, session)));
+    expect(results.filter((r) => r === "booked")).toHaveLength(3);
+    expect(results.filter((r) => r === "waitlisted")).toHaveLength(5);
+    const [n] = await adminSql()<{ booked: number; total: number }[]>`
+      select count(*) filter (where status = 'booked')::int as booked, count(*)::int as total from public.session_bookings where session_id = ${session}`;
+    expect(n).toEqual({ booked: 3, total: 8 });
+    // Le même membre qui appuie plusieurs fois en parallèle : une seule réservation.
+    const solo = await member(academy, "bk-race-solo");
+    const again = await Promise.all(Array.from({ length: 6 }, () => book(solo.user, session)));
+    expect(new Set(again)).toEqual(new Set(["waitlisted"]));
+    expect(await adminSql()`select 1 from public.session_bookings where session_id = ${session} and person_id = ${solo.person}`).toHaveLength(1);
+  });
+
   it("augmenter la capacité fait avancer la liste d'attente ; la retirer inscrit tout le monde", async () => {
     const owner = await createUser("bk3-owner");
     const academy = await createAcademy(owner);
