@@ -115,7 +115,7 @@ interface BaseFieldProps {
 
 function FieldShell({ label, name, hint, required, id, error, className, children }: BaseFieldProps & { id: string; error?: string; children: ReactNode }) {
   return (
-    <div className={className}>
+    <div className={`min-w-0 ${className ?? ""}`}>
       <label htmlFor={id} className="mb-1.5 block text-sm font-semibold text-ink">
         {label}
         {required && (

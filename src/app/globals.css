@@ -180,6 +180,21 @@
   .field[aria-invalid="true"] {
     border-color: var(--color-danger);
   }
+  /* Mobile : date et heure ont une largeur intrinsèque qui dépasse la cellule de la grille. */
+  .field {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .field[type="date"],
+  .field[type="time"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .field[type="date"]::-webkit-date-and-time-value,
+  .field[type="time"]::-webkit-date-and-time-value {
+    min-width: 0;
+    text-align: left;
+  }
   select.field {
     appearance: none;
     padding-right: 2.25rem;
