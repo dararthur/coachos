@@ -31,7 +31,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </ActionForm>
       </Card>
       {children.length > 0 && (
-        <Card title="Mes enfants" description="Les fiches des mineurs dont vous êtes le responsable légal.">
+        <Card title="Mes enfants" description="Les enfants dont vous êtes le responsable légal.">
           <ul className="divide-y divide-line">
             {children.map((c) => (
               <li key={c.childId} className="space-y-2 py-3 first:pt-0 last:pb-0">
@@ -54,7 +54,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
                       action={withdrawChildConsentAction.bind(null, c.childId)}
                       trigger="Retirer mon accord…"
                       title="Retirer votre accord ?"
-                      description={<p>La fiche de {c.firstName} sera archivée, sa photo supprimée et le classement désactivé. Le club l&apos;anonymisera ensuite.</p>}
+                      description={<p>La fiche de {c.firstName} sera archivée, sa photo supprimée et son classement désactivé. Le club l&apos;anonymisera ensuite, à l&apos;issue de sa durée de conservation.</p>}
                       confirmLabel="Retirer l'accord"
                     />
                   </div>

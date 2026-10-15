@@ -31,7 +31,7 @@ export function guardianConsentEmail(to: string, link: string, info: { childFirs
   const club = oneLine(info.academyName);
   const body = layout(
     "Accord du responsable légal",
-    `Le club « ${club} » souhaite inscrire ${child}, dont vous êtes le responsable légal, sur Matnexa (suivi des présences). Le club ne recueille aucune donnée de santé. Sans votre accord, la fiche reste inactive. L'affichage au classement et la photo sont désactivés par défaut.`,
+    `Le club « ${club} » aimerait inscrire ${child} sur Matnexa pour suivre ses présences aux cours. Comme vous êtes son responsable légal, nous avons besoin de votre accord. Aucune donnée de santé n'est demandée, et le classement comme la photo restent désactivés.`,
     "Confirmer mon accord",
     link,
     "Ce lien est valable 14 jours. Si vous n'êtes pas le responsable légal de cet enfant ou si vous ne souhaitez pas cette inscription, ignorez ce message et prévenez le club.",

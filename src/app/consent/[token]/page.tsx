@@ -38,9 +38,9 @@ export default async function ConsentPage({ params }: { params: Promise<{ token:
             </p>
             <ul className="mb-4 list-disc space-y-1.5 pl-5 text-sm text-ink-soft">
               <li>Aucune donnée de santé n&apos;est collectée.</li>
-              <li>Les messages du club sont adressés à vous, jamais à votre enfant.</li>
-              <li>L&apos;affichage au classement et la photo sont désactivés ; vous seul pouvez les activer.</li>
-              <li>Vous pouvez retirer votre accord à tout moment : la fiche est alors archivée.</li>
+              <li>Le club vous écrit à vous, jamais directement à votre enfant.</li>
+              <li>Le classement et la photo sont désactivés : vous seul pouvez les activer.</li>
+              <li>Vous pouvez retirer votre accord quand vous voulez : la fiche de votre enfant est alors archivée.</li>
             </ul>
             <p className="mb-4 text-sm text-ink-soft">
               En confirmant, vous déclarez être le responsable légal de cet enfant. Voir la <Link href="/privacy">notice de confidentialité</Link>.
