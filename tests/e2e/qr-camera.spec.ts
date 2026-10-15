@@ -1,4 +1,4 @@
-import { completeProfile, createClub, expect, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
+import { completeProfile, createClub, expect, PASSWORD, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
 
 // Caméra SIMULÉE par Chrome (motif de test, sans QR) : vérifie le démarrage, l'aperçu et l'arrêt du flux.
 test.use({ launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] } });
@@ -171,5 +171,22 @@ test("scanner : chaque échec de caméra a son message, et la caméra n'est jama
     await expect(page).not.toHaveURL(/\/checkin/);
     await expect.poll(async () => (await cam().catch(() => ({ live: 0 }))).live).toBe(0);
   });
+  await context.close();
+});
+
+test("raccourci « Pointer ma présence » ouvert hors connexion : après la connexion, retour direct au scanner", async ({ browser }) => {
+  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+  const page = await context.newPage();
+  const email = uniqueEmail("cam-login");
+  await signUp(page, email, "Cam Login");
+  await createClub(page, "Club Cam Login");
+  await context.clearCookies();
+  await page.goto("/checkin?scan=1");
+  await expect(page).toHaveURL(/\/login\?next=%2Fcheckin%3Fscan%3D1$/);
+  await page.getByLabel("Adresse e-mail").fill(email);
+  await page.getByLabel("Mot de passe").fill(PASSWORD);
+  await page.getByRole("button", { name: "Se connecter" }).click();
+  await expect(page).toHaveURL(/\/checkin\?scan=1$/);
+  await expect.poll(() => page.evaluate(() => (document.querySelector("video")?.srcObject as MediaStream | null)?.active ?? false)).toBe(true);
   await context.close();
 });
