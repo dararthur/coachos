@@ -73,3 +73,11 @@ describe("rappel de séance : libellé", () => {
     expect(p.url).toBe("/a/a1/me");
   });
 });
+
+describe("notification d'actualité : libellé", () => {
+  it("titre « 📣 Du nouveau chez <club> », corps = titre de la publication, tronqué à 90 caractères", async () => {
+    const { newsPayload } = await import("@/server/push");
+    expect(newsPayload({ academyId: "a1", academyName: "Dojo Nord", title: "Stage de samedi" })).toEqual({ title: "📣 Du nouveau chez Dojo Nord", body: "Stage de samedi", url: "/a/a1/news" });
+    expect(newsPayload({ academyId: "a1", academyName: "Dojo Nord", title: "x".repeat(200) }).body).toHaveLength(90);
+  });
+});

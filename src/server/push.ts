@@ -70,6 +70,12 @@ export interface NewsPushInput {
   authorId: string;
 }
 
+/** « 📣 Du nouveau chez <club> » ; le corps est le titre de la publication (tronqué). Aucune donnée de membre. */
+export function newsPayload(input: Pick<NewsPushInput, "academyId" | "academyName" | "title">): PushPayload {
+  const title = input.title.length > 90 ? `${input.title.slice(0, 89)}…` : input.title;
+  return { title: `📣 Du nouveau chez ${input.academyName}`, body: title, url: `/a/${input.academyId}/news` };
+}
+
 /** Prévient les membres du club (hors l'auteur) d'une nouvelle publication. */
 export async function notifyNews(input: NewsPushInput, deps: { sql?: Sql; send?: PushSender } = {}): Promise<{ sent: number; failed: number }> {
   if (!deps.send && !vapidPublicKey()) return { sent: 0, failed: 0 };
@@ -78,8 +84,7 @@ export async function notifyNews(input: NewsPushInput, deps: { sql?: Sql; send?:
     deps.sql,
   );
   if (targets.length === 0) return { sent: 0, failed: 0 };
-  const title = input.title.length > 90 ? `${input.title.slice(0, 89)}…` : input.title;
-  const result = await deliverPush(targets, { title: input.academyName, body: title, url: `/a/${input.academyId}/news` }, deps.send);
+  const result = await deliverPush(targets, newsPayload(input), deps.send);
   if (result.gone.length > 0) await withApp((tx) => tx`select app_private.drop_push_subscriptions(${tx.array(result.gone)}::uuid[])`, deps.sql);
   logger.info("push.news", { sent: result.sent, failed: result.failed, gone: result.gone.length });
   return { sent: result.sent, failed: result.failed };
