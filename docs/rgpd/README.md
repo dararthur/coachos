@@ -20,6 +20,9 @@ Légende utilisée dans tout le dossier :
 | [sous-traitants.md](sous-traitants.md) | Sous-traitants, transferts et vérifications contractuelles |
 | [procedures.md](procedures.md) | Exercice des droits, suppression, violation de données |
 | [checklist-mise-en-production.md](checklist-mise-en-production.md) | Conditions avant toute donnée réelle |
+| [guide-mise-en-service.md](guide-mise-en-service.md) | Pas à pas sur le VPS : purge, sauvegardes, restauration, Resend, contrats |
+| [modele-contrat-sous-traitance.md](modele-contrat-sous-traitance.md) | Modèle d'accord art. 28 à signer avec chaque club |
+| [modele-information-membres.md](modele-information-membres.md) | Modèle d'information que chaque club diffuse à ses membres |
 | [audit-2026-10-15.md](audit-2026-10-15.md) | Audit du code : constats, corrections, tests, statut |
 
 Règle de maintenance : toute fonctionnalité qui ajoute une donnée personnelle, un destinataire ou un prestataire met à jour **dans le même commit** la cartographie, le registre, la matrice de conservation, la notice `/privacy` (`src/app/privacy/page.tsx`) et les fonctions d'export/effacement (`export_person_data`, `export_my_data`, `erase_person`, `delete_my_account`), avec un test dans `tests/db/privacy.test.ts`.

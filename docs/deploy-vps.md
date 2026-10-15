@@ -220,7 +220,7 @@ free -h; pm2 status
 
 À ne pas sauter (`docs/pilot.md`, `docs/operations.md`) :
 1. **Sauvegardes chiffrées hors du serveur** : `age`, `rclone`, un stockage externe séparé, rôle `coachos_backup` (`ops/backup/create-backup-role.sql`), `coachos-backup.timer`. **Une restauration doit avoir été testée** sur une base jetable.
-2. Revue juridique (RGPD, mentions, politique de confidentialité) : `docs/privacy-gdpr.md`.
+2. RGPD : suivre `docs/rgpd/guide-mise-en-service.md` (purge, sauvegardes, restauration, Resend, contrat avec le club, notice) et cocher `docs/rgpd/checklist-mise-en-production.md`.
 3. Montée progressive de HSTS (`HSTS_MAX_AGE_SECONDS`) après quelques jours sans problème.
 
 ## 14. Mises à jour ultérieures

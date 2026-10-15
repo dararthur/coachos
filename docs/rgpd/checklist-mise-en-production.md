@@ -12,7 +12,7 @@ Coché = vérifié par une preuve (test exécuté, document signé, configuratio
 - [ ] `npm run pilot:preflight` exécuté **contre l'environnement réel** et vert.
 - [ ] Tâche quotidienne `POST /api/cron/purge` installée et constatée (sans elle, aucune durée de conservation n'est appliquée).
 - [ ] Sauvegarde chiffrée exécutée et **restauration testée**.
-- [ ] Resend (activé, région Irlande) : DPA accepté et archivé ; lieu de stockage des journaux et contenus vérifié pour ce compte, et garanties de transfert documentées s'ils sont aux États-Unis ; suivi des ouvertures et clics désactivé ; durée de rétention vérifiée.
+- [ ] Resend (activé, région Irlande) : DPA accepté et archivé ; stockage aux États-Unis confirmé par sa documentation : certification DPF vérifiée sur la liste officielle et capture archivée ; suivi des ouvertures et clics désactivé ; durée de rétention vérifiée.
 
 ## À faire rapidement (avant élargissement au-delà du pilote)
 

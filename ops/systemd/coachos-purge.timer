@@ -1,0 +1,11 @@
+# Une purge par nuit. Persistent=true rattrape une exécution manquée (serveur éteint).
+[Unit]
+Description=Matnexa - purge quotidienne
+
+[Timer]
+OnCalendar=*-*-* 03:10:00
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

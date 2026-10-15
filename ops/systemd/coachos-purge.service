@@ -1,0 +1,16 @@
+# Purge quotidienne de rétention (docs/rgpd/conservation.md) + envoi des avis de place restés en file.
+# Prérequis : /etc/coachos/purge.header contient « Authorization: Bearer <CRON_SECRET> » (root:coachos, 0640), voir docs/deploy-vps.md §6.
+# Sans cette tâche, AUCUNE durée de conservation n'est appliquée.
+[Unit]
+Description=Matnexa - purge de rétention
+Wants=network-online.target
+After=network-online.target coachos.service
+
+[Service]
+Type=oneshot
+User=coachos
+ExecStart=/usr/bin/curl -fsS --max-time 120 -X POST -H @/etc/coachos/purge.header http://127.0.0.1:3400/api/cron/purge
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

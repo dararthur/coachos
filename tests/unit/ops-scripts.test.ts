@@ -130,6 +130,13 @@ describe("scripts d'exploitation : identifiants et retour arrière (analyse stat
   it("l'unité d'exemple de l'application respecte le contrat avec activate.sh", () => {
     expect(read("ops/systemd/coachos.service")).toMatch(/^WorkingDirectory=\/srv\/coachos\/current$/m);
   });
+
+  it("la purge planifiée vise la route de purge en local et lit le jeton dans un fichier, jamais en clair", () => {
+    const service = read("ops/systemd/coachos-purge.service");
+    expect(service).toMatch(/^ExecStart=.*-X POST -H @\/etc\/coachos\/purge\.header http:\/\/127\.0\.0\.1:3400\/api\/cron\/purge$/m);
+    expect(service).not.toMatch(/Bearer [A-Za-z0-9]/);
+    expect(read("ops/systemd/coachos-purge.timer")).toMatch(/^Persistent=true$/m);
+  });
 });
 
 // --- Faux binaires communs ---------------------------------------------------------------------------------------------------------
