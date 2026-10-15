@@ -36,7 +36,7 @@ describe("scripts/migrate.mjs (processus réel)", () => {
 
     const dry = run({ MIGRATION_DATABASE_URL: url }, ["--dry-run"]);
     expect(dry.status, dry.stderr).toBe(0);
-    expect(dry.stdout).toMatch(/en attente : 25/);
+    expect(dry.stdout).toMatch(/en attente : 26/);
     const probe = postgres(url, { max: 1, onnotice: () => {} });
     expect((await probe`select to_regclass('coachos_migrations.applied') is not null as ok`)[0]!.ok).toBe(false);
 

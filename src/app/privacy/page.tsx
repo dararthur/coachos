@@ -83,7 +83,7 @@ export default function PrivacyPage() {
       <section>
         <h2>Hébergement et sous-traitants</h2>
         <p>
-          L&apos;application, sa base de données et l&apos;authentification sont auto-hébergées sur un serveur loué à OVHcloud, situé en France (centre de données de Gravelines). Les e-mails sont envoyés par un prestataire spécialisé [nom à compléter] dont le stockage peut se situer aux États-Unis [garanties de transfert : à compléter]. Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;intelligence artificielle.
+          L&apos;application, sa base de données et l&apos;authentification sont auto-hébergées sur un serveur loué à OVHcloud, situé en France (centre de données de Gravelines). Les e-mails sont envoyés par Resend depuis sa région d&apos;envoi en Irlande ; certaines données techniques liées aux e-mails peuvent être conservées par ce prestataire aux États-Unis [garanties de transfert : à compléter]. Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;intelligence artificielle.
         </p>
       </section>
       </div>

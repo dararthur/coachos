@@ -38,7 +38,7 @@ Aucune catégorie particulière (art. 9) n'est collectée par conception : ni sa
 | Flux | Données | Destinataire | Déclencheur | Statut |
 |---|---|---|---|---|
 | Navigateur → serveur | toutes les saisies | serveur de l'éditeur chez OVHcloud, Gravelines (HTTPS, Nginx) | utilisation | Nginx de production **non validé** (`docs/nginx.md`) |
-| E-mails transactionnels | adresse du destinataire, lien à usage limité ; avis de place : nom du club, du cours, date/heure | fournisseur d'e-mails (Resend prévu) | inscription, réinitialisation, invitation, promotion de liste d'attente | adaptateur **jamais exécuté en réel** |
+| E-mails transactionnels | adresse du destinataire, lien à usage limité ; avis de place : nom du club, du cours, date/heure | Resend, région d'envoi Irlande | inscription, réinitialisation, invitation, promotion de liste d'attente | activé par l'éditeur (non constaté dans cette session) |
 | E-mail de demande de club | nom et e-mail du demandeur, nom du club | administrateur de la plateforme, via le fournisseur d'e-mails | `/request-club` | idem |
 | Lien WhatsApp (tableau de bord) | numéro du membre + message pré-rempli contenant son prénom | Meta/WhatsApp, **depuis l'appareil du coach** quand il clique | action volontaire du staff | à mentionner dans la notice du club (fait dans `/privacy`) |
 | Exports CSV / JSON | fiches, présences, réservations, photo (JSON) | poste de l'admin / du membre | action volontaire, journalisée, limitée en débit | une fois téléchargé, le fichier sort du périmètre de l'application |
