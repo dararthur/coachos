@@ -18,6 +18,10 @@ Délai de réponse : **un mois** à compter de la réception, prolongeable de de
 | Retrait du consentement (classement) | Page Classement | `set_my_ranking_visibility` | `tests/e2e/mobile-pwa.spec.ts` (non exécuté dans cette session) |
 | Opposition / limitation | Archiver la fiche (retire des appels), puis anonymiser | `setMemberArchivedAction` | e2e |
 
+**Mineurs** : les droits d'un enfant sont exercés par son responsable légal (« Mon compte » → « Mes enfants », ou le club). Vérifier la qualité de responsable avant d'exporter ou d'effacer (le lien d'accord prouve l'accès à l'e-mail, pas la qualité de responsable légal ; le club peut demander un justificatif papier). Retrait de l'accord = fiche archivée, classement coupé, photo supprimée. La suppression du **compte** d'un responsable ne supprime pas la fiche de l'enfant ni ses coordonnées de contact : le lui indiquer et lui proposer le retrait de l'accord.
+
+**Notifications** : l'utilisateur gère ses appareils dans « Mon compte » ; l'export de ses données les liste (date, service de notification), sans clé.
+
 Tenir un **journal des demandes** (date, demandeur, droit, réponse, date de réponse) hors de l'application : [outil à choisir].
 
 ## 2. Suppression

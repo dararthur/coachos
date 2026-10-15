@@ -25,6 +25,8 @@ Pour chaque club client : [nom du club, contact]. Le club tient **son propre** r
 | Photo de profil | Reconnaissance des membres par l'équipe | **À trancher** : facultative et ajoutée par le membre ; base 6.1.a (consentement) ou 6.1.f possibles | image | facultative ; retrait libre ; supprimée avec le compte |
 | Classement des venues | Animation du club | **Art. 6.1.a (consentement)** — opt-in, désactivé par défaut, retrait en un clic | nom, photo, ceinture, venues visibles des autres membres | `ranking_opt_in` faux par défaut ; réinitialisé à la suppression du compte |
 | Recontact (WhatsApp) | Relancer un membre absent | Art. 6.1.f (à confirmer) | téléphone, prénom | action manuelle du staff depuis son appareil |
+| Notifications push (actualités du club, rappel de séance) | Prévenir les membres, sur leur demande | **Art. 6.1.a (consentement)** — activation appareil par appareil, désactivation à tout moment | adresse technique de l'appareil + clés de chiffrement ; message : nom du club et titre | chiffrement de bout en bout ; service de notification du navigateur (Google, Apple, Mozilla, Microsoft) : message opaque ; aucune donnée de membre dans le message |
+| Actualités du club | Informer les membres | Art. 6.1.f (intérêt légitime du club) | titre, texte, auteur (équipe) | lisibles par les seuls membres connectés ; aucune donnée de membre dans une publication (`docs/news.md`) |
 | Avis de place confirmée | Informer de la sortie de liste d'attente | Art. 6.1.b | e-mail, club, cours, date | file interne fermée aux rôles applicatifs |
 
 Mesures de sécurité (art. 32) : voir `docs/security.md` et [risques-aipd.md](risques-aipd.md).

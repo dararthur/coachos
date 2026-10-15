@@ -14,6 +14,13 @@ Coché = vérifié par une preuve (test exécuté, document signé, configuratio
 - [x] Sauvegarde chiffrée exécutée et **restauration testée**. 15/10/2026 : `coachos-20261015T084152Z.dump.age` (315 Ko), timer actif (03:30) ; `restore-verify.sh` : intégrité, déchiffrement, rôles, RLS, tables, migrations OK en 1,3 s. Destination : dossier local `/var/backups/coachos-archive`, emporté hors machine par la **sauvegarde quotidienne OVH du VPS** (choix de l'éditeur, pas de stockage objet séparé). Clé privée age hors serveur, chez l'éditeur. Prochain exercice : janvier 2027.
 - [x] Resend (activé, région Irlande). Vérifié le 15/10/2026 : le DPA est intégré aux conditions d'utilisation et en vigueur dès l'acceptation du compte (clauses contractuelles types 2021/914, modules 2 et 3 ; sous-traitants ultérieurs sur resend.com/legal/subprocessors, préavis de 14 jours) ; Resend figure sur la liste officielle du Data Privacy Framework (UE–États-Unis et extension britannique, données hors RH), statut « Active - Re-certification under Review ». 15/10/2026, d'après l'éditeur : DPA signé téléchargé et archivé ; suivi des ouvertures et des clics désactivé sur `matnexa.fr`.
 
+## Avant de saisir des fiches d'enfants réelles
+
+- [ ] AIPD courte menée et documentée (ou décision motivée de ne pas en faire), voir [risques-aipd.md](risques-aipd.md) : les enfants sont des personnes vulnérables au sens des lignes directrices du CEPD.
+- [ ] Texte d'information aux familles remis par le club ([modele-information-membres.md](modele-information-membres.md)) ; le club sait qu'il doit vérifier la qualité de responsable légal.
+- [ ] Parcours mineur essayé de bout en bout sur la production avec des données fictives (création de la fiche, e-mail d'accord, confirmation, retrait de l'accord).
+- [ ] Après déploiement des migrations 0004 à 0013 : purge quotidienne relancée à la main, réponse JSON contenant `minors_graduated`.
+
 ## À faire rapidement (avant élargissement au-delà du pilote)
 
 - [ ] Revue juridique de la notice `/privacy` et du registre ; bases légales confirmées (notamment photo et recontact WhatsApp).

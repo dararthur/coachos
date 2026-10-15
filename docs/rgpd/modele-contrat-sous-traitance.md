@@ -42,6 +42,8 @@ Le Responsable autorise le recours aux sous-traitants suivants :
 | OVHcloud | Stockage des sauvegardes chiffrées | France ([région à compléter]) |
 | Resend | Envoi des e-mails de service | Envoi depuis l'Irlande ; métadonnées et journaux stockés aux États-Unis, encadrés par les clauses contractuelles types de son DPA et sa certification Data Privacy Framework |
 
+Les notifications push, que chaque utilisateur active volontairement, transitent par le service de notification de son navigateur (Google, Apple, Mozilla ou Microsoft) : message chiffré de bout en bout, adresse technique de l'appareil. Ces services sont des intermédiaires techniques du standard Web Push, non choisis par le Sous-traitant.
+
 Le Sous-traitant informe le Responsable de tout ajout ou remplacement [30] jours à l'avance ; le Responsable peut s'y opposer et, à défaut d'accord, résilier sans frais. Le Sous-traitant impose à ses sous-traitants des obligations équivalentes.
 
 ## 7. Droits des personnes (art. 28 §3.e)
