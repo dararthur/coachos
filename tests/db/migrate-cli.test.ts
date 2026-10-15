@@ -43,7 +43,7 @@ describe("scripts/migrate.mjs (processus réel)", () => {
     const first = run({ MIGRATION_DATABASE_URL: url });
     expect(first.status, first.stderr).toBe(0);
     expect(first.stdout).toMatch(/25 migration\(s\) appliquée\(s\) au total/);
-    expect((await probe`select count(*)::int as n from coachos_migrations.applied`)[0]!.n).toBe(25);
+    expect((await probe`select count(*)::int as n from coachos_migrations.applied`)[0]!.n).toBe(26);
     const again = run({ MIGRATION_DATABASE_URL: url }, ["--dry-run"]);
     expect(again.stdout).toMatch(/en attente : 0/);
     await probe.end();

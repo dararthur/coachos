@@ -194,3 +194,61 @@ describe("journal d'audit", () => {
     expect(actions).toEqual(expect.arrayContaining(["academy.settings_updated", "member.archived", "member.restored"]));
   });
 });
+
+describe("durcissement RGPD (migration 20261015000300)", () => {
+  const photo = Buffer.from("RIFF0000WEBPVP8 fake-synthetic-image");
+
+  it("l'export d'un membre contient sa photo ; un coach ou un autre club ne peut pas l'exporter", async () => {
+    const person = await createPerson(w.academyA, "Photo", "Export");
+    await adminSql()`insert into public.person_photos (person_id, academy_id, content_type, data) values (${person}, ${w.academyA}, 'image/webp', ${photo})`;
+    const [row] = await asUser(w.alice, (tx) => tx<{ d: { photo: { content_type: string; data_base64: string } } }[]>`select public.export_person_data(${person}) as d`);
+    expect(row!.d.photo.content_type).toBe("image/webp");
+    expect(Buffer.from(row!.d.photo.data_base64, "base64").equals(photo)).toBe(true);
+    await expect(asUser(w.carl, (tx) => tx`select public.export_person_data(${person})`)).rejects.toMatchObject({ code: "not_found" });
+    await expect(asUser(w.bob, (tx) => tx`select public.export_person_data(${person})`)).rejects.toMatchObject({ code: "not_found" });
+  });
+
+  it("export de mes données : sessions, demandes de club et photo, sans IP ni jeton, sans les données d'autrui", async () => {
+    const user = await createUser("exporteur");
+    await addMember(w.academyA, user, "member");
+    const person = await createPerson(w.academyA, "Expo", "Rteur");
+    await adminSql()`update public.people set user_id = ${user.id} where id = ${person}`;
+    await adminSql()`insert into public.person_photos (person_id, academy_id, content_type, data) values (${person}, ${w.academyA}, 'image/webp', ${photo})`;
+    await adminSql()`insert into auth.sessions (token, updated_at, expires_at, ip_address, user_agent, user_id)
+      values ('synthetic-token-should-not-leak', now(), now() + interval '1 day', 'hmac-ip-should-not-leak', 'TestAgent/1.0', ${user.id})`;
+    await adminSql()`insert into public.academy_requests (name, contact_name, email) values ('Club demandé', 'Expo Rteur', ${user.email})`;
+    await adminSql()`insert into public.academy_requests (name, contact_name, email) values ('Club autrui', 'Autre Personne', 'autrui@example.invalid')`;
+    const [row] = await asUser(user, (tx) => tx<{ d: Record<string, unknown> }[]>`select public.export_my_data() as d`);
+    const text = JSON.stringify(row!.d);
+    expect(text).toContain("TestAgent/1.0");
+    expect(text).toContain("Club demandé");
+    expect(text).toContain(photo.toString("base64"));
+    expect(text).not.toMatch(/synthetic-token-should-not-leak|hmac-ip-should-not-leak|Club autrui|autrui@example/);
+  });
+
+  it("supprimer son compte efface sa photo, retire son consentement au classement, ses demandes de club et son identifiant d'audit", async () => {
+    const user = await createUser("partant");
+    await addMember(w.academyA, user, "member");
+    const person = await createPerson(w.academyA, "Par", "Tant");
+    await adminSql()`update public.people set user_id = ${user.id}, ranking_opt_in = true where id = ${person}`;
+    await adminSql()`insert into public.person_photos (person_id, academy_id, content_type, data) values (${person}, ${w.academyA}, 'image/webp', ${photo})`;
+    await adminSql()`insert into public.academy_requests (name, contact_name, email) values ('Club du partant', 'Par Tant', ${user.email})`;
+    const other = await createPerson(w.academyA, "Reste", "Visible");
+    await adminSql()`update public.people set ranking_opt_in = true where id = ${other}`;
+    await adminSql()`insert into public.person_photos (person_id, academy_id, content_type, data) values (${other}, ${w.academyA}, 'image/webp', ${photo})`;
+    await asUser(user, (tx) => tx`select public.export_my_data()`); // audit avec entity_id = compte
+
+    await asUser(user, (tx) => tx`select public.delete_my_account()`);
+
+    expect(await adminSql()`select 1 from public.person_photos where person_id = ${person}`).toHaveLength(0);
+    const [p] = await adminSql()<{ ranking_opt_in: boolean; user_id: string | null; first_name: string }[]>`select ranking_opt_in, user_id, first_name from public.people where id = ${person}`;
+    expect(p).toMatchObject({ ranking_opt_in: false, user_id: null, first_name: "Par" }); // la fiche reste au club
+    expect(await adminSql()`select 1 from public.academy_requests where email = ${user.email}`).toHaveLength(0);
+    expect(await adminSql()`select 1 from public.audit_events where entity_id = ${user.id} or actor_user_id = ${user.id}`).toHaveLength(0);
+    // rien n'est touché chez les autres
+    expect(await adminSql()`select 1 from public.person_photos where person_id = ${other}`).toHaveLength(1);
+    const [o] = await adminSql()<{ ranking_opt_in: boolean }[]>`select ranking_opt_in from public.people where id = ${other}`;
+    expect(o?.ranking_opt_in).toBe(true);
+    expect(await adminSql()`select 1 from public.academy_requests where email = 'autrui@example.invalid'`).not.toHaveLength(0);
+  });
+});
