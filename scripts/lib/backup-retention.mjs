@@ -1,8 +1,8 @@
 // Rétention des sauvegardes : fonction PURE (aucun accès disque ni réseau). Ne désigne à supprimer que des fichiers dont le nom suit
 // exactement le format produit par ops/backup/backup.sh ; tout autre nom est ignoré (jamais supprimé).
 export const BACKUP_NAME = /^coachos-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z\.dump\.age$/;
-/** Objectifs PROPOSÉS (à valider avec le client et le coût de stockage) : 14 jours, 8 semaines, 6 mois. */
-export const DEFAULT_POLICY = { daily: 14, weekly: 8, monthly: 6 };
+/** Décidé par l'éditeur le 15/10/2026 : une semaine (7 sauvegardes quotidiennes), aucune hebdomadaire ni mensuelle. */
+export const DEFAULT_POLICY = { daily: 7, weekly: 0, monthly: 0 };
 
 function parse(name) {
   const m = BACKUP_NAME.exec(name);

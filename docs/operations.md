@@ -70,7 +70,7 @@ instance avant de se fier aux sauvegardes (§6).
 
 ## 2. Rétention (`ops/backup/prune.sh`, `scripts/lib/backup-retention.mjs`)
 
-**Objectifs proposés, à valider avec le client et le coût de stockage** : 14 jours quotidiennes, 8 semaines, 6 mois (une sauvegarde par
+**Politique en vigueur (décidée le 15/10/2026)** : 7 jours (`DEFAULT_POLICY`). Une politique plus longue reste possible avec `--daily/--weekly/--monthly` : 14 jours quotidiennes, 8 semaines, 6 mois (une sauvegarde par
 période, la plus récente). La plus récente n'est jamais supprimée ; un fichier dont le nom n'est pas exactement celui d'une sauvegarde est ignoré.
 `prune.sh` **simule** par défaut ; `--apply` est nécessaire pour supprimer. Les données personnelles restent dans les sauvegardes jusqu'à leur
 expiration : la durée maximale doit figurer dans l'information des personnes concernées.

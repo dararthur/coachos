@@ -1,23 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Alert, BackLink, PageHeader } from "@/components/ui/ui";
+import { BackLink, PageHeader } from "@/components/ui/ui";
 import { StandaloneFrame } from "@/components/layout/standalone";
 
 export const metadata: Metadata = { title: "Confidentialité" };
 
 /**
- * Notice d'information (art. 13 RGPD) — PROJET À FAIRE VALIDER JURIDIQUEMENT. Doit rester cohérente avec docs/rgpd/registre.md
- * (même liste de données, mêmes durées). Éditeur : personne physique agissant à titre personnel. Les éléments entre crochets sont à compléter.
+ * Notice d'information (art. 13 RGPD). Rédigée sans relecture juridique (docs/rgpd/README.md) : ne jamais la présenter comme validée.
+ * Doit rester cohérente avec docs/rgpd/registre.md (même liste de données, mêmes durées) ; mettre à jour la date en bas à chaque changement.
  */
 export default function PrivacyPage() {
   return (
     <StandaloneFrame width="xl">
       <PageHeader title="Confidentialité et données personnelles" back={<BackLink href="/">Retour</BackLink>} />
       <div className="max-w-[68ch] space-y-6 text-base leading-7 [&_h2]:mb-1.5 [&_h2]:text-lg [&_h2]:font-bold">
-      <Alert tone="warning" title="Document de travail">
-        Ce texte est un projet de notice d&apos;information, non validé juridiquement. Les éléments entre crochets restent à compléter par l&apos;éditeur.
-      </Alert>
-
       <section>
         <h2>Qui est responsable de vos données ?</h2>
         <p>
@@ -33,10 +29,10 @@ export default function PrivacyPage() {
         <h2>Quelles données, pour quoi faire ?</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>
-            <strong>Compte</strong> (adresse e-mail, nom affiché, mot de passe haché, sessions de connexion avec le type de navigateur et une empreinte irréversible de l&apos;adresse IP) : se connecter et sécuriser l&apos;accès. Base légale envisagée : exécution du contrat.
+            <strong>Compte</strong> (adresse e-mail, nom affiché, mot de passe haché, sessions de connexion avec le type de navigateur et une empreinte irréversible de l&apos;adresse IP) : se connecter et sécuriser l&apos;accès. Base légale : exécution du contrat (conditions d&apos;utilisation du service).
           </li>
           <li>
-            <strong>Fiche membre</strong> (prénom, nom, e-mail et téléphone facultatifs, date d&apos;inscription, identifiant d&apos;origine facultatif, ceinture et barrettes, silhouette d&apos;avatar, attestation de majorité) : gérer les adhérents du club. Le téléphone permet à l&apos;équipe du club de vous recontacter, notamment via WhatsApp depuis son propre téléphone.
+            <strong>Fiche membre</strong> (prénom, nom, e-mail et téléphone facultatifs, date d&apos;inscription, identifiant d&apos;origine facultatif, ceinture et barrettes, silhouette d&apos;avatar, attestation de majorité) : gérer les adhérents du club, sur la base légale retenue par celui-ci (en général l&apos;exécution du contrat d&apos;adhésion). Le téléphone permet à l&apos;équipe du club de vous recontacter, notamment via WhatsApp depuis son propre téléphone.
           </li>
           <li>
             <strong>Photo de profil</strong> (facultative, ajoutée par vous) : visible de vous et de l&apos;équipe du club, et des autres membres seulement si vous apparaissez dans le classement.
@@ -71,7 +67,7 @@ export default function PrivacyPage() {
           <li>Compte : jusqu&apos;à sa suppression. Une session de connexion expire après un an sans utilisation.</li>
           <li>Invitations : 30 jours après expiration ou acceptation. Demandes de création de club : 90 jours (180 jours au plus).</li>
           <li>Journal d&apos;audit : 24 mois. Compteurs anti-abus : moins de 24 heures.</li>
-          <li>Sauvegardes : copies chiffrées conservées au plus environ 6 mois, et sauvegarde quotidienne du serveur par l&apos;hébergeur ; les données effacées disparaissent des sauvegardes à leur expiration.</li>
+          <li>Sauvegardes : une sauvegarde chiffrée par jour, conservée 7 jours, et une sauvegarde quotidienne du serveur par l&apos;hébergeur, conservée 7 jours. Une donnée effacée disparaît donc des sauvegardes au plus tard une semaine après.</li>
         </ul>
       </section>
 
@@ -89,6 +85,8 @@ export default function PrivacyPage() {
           L&apos;application, sa base de données et l&apos;authentification sont auto-hébergées sur un serveur loué à OVHcloud, situé en France (centre de données de Gravelines). Les e-mails sont envoyés par Resend depuis sa région d&apos;envoi en Irlande ; les métadonnées et journaux de ces e-mails sont conservés par ce prestataire aux États-Unis, transfert encadré par les clauses contractuelles types de la Commission européenne et la certification Data Privacy Framework du prestataire. Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;intelligence artificielle.
         </p>
       </section>
+
+      <p className="text-sm text-ink-soft">Dernière mise à jour : 15 octobre 2026.</p>
       </div>
     </StandaloneFrame>
   );

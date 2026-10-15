@@ -58,7 +58,7 @@ Le Sous-traitant met à disposition les informations nécessaires pour démontre
 
 ## 10. Fin du contrat (art. 28 §3.g)
 
-Au choix du Responsable : export de ses données (formats CSV et JSON fournis par le service) puis suppression du club et de toutes ses données, ou suppression directe. La suppression dans la base est immédiate ; les copies dans les sauvegardes disparaissent à l'expiration de celles-ci, au plus tard [6 mois]. Le Sous-traitant le confirme par écrit sur demande.
+Au choix du Responsable : export de ses données (formats CSV et JSON fournis par le service) puis suppression du club et de toutes ses données, ou suppression directe. La suppression dans la base est immédiate ; les copies dans les sauvegardes disparaissent à l'expiration de celles-ci, au plus tard 7 jours après l'effacement. Le Sous-traitant le confirme par écrit sur demande.
 
 ## 11. Responsabilités
 

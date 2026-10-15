@@ -41,12 +41,20 @@ describe("rétention des sauvegardes (fonction pure)", () => {
   const name = (iso: string) => `coachos-${iso.replace(/[-:]/g, "").replace(/\.\d+/, "")}.dump.age`;
   const days = (n: number) => Array.from({ length: n }, (_, i) => name(new Date(Date.UTC(2026, 9, 13, 3, 30) - i * 86_400_000).toISOString()));
 
-  it("garde 14 jours, puis 1 par semaine / par mois ; la plus récente n'est jamais supprimée", () => {
+  it("par défaut, garde une semaine (7 jours) et rien au-delà", () => {
+    expect(DEFAULT_POLICY).toEqual({ daily: 7, weekly: 0, monthly: 0 });
     const names = days(200);
     const plan = planRetention(names);
+    expect(plan.keep).toEqual(names.slice(0, 7));
+    expect(plan.delete).toEqual(names.slice(7));
+  });
+
+  it("une politique plus longue garde 14 jours, puis 1 par semaine / par mois ; la plus récente n'est jamais supprimée", () => {
+    const names = days(200);
+    const plan = planRetention(names, { daily: 14, weekly: 8, monthly: 6 });
     expect(plan.keep).toContain(names[0]);
     expect(plan.keep.slice(0, 14)).toEqual(names.slice(0, 14));
-    expect(plan.keep.length).toBeLessThan(14 + DEFAULT_POLICY.weekly + DEFAULT_POLICY.monthly + 1);
+    expect(plan.keep.length).toBeLessThan(14 + 8 + 6 + 1);
     expect(plan.delete.length + plan.keep.length).toBe(200);
     expect(plan.delete).toContain(names[100]);
   });

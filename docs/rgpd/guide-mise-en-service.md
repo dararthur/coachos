@@ -184,7 +184,7 @@ Notez dans [checklist-mise-en-production.md](checklist-mise-en-production.md) : 
 sudo -u coachos-backup env BACKUP_REMOTE=offsite:matnexa-backups RCLONE_CONFIG=/etc/coachos/rclone.conf /srv/coachos/current/ops/backup/prune.sh
 ```
 
-La durée maximale (proposition : 6 mois) doit figurer dans la notice `/privacy` (ligne « Sauvegardes ») dès qu'elle est décidée.
+Durée décidée le 15/10/2026 : **7 jours** (`DEFAULT_POLICY` de `scripts/lib/backup-retention.mjs`), indiquée dans la notice `/privacy`. Toute modification de cette durée doit être reportée dans la notice.
 
 ---
 

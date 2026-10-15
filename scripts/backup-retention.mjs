@@ -7,8 +7,8 @@ const policy = { ...DEFAULT_POLICY };
 for (let i = 0; i < args.length; i += 2) {
   const k = args[i]?.replace(/^--/, "");
   const v = Number(args[i + 1]);
-  if (!(k in policy) || !Number.isInteger(v) || v < 1) {
-    console.error("Usage : backup-retention.mjs [--daily N] [--weekly N] [--monthly N] (entiers ≥ 1)");
+  if (!(k in policy) || !Number.isInteger(v) || v < 0) {
+    console.error("Usage : backup-retention.mjs [--daily N] [--weekly N] [--monthly N] (entiers ≥ 0)");
     process.exit(2);
   }
   policy[k] = v;
