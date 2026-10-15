@@ -47,12 +47,12 @@ const msg = async (p: Promise<unknown>) => {
 };
 
 describe("lanceur de migrations : application, suivi, reprise", () => {
-  it("applique les 24 migrations réelles dans l'ordre, avec suivi ; une relance n'applique rien ; le suivi est fermé aux rôles applicatifs", async () => {
+  it("applique les 25 migrations réelles dans l'ordre, avec suivi ; une relance n'applique rien ; le suivi est fermé aux rôles applicatifs", async () => {
     const sql = await freshDb();
     try {
       const first = await runMigrations({ sql, dir: migrationsDir });
       const files = loadMigrations(migrationsDir);
-      expect(files).toHaveLength(24);
+      expect(files).toHaveLength(25);
       expect(first.applied).toEqual(files.map((f: { name: string }) => f.name));
       const rows = await readApplied(sql);
       expect(rows.map((r: { version: string }) => r.version)).toEqual(files.map((f: { version: string }) => f.version));
@@ -60,7 +60,7 @@ describe("lanceur de migrations : application, suivi, reprise", () => {
 
       const again = await runMigrations({ sql, dir: migrationsDir });
       expect(again.pending).toEqual([]);
-      expect((await readApplied(sql)).length).toBe(24);
+      expect((await readApplied(sql)).length).toBe(25);
 
       const [priv] = await sql`select has_schema_privilege('app_server', 'coachos_migrations', 'usage') as a, has_schema_privilege('auth_runtime', 'coachos_migrations', 'usage') as b,
         has_schema_privilege('authenticated', 'coachos_migrations', 'usage') as c, has_schema_privilege('anon', 'coachos_migrations', 'usage') as d`;
@@ -76,7 +76,7 @@ describe("lanceur de migrations : application, suivi, reprise", () => {
     const sql = await freshDb();
     try {
       const r = await runMigrations({ sql, dir: migrationsDir, dryRun: true });
-      expect(r.pending).toHaveLength(24);
+      expect(r.pending).toHaveLength(25);
       const [t] = await sql`select to_regclass('coachos_migrations.applied') is not null as ok, to_regclass('auth.users') is not null as auth`;
       expect(t).toEqual({ ok: false, auth: false });
     } finally {
@@ -176,7 +176,7 @@ describe("lanceur de migrations : collisions de rôles globaux (cluster partagé
         await adminSql().unsafe(`comment on role anon is '${ROLE_MARKER}'`);
       }
       const ok = await runMigrations({ sql, dir: migrationsDir });
-      expect(ok.applied).toHaveLength(24);
+      expect(ok.applied).toHaveLength(25);
     } finally {
       await sql.end();
     }
