@@ -25,7 +25,7 @@ OWN-WORLD: monde Ceinture inchangé. Fond coton #F4F2EE, panneaux blancs à file
 
 STORY: le responsable reconnaît son cahier et son tableur, voit l'appel fait au doigt, la liste des membres qui décrochent avec « Écrire », le QR de pointage, puis comprend que tout tient dans un outil et que les données restent en France ; il demande l'accès.
 
-FIRST VIEWPORT: en-tête noir (logotype, Se connecter). À gauche H1 condensé ≈ 64 px « Le cahier d'appel de votre club, enfin à jour. », une phrase de promesse, le bouton orange et le lien adhérent. À droite, une page de cahier quadrillée (noms, bâtons au crayon) barrée en diagonale par le trait orange du symbole, la feuille d'appel Matnexa posée par-dessus, compteurs Présent/Retard/Absent.
+FIRST VIEWPORT: en-tête noir (logotype, ancres, Se connecter, « Demander l'accès » au trait blanc). À gauche H1 condensé 48–72 px « Rayez le cahier d'appel. » (choix retenu au build, repris par l'image de partage) suivi d'une sous-ligne porteuse des mots-clés, une phrase de promesse, le bouton orange et le lien « J'ai un code de club ». À droite, une page de cahier quadrillée (noms, bâtons au crayon) barrée en diagonale par le trait orange du symbole, la feuille d'appel Matnexa interactive posée par-dessus, compteurs Présent/Retard/Absent.
 
 FORM: « Le cahier d'appel, rayé », position 6 de ma liste ordonnée de sept structures ; seed key 19e50651. Signature : le trait orange qui raye le cahier se trace au chargement (stroke-dashoffset, 700 ms, sortie exponentielle, désactivé sous prefers-reduced-motion), puis chaque section « corvée » montre sa ligne de cahier rayée au-dessus de l'écran qui la remplace.
 
