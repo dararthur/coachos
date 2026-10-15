@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
-import { completeProfile, createClub, expect, logIn, parisToday, PASSWORD, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
+import { completeProfile, createClub, expect, logIn, PASSWORD, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
 
 /** Heure locale Paris (HH:MM) actuelle : la séance de test couvre « maintenant ». */
 const parisNow = (offsetMin = 0) =>
@@ -41,7 +41,8 @@ async function setup(browser: Browser) {
   }
 
   await coach.page.goto(`/a/${club}/schedule/new`);
-  await coach.page.getByLabel("Date de la première séance").fill(parisToday());
+  // Date et heure du MÊME instant (il y a 5 min) : juste après minuit, c'est encore la veille.
+  await coach.page.getByLabel("Date de la première séance").fill(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date(Date.now() - 5 * 60_000)));
   await coach.page.getByLabel("Heure de début").fill(parisNow(-5));
   await coach.page.getByRole("button", { name: "Créer" }).click();
   await expect(coach.page.getByText("Création effectuée : 1")).toBeVisible();
