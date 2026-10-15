@@ -353,11 +353,12 @@ test.describe("scanner côté adhérent (mobile)", () => {
     );
     expect(small).toEqual([]);
 
-    // en-têtes : la caméra n'est autorisée que sur /checkin
+    // en-têtes : caméra pour ce site seulement, sur toutes ses pages (le scanner s'ouvre souvent par navigation interne : voir qr-camera.spec.ts)
     const scanHeaders = (await m.page.goto("/checkin"))!.headers();
     expect(scanHeaders["permissions-policy"]).toContain("camera=(self)");
     expect(scanHeaders["permissions-policy"]).toContain("geolocation=()");
-    expect((await m.page.goto("/academies"))!.headers()["permissions-policy"]).toContain("camera=()");
+    expect((await m.page.goto("/academies"))!.headers()["permissions-policy"]).toContain("camera=(self)");
+    expect(scanHeaders["permissions-policy"]).toMatch(/(^|, )camera=\(self\)(,|$)/); // exactement « self » : jamais de cadre tiers
     await m.context.close();
   });
 });

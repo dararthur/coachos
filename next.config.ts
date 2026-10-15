@@ -5,7 +5,7 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  // Permissions-Policy : posé par src/proxy.ts (la caméra n'est autorisée que sur /checkin).
+  // Permissions-Policy : posé par src/proxy.ts (caméra : ce site seulement, jamais un cadre tiers).
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   // Strict-Transport-Security : émis par src/proxy.ts (instance déployée en https seulement, sans includeSubDomains ni preload).
 ];

@@ -42,7 +42,7 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 | Aperçu de lien / robot | l'ouverture du lien **ne modifie rien** ; confirmation par POST authentifié | e2e |
 | Redirection / contenu malveillant d'un QR | seuls un jeton ou un lien `<ce site>/checkin/<jeton>` sont acceptés ; jamais de navigation ailleurs | `tests/unit/checkin.test.ts`, e2e |
 | Fuite via journaux | jeton jamais stocké ni journalisé en clair ; audit : `checkin.opened/closed`, `roll.validated/reopened` (sans jeton ni nom) | `checkin.test.ts` |
-| Atteinte à la vie privée | **aucune** géolocalisation, reconnaissance faciale, biométrie ; caméra limitée à `/checkin` par `Permissions-Policy` | e2e en-têtes |
+| Atteinte à la vie privée | **aucune** géolocalisation, reconnaissance faciale, biométrie ; caméra limitée à ce site par `Permissions-Policy: camera=(self)` (jamais un cadre tiers) et demandée seulement après un geste explicite | e2e en-têtes, `qr-camera.spec.ts` |
 
 ## Limites connues
 
@@ -51,7 +51,7 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 - Le jeton figure dans l'URL (`/checkin/<jeton>`) : visible dans l'historique du navigateur de l'adhérent et dans d'éventuels journaux d'accès du serveur/CDN pendant sa courte validité. Les journaux applicatifs de Matnexa ne l'enregistrent pas ; configurer l'hébergeur pour ne pas conserver les chemins de requête si possible.
 - Décodage par `jsQR` (JavaScript) : peut être lent sur un téléphone très ancien ; l'alternative « coller le lien » existe. Mauvaises conditions (reflets, QR trop petit) : agrandir le QR à l'écran du coach.
 - Actualisation par **interrogation toutes les 4 s** (pas de push) : un pointage apparaît chez le coach en ≤ ~5 s ; hors ligne, la liste est figée et un avertissement l'indique.
-- **Caméra et appareils** : testée par Chrome avec caméra simulée (pas de décodage d'un vrai flux) ; le décodage d'un QR réel est prouvé sur image (test unitaire jsQR). Aucun essai sur iPhone/Android physique n'a été fait.
+- **Caméra et appareils** : testée par Chrome avec caméra simulée (motif de test) et avec des échecs simulés (refus, absence, caméra occupée, interruption, arrière-plan : `tests/e2e/qr-camera.spec.ts`, `tests/unit/camera.test.ts`) ; le décodage d'un QR réel est prouvé sur image (test unitaire jsQR). Aucun essai sur iPhone/Android physique n'a été fait : voir la procédure ci-dessous.
 - Les durées de test (jeton 10 s) viennent de `CHECKIN_TOKEN_TTL_SECONDS` ; ne pas la régler en production sans raison.
 
 ## Données
@@ -67,3 +67,20 @@ En plus du QR tournant (un jeton court par séance, affiché par le coach), un c
 - Si aucune séance n'est pointable, la page indique le prochain cours et l'heure d'ouverture du pointage (`checkin_fixed_peek` renvoie `next` et `before_minutes`, après les mêmes contrôles de clé et d'appartenance).
 - Mêmes règles que le QR tournant : l'identité est celle de la session, **la réservation est obligatoire** (« Réserver et confirmer ma présence » réserve puis pointe ; séance pleine : liste d'attente, pas de pointage), un pointage existant n'est jamais écrasé, et la page d'ouverture ne modifie rien avant confirmation.
 - Compromis à connaître : un QR fixe peut être photographié ; il ne fonctionne que pour un adhérent connecté, réservé, dans la fenêtre horaire. Pour un contrôle plus strict, garder le QR tournant.
+
+## Validation sur téléphone (procédure courte, à faire sur un vrai appareil)
+
+Correctif du 2026-10-15 : la caméra était refusée quand le scanner était ouvert depuis l'onglet « Pointer » ou « Scanner à nouveau » (navigation interne : `Permissions-Policy: camera=()` hérité de la page précédente). Reproduit et corrigé dans Chrome ordinateur (même moteur que Chrome Android) ; **à confirmer sur Android**.
+
+Prérequis : application déployée en **https** (la caméra n'existe pas en http, sauf `localhost`), un club avec un cours dans la fenêtre de pointage, un compte membre.
+
+1. **Chrome Android, onglet** : se connecter, ouvrir *Mon espace*, toucher l'onglet **Pointer** (ne PAS recharger la page). Attendu : demande d'autorisation, puis aperçu vidéo de la caméra arrière.
+2. Scanner le QR du coach (ou l'affiche du QR fixe) : écran de confirmation du cours, puis « Présence enregistrée ». Le voyant caméra s'éteint.
+3. Revenir avec « Scanner à nouveau » ou l'onglet **Pointer** : la caméra redémarre sans message d'erreur.
+4. **Refus** : réglages du site › Caméra › Bloquer, puis Pointer. Attendu : « L'accès à la caméra est refusé » avec la marche à suivre Android. Réautoriser dans les réglages puis revenir : le scanner redémarre seul (ou via « Réessayer la caméra »).
+5. **Arrière-plan** : pendant le scan, passer sur une autre application puis revenir. Attendu : la caméra est coupée en arrière-plan et relancée au retour.
+6. **Application installée (PWA)** : « Ajouter à l'écran d'accueil », l'ouvrir, refaire 1 à 3 ; tester aussi le raccourci « Pointer ma présence » (appui long sur l'icône).
+7. **Caméra occupée** : ouvrir l'appareil photo natif, revenir sans le fermer, Pointer. Attendu : message « caméra déjà utilisée » ou démarrage normal selon l'appareil, jamais d'écran figé.
+8. Recommencer 1 à 3 sur **Safari iPhone** et sur l'application installée iOS (non-régression).
+
+Noter pour chaque étape : modèle, version d'Android, version de Chrome, résultat. En cas d'échec, `chrome://inspect` (débogage USB) donne la console et le nom exact de l'erreur.

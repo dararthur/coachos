@@ -30,9 +30,12 @@ export async function proxy(request: NextRequest) {
   const response = NextResponse.next({ request: { headers: requestHeaders } });
 
   response.headers.set("Content-Security-Policy", csp);
-  // La caméra n'est autorisée que sur la page de scan ; micro, géolocalisation, paiement et USB ne le sont jamais.
-  const camera = request.nextUrl.pathname === "/checkin" ? "camera=(self)" : "camera=()";
-  response.headers.set("Permissions-Policy", `${camera}, microphone=(), geolocation=(), payment=(), usb=()`);
+  // Caméra : ce site seulement (jamais un cadre tiers), sur TOUTES ses pages. La Permissions-Policy est figée au chargement du
+  // document ; or le scanner s'ouvre le plus souvent par une navigation interne (onglet « Pointer », « Scanner à nouveau »)
+  // qui garde le document de la page précédente. Un `camera=()` hors /checkin y faisait refuser la caméra par Chrome
+  // (Android compris) sans que l'utilisateur puisse rien y changer. Restreindre au chemin n'ajoutait rien : l'autorisation
+  // de l'utilisateur vaut pour toute l'origine. Micro, géolocalisation, paiement et USB restent interdits partout.
+  response.headers.set("Permissions-Policy", "camera=(self), microphone=(), geolocation=(), payment=(), usb=()");
   // HSTS : émetteur unique (jamais Nginx). Lu à CHAQUE requête dans l'environnement d'exécution du service.
   const hsts = hstsHeader({ appEnv: process.env.APP_ENV, siteUrl: process.env.SITE_URL, maxAge: process.env.HSTS_MAX_AGE_SECONDS });
   if (hsts) response.headers.set("Strict-Transport-Security", hsts);

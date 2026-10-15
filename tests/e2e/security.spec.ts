@@ -136,7 +136,7 @@ test.describe("authentification et en-têtes de sécurité", () => {
 
     // `next` externe ignoré après une connexion réussie
     await logIn(page, email, "https://evil.example/phish");
-    await expect(page).toHaveURL(/127\.0\.0\.1:3100\/(onboarding|academies|a\/)/);
+    await expect(page).toHaveURL(new RegExp(`127\\.0\\.0\\.1:${process.env.E2E_PORT ?? 3100}/(onboarding|academies|a/)`));
     expect(new URL(page.url()).hostname).toBe("127.0.0.1");
   });
 
@@ -158,7 +158,9 @@ test.describe("authentification et en-têtes de sécurité", () => {
     // HSTS : émis par UN seul composant (src/proxy.ts), uniquement pour une instance déployée en https. La pile e2e (APP_ENV=test, http) n'en émet pas ;
     // l'émission (valeur exacte, sans includeSubDomains ni preload) est prouvée sur un vrai processus par tests/e2e/startup-guards.spec.ts.
     expect(h["strict-transport-security"]).toBeUndefined();
-    expect(h["permissions-policy"]).toContain("camera=()");
+    expect(h["permissions-policy"]).toContain("camera=(self),"); // ce site seulement (navigation interne vers le scanner)
+    expect(h["permissions-policy"]).toContain("microphone=()");
+    expect(h["permissions-policy"]).toContain("geolocation=()");
     expect(h["x-powered-by"]).toBeUndefined();
     const csp = h["content-security-policy"] ?? "";
     expect(csp).toMatch(/script-src 'self' 'nonce-[^']+' 'strict-dynamic'/);
