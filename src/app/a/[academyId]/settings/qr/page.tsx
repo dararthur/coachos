@@ -48,7 +48,7 @@ export default async function PosterPage({ params }: { params: Promise<{ academy
         </div>
         <div className="space-y-2">
           <p className="text-[1.75rem] font-bold font-stretch-[80%]">Scannez pour pointer votre présence</p>
-          <p className="text-lg text-ink-soft">Ouvrez Matnexa, touchez « Pointer », puis visez ce code. Pensez à réserver votre cours.</p>
+          <p className="text-lg text-ink-soft">Visez ce code avec l&apos;appareil photo de votre téléphone et touchez le lien, ou ouvrez Matnexa › « Pointer ». Pensez à réserver votre cours.</p>
         </div>
         <MatnexaLogo size="sm" />
       </section>

@@ -11,8 +11,10 @@ Un adhérent connecté enregistre lui-même sa présence en scannant un QR code 
 4. *Fermer le pointage* (révoque immédiatement tous les QR) ou *Valider la feuille d'appel* (ferme + révoque ; réversible par *Rouvrir la feuille*).
 
 **Adhérent** (compte rattaché à sa fiche membre par l'invitation « fiche membre liée ») :
-1. **Recommandé : le scanner intégré** — *Mon espace → Pointer ma présence* (ou l'onglet « Pointer », ou le raccourci de l'application installée). Ces entrées ouvrent `/checkin?scan=1` : la caméra démarre sans second appui. Il fonctionne dans l'application installée et garde votre session.
-   **Secours** : l'écran ne propose plus l'appareil photo natif (session séparée sur iOS, lien qui sort de l'application). Si la caméra est bloquée, il donne la marche à suivre iPhone ou Android ; sinon, le membre se signale au coach, qui le marque présent à l'appel. Le lien de pointage texte reste accepté, replié sous « J'ai un lien de pointage ».
+1. **Deux chemins officiels, qui mènent au même écran de confirmation** (décision du 2026-10-16) :
+   - **Appareil photo du téléphone** : le membre vise le QR (affiche ou écran du coach) avec l'appareil photo natif et touche le lien affiché. Le QR ne contient que l'adresse `<site>/checkin/…`, qui s'ouvre dans le navigateur. Android : Chrome (ou l'application installée) partage la session, le membre est déjà connecté. iPhone : le lien s'ouvre dans **Safari, séparé de l'application installée** ; il faut s'y connecter **une fois** (session d'un an), la page de connexion l'explique. Avec le QR tournant (90 s), cette première connexion peut dépasser la validité : viser à nouveau l'écran du coach. L'affiche du QR fixe n'expire pas : c'est le cas idéal pour ce chemin.
+   - **Scanner intégré** : *Mon espace → Pointer ma présence* (ou l'onglet « Pointer », ou le raccourci de l'application installée), qui ouvre `/checkin?scan=1` : la caméra démarre sans second appui, dans l'application installée, avec sa session.
+   **Secours** : si la caméra intégrée est bloquée, l'écran donne la marche à suivre iPhone ou Android et rappelle le chemin « appareil photo » ; sinon, le membre se signale au coach, qui le marque présent à l'appel. Le lien de pointage texte reste accepté, replié sous « J'ai un lien de pointage ».
 2. La caméra n'est demandée qu'après un geste explicite (bouton du scanner, ou « Pointer ma présence » ailleurs dans l'application) : une simple visite de `/checkin` ne la sollicite pas. Le décodage se fait dans le navigateur (aucune image n'est envoyée ni conservée).
 3. Un écran affiche le cours concerné ; **rien n'est enregistré avant « Confirmer ma présence »**. La confirmation « Présence enregistrée » n'apparaît qu'après la réponse du serveur confirmant l'écriture.
 
@@ -82,5 +84,6 @@ Prérequis : application déployée en **https** (la caméra n'existe pas en htt
 6. **Application installée (PWA)** : « Ajouter à l'écran d'accueil », l'ouvrir, refaire 1 à 3 ; tester aussi le raccourci « Pointer ma présence » (appui long sur l'icône).
 7. **Caméra occupée** : ouvrir l'appareil photo natif, revenir sans le fermer, Pointer. Attendu : message « caméra déjà utilisée » ou démarrage normal selon l'appareil, jamais d'écran figé.
 8. Recommencer 1 à 3 sur **Safari iPhone** et sur l'application installée iOS (non-régression).
+9. **Appareil photo natif** (second chemin officiel) : sans ouvrir Matnexa, viser l'affiche du QR fixe avec l'application Appareil photo et toucher le lien. Android : la confirmation du cours s'ouvre directement. iPhone : Safari affiche la connexion avec l'aide « Sur iPhone… » ; se connecter, confirmer, puis rescanner : la confirmation doit s'ouvrir sans nouvelle connexion. Refaire avec le QR tournant de l'écran du coach.
 
 Noter pour chaque étape : modèle, version d'Android, version de Chrome, résultat. En cas d'échec, `chrome://inspect` (débogage USB) donne la console et le nom exact de l'erreur.

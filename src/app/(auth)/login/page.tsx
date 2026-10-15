@@ -30,7 +30,15 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       <h1 className="mb-1 text-title font-bold font-stretch-[80%]">Connexion</h1>
       <p className="mb-5 text-sm text-ink-soft">Accédez à votre club.</p>
       {joiningClub && <Alert tone="info">Connectez-vous pour terminer votre inscription au club{joiningClub === true ? "" : <> « {joiningClub} »</>} : vous y revenez juste après.</Alert>}
-      {safeNext(params.next).startsWith("/checkin/") && <Alert tone="info">Vous avez ouvert un lien de pointage. Connectez-vous : vous reviendrez à la confirmation de votre présence (si le QR code a expiré, rescannez-le).</Alert>}
+      {safeNext(params.next).startsWith("/checkin/") && (
+        <Alert tone="info" title="Vous avez scanné un QR de pointage">
+          Connectez-vous : vous reviendrez directement à la confirmation de votre présence.
+          {!safeNext(params.next).startsWith("/checkin/club/") && " Si le QR de l'écran du coach a expiré entre-temps, visez-le à nouveau."}
+          <span className="mt-1.5 block">
+            Sur iPhone, l&apos;appareil photo ouvre Safari, qui est séparé de l&apos;application Matnexa installée : connectez-vous une fois ici, les scans suivants iront droit à la confirmation.
+          </span>
+        </Alert>
+      )}
       {params.verified && !params.error && <Alert tone="success">Adresse e-mail confirmée. Vous pouvez vous connecter.</Alert>}
       {params.reset && <Alert tone="success">Mot de passe mis à jour. Reconnectez-vous avec votre nouveau mot de passe.</Alert>}
       {params.deleted && <Alert tone="success">Votre compte a été supprimé.</Alert>}

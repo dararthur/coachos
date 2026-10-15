@@ -308,7 +308,9 @@ export function Scanner({ autoStart = false }: { autoStart?: boolean }) {
         <h2 id="fallback-title" className="text-base font-semibold">
           La caméra ne fonctionne pas ?
         </h2>
-        <p className="mt-1 text-sm text-ink-soft">Signalez-vous au coach au début du cours : il vous marque présent à l&apos;appel.</p>
+        <p className="mt-1 text-sm text-ink-soft">
+          Visez le QR avec l&apos;appareil photo de votre téléphone et touchez le lien qui apparaît : il ouvre directement la confirmation de votre présence. Sinon, signalez-vous au coach au début du cours : il vous marque présent à l&apos;appel.
+        </p>
         <details className="mt-3">
           <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold underline decoration-ink/40 underline-offset-[3px] hover:decoration-ink">
             J&apos;ai un lien de pointage

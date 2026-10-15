@@ -449,7 +449,7 @@ function CheckinPanel({
   const live = isOpen && token !== null && remaining > 0;
 
   return (
-    <Card title="Pointage par QR code" description={isOpen ? "Montrez cet écran : chaque adhérent scanne et confirme sa présence. Vous gardez la main sur la feuille." : undefined}>
+    <Card title="Pointage par QR code" description={isOpen ? "Montrez cet écran : chaque adhérent le vise avec l'appareil photo de son téléphone (ou l'onglet « Pointer » de Matnexa) et confirme sa présence. Vous gardez la main sur la feuille." : undefined}>
       {error && (
         <p role="alert" className="mb-3 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2 text-sm font-medium text-danger-ink">
           {error}

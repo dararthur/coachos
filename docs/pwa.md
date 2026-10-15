@@ -35,7 +35,7 @@
 | Barre d'état | `theme-color` | `statusBarStyle: default` ; contenu sous l'encoche géré par `safe-area-inset-*` |
 | Session / cookies | Partagés avec Chrome | **Stockage séparé du navigateur** : une session Safari n'est pas reprise dans l'app installée → se reconnecter une fois après l'installation |
 | Liens ouverts depuis l'extérieur (invitation, e-mail de reset) | S'ouvrent dans Chrome ou, selon la version, dans l'app installée | S'ouvrent dans Safari, **pas** dans l'app installée : terminer l'action dans Safari puis se reconnecter dans l'app |
-| Caméra (pointage par QR, `/checkin`) | Demande de permission du navigateur ; en app installée, permission du site conservée | Demande possible à chaque ouverture ; nécessite HTTPS ; le scan natif de l'appareil photo ouvre le lien dans Safari, **pas** dans l'app installée (la session de l'app est séparée : se reconnecter dans Safari) |
+| Caméra (pointage par QR, `/checkin`) | Demande de permission du navigateur ; en app installée, permission du site conservée | Demande possible à chaque ouverture ; nécessite HTTPS ; le scan par l'appareil photo natif (chemin officiel, comme le scanner intégré) ouvre le lien dans Safari, **pas** dans l'app installée : se connecter **une fois** dans Safari, les scans suivants mènent droit à la confirmation |
 | Notifications push | Bouton « Activer les notifications » dans « Mon compte » | Idem, **uniquement depuis l'application installée** sur l'écran d'accueil (iOS 16.4+) ; dans Safari : mode d'emploi affiché |
 | Mise à jour | Immédiate (pas de cache d'application) | Immédiate |
 
@@ -49,5 +49,5 @@ Sur un **iPhone (Safari)** et un **Android (Chrome)**, avec l'environnement de *
 4. Faire un appel complet (7 membres) en conditions réelles de salle (une main, lumière forte) ; vérifier la lisibilité et les cibles tactiles.
 5. Vérifier que rien ne passe sous l'encoche ou la barre d'accueil, en portrait et en paysage.
 6. Mode avion : confirmer que l'app affiche une erreur claire et ne montre aucune donnée périmée.
-7. Pointage QR (`docs/qr-checkin.md`) : refuser puis accepter la permission caméra, scanner en lumière de salle, tester le scanner intégré (application installée), puis le secours : scan avec l'application Appareil photo (vérifier dans quel navigateur le lien s'ouvre, se connecter, confirmer avant expiration), puis « coller le lien ».
+7. Pointage QR (`docs/qr-checkin.md`) : refuser puis accepter la permission caméra, scanner en lumière de salle, tester le scanner intégré (application installée), puis le second chemin officiel : scan avec l'application Appareil photo (vérifier dans quel navigateur le lien s'ouvre ; sur iPhone, se connecter une fois dans Safari, confirmer, puis rescanner : la confirmation doit s'ouvrir directement), puis « coller le lien ».
 8. Noter tout écart dans ce document.
