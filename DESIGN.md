@@ -33,6 +33,10 @@ colors:
   danger-strong: "#8f1c13"
   danger-soft: "#fbe9e7"
   danger-ink: "#7a1a12"
+  paper: "#fbfaf6"
+  paper-grid: "#e6e1d7"
+  paper-margin: "#e2a19a"
+  graphite: "#4a4e55"
 typography:
   figure:
     fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
@@ -74,6 +78,45 @@ typography:
     fontSize: "0.75rem"
     fontWeight: 400
     lineHeight: "1rem"
+  display-hero:
+    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(3rem, 1.9rem + 3.6vw, 4.5rem)"
+    fontWeight: 750
+    lineHeight: 0.92
+    letterSpacing: "-0.02em"
+    fontVariation: "'wdth' 72"
+  display-closing:
+    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(2.75rem, 1.6rem + 5vw, 5.5rem)"
+    fontWeight: 750
+    lineHeight: 0.92
+    letterSpacing: "-0.015em"
+    fontVariation: "'wdth' 75"
+  display-section:
+    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(2.25rem, 1.5rem + 3vw, 3.75rem)"
+    fontWeight: 750
+    lineHeight: 0.98
+    letterSpacing: "-0.015em"
+    fontVariation: "'wdth' 75"
+  display-chore:
+    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "clamp(1.875rem, 1.35rem + 2vw, 2.75rem)"
+    fontWeight: 750
+    lineHeight: 1.02
+    letterSpacing: "-0.015em"
+    fontVariation: "'wdth' 75"
+  lead:
+    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 400
+    lineHeight: 1.6
+  body-vitrine:
+    fontFamily: "Archivo, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.0625rem"
+    fontWeight: 400
+    lineHeight: 1.6
+    fontFeature: "'tnum'"
 rounded:
   xs: "2px"
   sm: "4px"
@@ -141,6 +184,22 @@ components:
     rounded: "{rounded.md}"
     padding: "24px"
     width: "min(32rem, calc(100vw - 2rem))"
+  button-vitrine:
+    backgroundColor: "{colors.accent}"
+    textColor: "#ffffff"
+    rounded: "{rounded.sm}"
+    padding: "8px 20px"
+    height: "48px"
+  button-vitrine-hover:
+    backgroundColor: "{colors.accent-strong}"
+  button-bar:
+    backgroundColor: "{colors.bar}"
+    textColor: "{colors.bar-text}"
+    rounded: "{rounded.sm}"
+    padding: "8px 16px"
+    height: "44px"
+  button-bar-hover:
+    backgroundColor: "{colors.bar-raised}"
 ---
 
 # Design System: Matnexa
@@ -339,3 +398,85 @@ Centrés, sans cadre pointillé : quatre bâtons gris (glyphe de comptage), titr
 - **Don't** aligner une rangée de cartes KPI : les compteurs vont dans une seule bande divisée par des filets.
 - **Don't** ajouter de surtitre (petit libellé en capitales au-dessus d'un titre) ni d'icône sans libellé.
 - **Don't** ajouter de thème sombre ni de seconde famille de caractères.
+
+## Vitrine (www.matnexa.fr)
+
+Source normative : `site/assets/site.css`, `site/index.html`, `site/mentions-legales/index.html`, `site/404.html`. Extension approuvée du monde Ceinture pour le site public statique (mode Persuader). Toutes les règles qui précèdent valent sur la vitrine sauf mention contraire ci-dessous ; rien de cette section ne remonte dans l'application.
+
+**Le cahier rayé.** La vitrine montre le cahier d'appel papier, puis le raye : la page quadrillée tenue au crayon est l'illustration, le trait orange cerné de noir du symbole est le geste. Mêmes jetons, mêmes panneaux, même barre noire que l'application ; le site ajoute une échelle d'affiche, un contrepoint papier réservé à l'illustration et quelques motifs de mise en scène. Thème clair uniquement (`color-scheme: light`) ; `html` prend la couleur de la barre pour que le rebond de défilement reste noir.
+
+### Couleurs de la vitrine
+- Palette de l'application reprise telle quelle, en variables CSS du même nom dans `site.css`.
+- **Le cahier :** **Papier** (`paper`), **Quadrillage** (`paper-grid`), **Marge** (`paper-margin`, la ligne de marge rose pâle) et **Graphite** (`graphite`, écriture et bâtons au crayon). Uniquement dans l'illustration : page de cahier SVG du héros et lignes de cahier rayées des corvées.
+- **Orange ceinture vif** (`accent-bright`) : sur la vitrine, en plus du symbole, il trace le trait qui raye (héros, lignes de cahier, dernière étape du rituel), toujours cerné d'encre. Jamais sur un bouton ni sur un texte.
+
+**La règle du cahier en contrepoint.** Papier, quadrillage, marge et graphite n'existent que dans le dessin du cahier. Ce qui est cliquable, se lit comme une interface ou porte une donnée de l'écran reste en coton, blanc, encre et filet.
+
+**La règle du trait cerné.** Le trait qui raye est une bande `accent-bright` bordée d'encre des deux côtés : 14 px d'orange dans 30 px d'encre, bouts droits, sur le cahier du héros ; 2 px d'orange entre deux filets d'encre de 0,5 px, à 60 % de la hauteur du texte, sur une ligne de cahier. Il raye une corvée papier, jamais une fonction de Matnexa.
+
+**La règle de l'accent unique, en vitrine.** Un seul bouton orange par hauteur d'écran : celui du héros et celui de la clôture, séparés par toute la page. Dans l'en-tête, « Demander l'accès » est un bouton au trait blanc, pour ne pas doubler l'orange du héros ; les actions secondaires sont des liens soulignés.
+
+### Typographie d'affiche
+Archivo seul, comme l'application. Les titres d'affiche sont condensés, graisse 750, interlignage serré, `text-wrap: balance`.
+- **Affiche** (`display-hero`, 48 à 72 px, chasse 72 %) : le `h1` du héros. Dans le même `h1`, une sous-ligne de 19 à 22 px, graisse 600, chasse normale, 30ch max, porte les mots-clés.
+- **Clôture** (`display-closing`, 44 à 88 px, chasse 75 %) : le titre de la section finale, 14ch max.
+- **Section** (`display-section`, 36 à 60 px, chasse 75 %) : `h2` des sections.
+- **Corvée** (`display-chore`, 30 à 44 px, chasse 75 %) : `h3` de chaque corvée et titre de l'inventaire.
+- **Pages simples :** `h1` des mentions légales et de la 404 de 40 à 64 px, chasse 75 % ; `h2` de 22 px, chasse 85 %, sous un filet `line`.
+- **Chapeau** (`lead`, 18 px) : sous un titre de section, en `ink-soft` (`bar-muted` sur la barre), 40rem max.
+- **Corps** (`body-vitrine`, 17 px / 1,6, chiffres tabulaires) : mesure de 34 à 42rem, `text-wrap: pretty`.
+- **Reproductions d'écran :** panneaux à 15 px / 1,45, méta et indications à 13 px, heures en chasse 75 %.
+- Titres d'étape du rituel 24 px, chasse 78 % ; terme du registre 17 px gras, chasse 85 %.
+
+**La règle des deux échelles.** L'échelle d'affiche ne vit que sur la vitrine ; l'application garde la sienne (titre de page 26 px). Un écran reproduit dans la vitrine reste à l'échelle de l'application, jamais grossi en affiche.
+
+### Mise en page de la vitrine
+- Colonne de 76rem max, gouttière fluide de 16 à 32 px (`clamp(1rem, 4vw, 2rem)`), sections espacées de 72 à 128 px (`clamp(4.5rem, 3rem + 6vw, 8rem)`).
+- Dès 1024 px : héros 5/7 (texte | cahier), corvée 5/6 (texte | écran), données 5/7 avec l'introduction collante, questions 4/7, clôture texte | symbole. Une colonne en dessous. Paliers identiques à l'application (480, 640, 768, 1024 px).
+- Fonds alternés : coton (héros, corvées, questions, pages simples), blanc à filet bas (données), barre noire (en-tête, rituel, clôture, pied de page). Les corvées s'ouvrent sur un filet `line`.
+- Aucune ombre : la profondeur de la scène du héros vient du recouvrement. Le cahier est incliné de -1,5°, la feuille d'appel se pose dessus (recouvrement de 14 %, 22 % dès 640 px).
+- Aucun `style` ni script en ligne, et aucun JavaScript requis : tout passe par `site.css`, démo comprise (CSP stricte).
+- Impression : barres noires et scène masquées, fond blanc.
+
+**La règle des bandes noires.** La barre noire ne sert qu'aux bandes pleine largeur qui ouvrent, rythment et ferment la page : en-tête, rituel, clôture, pied de page. Texte blanc, secondaire `bar-muted`, séparateurs `bar-track`, focus blanc (`on-bar`).
+
+### Composants de la vitrine
+
+#### Boutons et liens
+- **Principal vitrine** (`button-vitrine`) : orange ceinture, texte blanc, 48 px de haut, 16 px graisse 600, flèche de 18 px ; survol `accent-strong`.
+- **Au trait blanc** (`button-bar`) : sur la barre noire, 44 px, 14 px graisse 600, texte blanc, filet blanc à 35 % ; survol `bar-raised` et filet à 60 %.
+- **Lien d'accompagnement :** lien souligné de 44 px, 15 px graisse 600, à côté du bouton principal.
+- **Navigation d'en-tête :** barre de 64 px ; liens `bar-muted` de 44 px, 14 px graisse 600, survol `bar-raised` et blanc ; ancres visibles dès 1024 px, bouton au trait blanc dès 640 px.
+
+#### Le trait qui raye (signature)
+- **Cahier du héros :** page de cahier SVG (quadrillage de 16 px, ligne de marge, trous de reliure en coton, noms et bâtons au graphite en chasse 78 %), barrée en diagonale par le trait cerné. Le trait se trace au chargement par `stroke-dashoffset` (760 ms, sortie exponentielle, 380 ms de délai), uniquement sous `prefers-reduced-motion: no-preference` ; sinon il est posé d'emblée. C'est le seul mouvement mis en scène de la vitrine.
+- **Ligne de cahier rayée :** au-dessus de l'écran de chaque corvée, la phrase du cahier que cet écran remplace : papier quadrillé de 12 px avec sa marge à 12 px, filet `line`, coins de 2 px, graphite 20 px graisse 500 chasse 92 %, inclinée de -0,8°, rayée du trait cerné. Elle dépasse au-dessus du panneau, décalée de 16 px, et le panneau la recouvre de 5 px.
+
+#### Feuille d'appel de démonstration
+Reproduction fonctionnelle sans JavaScript de la feuille d'appel : par membre, trois boutons radio dans des étiquettes de 44 px (filet `line-strong` au repos, plein vert / ambre / rouge une fois coché via `:has()`, focus orange porté par l'étiquette) ; compteurs CSS Présent / Retard / Absent / À marquer et progression en cinq segments de 8 px sur `line`. Bandeau d'invitation en `hover`, 13 px, en tête ; pied coton à filet haut. Noms fictifs, annoncés comme tels.
+
+#### Puces ruban
+Listes de faits entre filets `line`, 15 px / 1,5, retrait de 28 px. La puce est une case de barrette : 12 × 16 px, ruban blanc de 6 px entre deux bandes noires, coin de 1 px.
+
+#### Registre
+Liste de définitions ouverte par un filet d'encre de 2 px, lignes séparées par un filet `line` de 1 px, 18 px de marge verticale. Dès 640 px, deux colonnes : terme (13rem, 17 px gras, chasse 85 %) | définition (`ink-soft`, 15 px / 1,6, 65ch max). Inventaire des fonctions et engagements sur les données.
+
+#### Rituel
+Bande noire en cinq étapes : empilées sous 768 px avec un filet `bar-track` en haut, cinq colonnes séparées par des filets `bar-track` au-dessus. Chaque étape s'ouvre sur une bande de ruban blanc de 14 × 36 px ; la dernière est rayée en diagonale du trait cerné. Titre 24 px, moment en 14 px graisse 600 blanc sous le titre, texte 15 px `bar-muted`.
+
+#### Questions
+`<details>` natifs entre filets (filet fort en tête), question 18 px graisse 650 sur 56 px minimum, chevron de 20 px qui pivote en 150 ms.
+
+#### Clôture et pied de page
+- **Clôture :** titre `display-closing`, chapeau `bar-muted`, le second et dernier bouton orange, grand symbole de 128 à 240 px, à droite dès 1024 px.
+- **Pied de page :** logotype, accroche, colonnes de liens `bar-muted` de 44 px (blanc souligné au survol), titres de colonne 14 px gras blancs, mentions en 13 px sous un filet `bar-track`.
+
+### Do / Don't de la vitrine
+- **Do** réserver papier, quadrillage, marge et graphite au dessin du cahier.
+- **Do** cerner d'encre chaque trait `accent-bright` qui raye.
+- **Do** garder un seul bouton orange par hauteur d'écran ; dans l'en-tête, le bouton au trait blanc.
+- **Do** reproduire les écrans à l'échelle de l'application (panneaux 15 / 13 px), avec ses composants et des données fictives annoncées.
+- **Do** tout faire fonctionner sans JavaScript et sans `style` en ligne.
+- **Don't** poser la ligne de cahier rayée comme un surtitre : c'est une phrase de cahier posée sur l'écran qui la remplace, jamais un libellé au-dessus d'un titre.
+- **Don't** ajouter d'ombre, de fond en dégradé de couleurs, de rangée de cartes icône-titre-texte, de logos clients ni de chiffres en vitrine.
+- **Don't** mettre en scène d'autre mouvement que le trait du héros ; les transitions restent des changements de couleur.

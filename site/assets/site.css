@@ -222,10 +222,6 @@ a:hover {
   transition: transform 200ms var(--ease-out);
 }
 
-.btn:hover svg {
-  transform: translateX(3px);
-}
-
 .btn-primary {
   background: var(--accent);
   color: #ffffff;
@@ -1488,7 +1484,9 @@ a:hover {
 }
 
 .faq-list summary:hover {
-  color: var(--accent-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 
 .faq-list summary svg {

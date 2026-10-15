@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-13T22:22:07.868Z",
+  "generatedAt": "2026-10-15T09:47:46.107Z",
   "title": "Design System: Matnexa",
   "extensions": {
     "colorMeta": {
@@ -187,6 +187,22 @@
       "bar-track": {
         "role": "neutral",
         "displayName": "Piste de barrette"
+      },
+      "paper": {
+        "role": "tertiary",
+        "displayName": "Papier (vitrine, illustration seulement)"
+      },
+      "paper-grid": {
+        "role": "tertiary",
+        "displayName": "Quadrillage (vitrine, illustration seulement)"
+      },
+      "paper-margin": {
+        "role": "tertiary",
+        "displayName": "Marge (vitrine, illustration seulement)"
+      },
+      "graphite": {
+        "role": "tertiary",
+        "displayName": "Graphite (vitrine, illustration seulement)"
       }
     },
     "typographyMeta": {
@@ -217,6 +233,30 @@
       "caption": {
         "displayName": "Légende",
         "purpose": "Badges, en-têtes de colonne, dates secondaires."
+      },
+      "display-hero": {
+        "displayName": "Affiche",
+        "purpose": "Vitrine : h1 du héros, chasse 72 %."
+      },
+      "display-closing": {
+        "displayName": "Clôture",
+        "purpose": "Vitrine : titre de la section finale, chasse 75 %, 14ch max."
+      },
+      "display-section": {
+        "displayName": "Section",
+        "purpose": "Vitrine : h2 des sections, chasse 75 %."
+      },
+      "display-chore": {
+        "displayName": "Corvée",
+        "purpose": "Vitrine : h3 des corvées et titre de l'inventaire, chasse 75 %."
+      },
+      "lead": {
+        "displayName": "Chapeau",
+        "purpose": "Vitrine : texte sous un titre de section, ink-soft ou bar-muted."
+      },
+      "body-vitrine": {
+        "displayName": "Corps vitrine",
+        "purpose": "Vitrine : texte courant, 17 px / 1,6."
       }
     },
     "shadows": [
@@ -241,6 +281,16 @@
         "name": "reduced",
         "value": "0.01ms",
         "purpose": "prefers-reduced-motion : animations et transitions neutralisées."
+      },
+      {
+        "name": "vitrine-ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Vitrine : sortie exponentielle du trait qui raye et du chevron des questions."
+      },
+      {
+        "name": "vitrine-strike",
+        "value": "760ms cubic-bezier(0.16, 1, 0.3, 1) 380ms",
+        "purpose": "Vitrine : tracé du trait sur le cahier du héros (stroke-dashoffset), seulement sous prefers-reduced-motion: no-preference."
       }
     ],
     "breakpoints": [
@@ -265,6 +315,13 @@
       "default": "outline: 2px solid #c2410c; outline-offset: 2px",
       "onBar": "outline-color: #ffffff",
       "field": "border-color: #16191d; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #c2410c"
+    },
+    "vitrine": {
+      "source": "site/assets/site.css",
+      "page": "76rem",
+      "gutter": "clamp(1rem, 4vw, 2rem)",
+      "sectionY": "clamp(4.5rem, 3rem + 6vw, 8rem)",
+      "colorScheme": "light"
     }
   },
   "components": [
@@ -337,6 +394,43 @@
       "description": "Signature : bandes de ruban blanc sur barre noire, une par semaine avec venue.",
       "html": "<div class=\"ds-tally\"><span class=\"on\"></span><span class=\"on\"></span><span></span><span class=\"on\"></span><span class=\"on\"></span><span></span><span class=\"on\"></span><span class=\"on\"></span></div>",
       "css": ".ds-tally{display:inline-flex;gap:3px;padding:4px;border-radius:2px;background:#16191d}.ds-tally>span{display:block;width:8px;height:20px;border-radius:1px;background:var(--color-bar-track, #3b4047)}.ds-tally>span.on{background:#fff}"
+    },
+    {
+      "name": "Bouton principal vitrine",
+      "kind": "button",
+      "refersTo": "button-vitrine",
+      "description": "Vitrine : action orange unique par hauteur d'écran, 48 px.",
+      "html": "<a class=\"ds-btn-vitrine\" href=\"#\">Demander l'accès pour mon club <svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></a>",
+      "css": ".ds-btn-vitrine{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:8px 20px;border:1px solid transparent;border-radius:4px;background:#c2410c;color:#fff;font:600 16px/1.3 Archivo,system-ui,sans-serif;text-decoration:none;transition:background-color 150ms}.ds-btn-vitrine svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:square}.ds-btn-vitrine:hover,.ds-btn-vitrine:active{background:#a3360a}.ds-btn-vitrine:focus-visible{outline:2px solid #c2410c;outline-offset:2px}"
+    },
+    {
+      "name": "Bouton au trait blanc",
+      "kind": "button",
+      "refersTo": "button-bar",
+      "description": "Vitrine : action sur la barre noire de l'en-tête, sans orange.",
+      "html": "<div class=\"ds-bar-wrap\"><a class=\"ds-btn-bar\" href=\"#\">Demander l'accès</a></div>",
+      "css": ".ds-bar-wrap{padding:16px;background:#16191d}.ds-btn-bar{display:inline-flex;align-items:center;min-height:44px;padding:8px 16px;border:1px solid rgb(255 255 255 / .35);border-radius:4px;color:#fff;font:600 14px/1.3 Archivo,system-ui,sans-serif;text-decoration:none;transition:background-color 150ms,border-color 150ms}.ds-btn-bar:hover{background:#23272d;border-color:rgb(255 255 255 / .6)}.ds-btn-bar:focus-visible{outline:2px solid #fff;outline-offset:2px}"
+    },
+    {
+      "name": "Ligne de cahier rayée",
+      "kind": "custom",
+      "description": "Vitrine, signature : la phrase du cahier sur papier quadrillé, rayée du trait orange cerné d'encre.",
+      "html": "<p class=\"ds-page-line\"><s>La feuille qui fait le tour du tatami</s></p>",
+      "css": ".ds-page-line{display:inline-block;margin:0;padding:8px 16px 9px 28px;background-color:#fbfaf6;background-image:linear-gradient(90deg,transparent 12px,#e2a19a 12px,#e2a19a 13px,transparent 13px),linear-gradient(#e6e1d7 1px,transparent 1px),linear-gradient(90deg,#e6e1d7 1px,transparent 1px);background-size:100% 100%,12px 12px,12px 12px;border:1px solid #ddd8cf;border-radius:2px;color:#4a4e55;font:500 20px/1.6 Archivo,system-ui,sans-serif;font-stretch:92%;transform:rotate(-0.8deg)}.ds-page-line s{text-decoration:none;padding-inline:2px;background-image:linear-gradient(transparent calc(60% - 1.5px),#16191d calc(60% - 1.5px) calc(60% - 1px),#ea6a2a calc(60% - 1px) calc(60% + 1px),#16191d calc(60% + 1px) calc(60% + 1.5px),transparent calc(60% + 1.5px));-webkit-box-decoration-break:clone;box-decoration-break:clone}"
+    },
+    {
+      "name": "Liste à puces ruban",
+      "kind": "custom",
+      "description": "Vitrine : faits entre filets, puce en case de barrette.",
+      "html": "<ul class=\"ds-facts\"><li><strong>Assiduité sur 8 semaines</strong> dans chaque ligne de la liste des membres.</li><li><strong>Le message est pré-rempli</strong> : vous le modifiez si besoin, puis vous l'envoyez.</li></ul>",
+      "css": ".ds-facts{margin:0;padding:0;list-style:none;max-width:36rem;border-top:1px solid #ddd8cf;font:400 15px/1.5 Archivo,system-ui,sans-serif;color:#16191d}.ds-facts li{position:relative;padding:12px 0 12px 28px;border-bottom:1px solid #ddd8cf}.ds-facts li::before{content:\"\";position:absolute;left:0;top:15px;width:12px;height:16px;border-radius:1px;background:linear-gradient(90deg,#16191d 0 3px,#fff 3px 9px,#16191d 9px)}.ds-facts strong{font-weight:650}"
+    },
+    {
+      "name": "Registre",
+      "kind": "custom",
+      "description": "Vitrine : liste de définitions ouverte par un filet d'encre de 2 px.",
+      "html": "<dl class=\"ds-ledger\"><div><dt>Hébergement</dt><dd>Serveur OVHcloud en France (Gravelines).</dd></div><div><dt>Export et effacement</dt><dd>Chacun peut exporter ses données au format JSON et supprimer son compte.</dd></div></dl>",
+      "css": ".ds-ledger{margin:0;border-top:2px solid #16191d;font-family:Archivo,system-ui,sans-serif}.ds-ledger>div{display:grid;grid-template-columns:13rem minmax(0,1fr);gap:4px 32px;padding:18px 0;border-bottom:1px solid #ddd8cf}.ds-ledger dt{font-weight:700;font-stretch:85%;font-size:17px;line-height:1.35;color:#16191d}.ds-ledger dd{margin:0;max-width:65ch;color:#585d64;font-size:15px;line-height:1.6}"
     }
   ],
   "narrative": {
@@ -390,6 +484,31 @@
         "name": "La règle pas de carte dans la carte",
         "body": "Un panneau ne contient jamais un autre panneau ; un tableau ou une liste posé dedans va bord à bord (variante `flush`), séparé par des filets.",
         "section": "elevation"
+      },
+      {
+        "name": "La règle du cahier en contrepoint",
+        "body": "Papier, quadrillage, marge et graphite n'existent que dans le dessin du cahier. Ce qui est cliquable, se lit comme une interface ou porte une donnée de l'écran reste en coton, blanc, encre et filet.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle du trait cerné",
+        "body": "Le trait qui raye est une bande `accent-bright` bordée d'encre des deux côtés : 14 px d'orange dans 30 px d'encre, bouts droits, sur le cahier du héros ; 2 px d'orange entre deux filets d'encre de 0,5 px, à 60 % de la hauteur du texte, sur une ligne de cahier. Il raye une corvée papier, jamais une fonction de Matnexa.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle de l'accent unique, en vitrine",
+        "body": "Un seul bouton orange par hauteur d'écran : celui du héros et celui de la clôture, séparés par toute la page. Dans l'en-tête, « Demander l'accès » est un bouton au trait blanc, pour ne pas doubler l'orange du héros ; les actions secondaires sont des liens soulignés.",
+        "section": "colors"
+      },
+      {
+        "name": "La règle des deux échelles",
+        "body": "L'échelle d'affiche ne vit que sur la vitrine ; l'application garde la sienne (titre de page 26 px). Un écran reproduit dans la vitrine reste à l'échelle de l'application, jamais grossi en affiche.",
+        "section": "typography"
+      },
+      {
+        "name": "La règle des bandes noires",
+        "body": "La barre noire ne sert qu'aux bandes pleine largeur qui ouvrent, rythment et ferment la page : en-tête, rituel, clôture, pied de page. Texte blanc, secondaire `bar-muted`, séparateurs `bar-track`, focus blanc (`on-bar`).",
+        "section": "layout"
       }
     ],
     "dos": [
@@ -401,7 +520,12 @@
       "Do laisser le focus visible : contour orange de 2 px décalé de 2 px, blanc sur la barre noire.",
       "Do passer les dimensions calculées par des attributs SVG ou des classes : aucun `style` en ligne (CSP).",
       "Do réutiliser la barrette (bandes blanches sur barre noire) pour tout ce qui se compte.",
-      "Do respecter `prefers-reduced-motion` ; les transitions restent des changements de couleur de 100 à 150 ms."
+      "Do respecter `prefers-reduced-motion` ; les transitions restent des changements de couleur de 100 à 150 ms.",
+      "Do réserver papier, quadrillage, marge et graphite au dessin du cahier.",
+      "Do cerner d'encre chaque trait `accent-bright` qui raye.",
+      "Do garder un seul bouton orange par hauteur d'écran ; dans l'en-tête, le bouton au trait blanc.",
+      "Do reproduire les écrans à l'échelle de l'application (panneaux 15 / 13 px), avec ses composants et des données fictives annoncées.",
+      "Do tout faire fonctionner sans JavaScript et sans `style` en ligne."
     ],
     "donts": [
       "Don't mettre d'ombre ailleurs que sur un dialogue.",
@@ -411,7 +535,10 @@
       "Don't écrire la marque autrement que « Matnexa », ni la dessiner en image de texte.",
       "Don't aligner une rangée de cartes KPI : les compteurs vont dans une seule bande divisée par des filets.",
       "Don't ajouter de surtitre (petit libellé en capitales au-dessus d'un titre) ni d'icône sans libellé.",
-      "Don't ajouter de thème sombre ni de seconde famille de caractères."
+      "Don't ajouter de thème sombre ni de seconde famille de caractères.",
+      "Don't poser la ligne de cahier rayée comme un surtitre : c'est une phrase de cahier posée sur l'écran qui la remplace, jamais un libellé au-dessus d'un titre.",
+      "Don't ajouter d'ombre, de fond en dégradé de couleurs, de rangée de cartes icône-titre-texte, de logos clients ni de chiffres en vitrine.",
+      "Don't mettre en scène d'autre mouvement que le trait du héros ; les transitions restent des changements de couleur."
     ]
   }
 }
