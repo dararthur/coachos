@@ -56,7 +56,14 @@ export default function PrivacyPage() {
             <strong>Compteurs anti-abus</strong> (empreintes irréversibles d&apos;adresse IP/e-mail) : limiter les tentatives répétées.
           </li>
         </ul>
-        <p className="mt-2">Matnexa ne collecte <strong>aucune donnée de santé, de blessure ni de date de naissance</strong>, et n&apos;est ouvert qu&apos;aux <strong>membres majeurs</strong>. Aucun traceur publicitaire ni outil de mesure d&apos;audience : seuls des cookies de connexion strictement nécessaires sont utilisés.</p>
+        <p className="mt-2">Matnexa ne collecte <strong>aucune donnée de santé, de blessure ni de date de naissance</strong>, et n&apos;est ouvert qu&apos;aux <strong>membres majeurs</strong>. Aucun traceur publicitaire ni outil de mesure d&apos;audience.</p>
+      </section>
+
+      <section>
+        <h2>Cookies et stockage sur votre appareil</h2>
+        <p>
+          Matnexa ne dépose rien chez un visiteur non connecté. Une fois connecté : un <strong>cookie de session</strong> pour rester connecté (renouvelé à l&apos;usage, expire après un an sans utilisation) ; pour l&apos;équipe d&apos;un club qui choisit l&apos;affichage « membre », un cookie qui mémorise ce choix (un an) ; si vous fermez le bandeau d&apos;installation de l&apos;application, ce choix est mémorisé dans votre navigateur. Ces éléments sont strictement nécessaires au service ou mémorisent un choix que vous avez fait : ils ne demandent pas de consentement et aucun bandeau cookies n&apos;est affiché.
+        </p>
       </section>
 
       <section>

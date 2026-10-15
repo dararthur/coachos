@@ -48,4 +48,6 @@ Aucune catégorie particulière (art. 9) n'est collectée par conception : ni sa
 | Journaux Nginx | IP, URL, user-agent | disque du serveur (OVHcloud) | chaque requête | durée et rotation **à fixer** ; les URL contiennent des identifiants (UUID), pas de noms |
 | Fournisseur d'IA | — | **aucun** | — | aucune intégration IA dans le code |
 
-Aucun outil d'analyse d'audience, traceur ou script tiers (CSP `script-src 'self'` + nonce). Seuls des cookies de session strictement nécessaires.
+Aucun outil d'analyse d'audience, traceur ou script tiers (CSP `script-src 'self'` + nonce ; polices hébergées sur le serveur). Constaté le 15/10/2026 sur `app.matnexa.fr` : aucun `Set-Cookie` pour un visiteur non connecté, aucune ressource externe.
+
+Stockage sur l'appareil (art. 82 de la loi Informatique et Libertés ; lignes directrices CNIL de 2020 sur les cookies) : cookie de session Better Auth (authentification, `HttpOnly`, `Secure`, 1 an glissant) ; cookie `matnexa-view` (staff seulement, choix d'affichage « membre », 1 an, `src/server/actions/view-mode.ts`) ; `localStorage` du bandeau d'installation fermé (`src/components/ui/install-app.tsx`). Les trois relèvent des exemptions de consentement (authentification, mémorisation d'un choix de l'utilisateur) : **pas de bandeau requis**. Tout ajout de mesure d'audience, de vidéo ou de contenu tiers impose de revoir ce point.
