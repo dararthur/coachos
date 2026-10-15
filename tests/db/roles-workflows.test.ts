@@ -62,6 +62,10 @@ describe("matrice des permissions : application == base de données", () => {
       run: (w, u) => asUser(u, (tx) => tx`update public.academies set locale = 'fr' where id = ${w.academyA}`).then((r) => { if (r.count === 0) throw new AppError("forbidden"); }),
     },
     {
+      permission: "news.manage",
+      run: (w, u) => asUser(u, (tx) => tx`insert into public.club_posts (academy_id, title, body) values (${w.academyA}, 'Annonce', 'Texte')`),
+    },
+    {
       permission: "audit.read",
       run: (w, u) => asUser(u, (tx) => tx`select id from public.audit_events where academy_id = ${w.academyA}`).then((r) => { if (r.length === 0) throw new AppError("forbidden"); }),
     },

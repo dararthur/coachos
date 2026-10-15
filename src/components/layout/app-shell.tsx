@@ -19,9 +19,10 @@ export function AppShell({ academy, role, viewAsMember = false, userLabel, child
     shown === "member" && { href: `${base}/me`, label: "Mon espace", short: "Espace", icon: "home", also: [`${base}/profile`] },
     can(shown, "members.read") && { href: `${base}/members`, label: "Membres", short: "Membres", icon: "users" },
     { href: `${base}/schedule`, label: "Planning", short: "Planning", icon: "calendar" },
+    { href: `${base}/news`, label: "Actualités", short: "Actus", icon: "news" },
     shown === "member" && { href: `${base}/ranking`, label: "Classement", short: "Classement", icon: "trophy" },
     shown === "member" && { href: SCAN_PATH, label: "Pointer ma présence", short: "Pointer", shortName: "Pointer ma présence", icon: "qr" },
-    can(shown, "attendance.record") && { href: `${base}/attendance`, label: "Présences", short: "Présences", icon: "roll" },
+    can(shown, "attendance.record") && { href: `${base}/attendance`, label: "Présences", short: "Appel", shortName: "Présences (appel)", icon: "roll" },
     can(shown, "reports.read") && { href: `${base}/reports`, label: "Rapports", short: "Rapports", icon: "chart" },
     can(shown, "academy.update") && { href: `${base}/settings`, label: "Paramètres", short: "Réglages", icon: "settings" },
   ];

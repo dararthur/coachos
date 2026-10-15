@@ -31,7 +31,7 @@ describe("invariants du schéma", () => {
     const deletes = await adminSql()<{ table_name: string }[]>`
       select table_name from information_schema.role_table_grants
       where grantee = 'authenticated' and table_schema = 'public' and privilege_type = 'DELETE' order by table_name`;
-    expect(deletes.map((r) => r.table_name)).toEqual(["attendance", "invitations", "sessions"]);
+    expect(deletes.map((r) => r.table_name)).toEqual(["attendance", "club_posts", "invitations", "sessions"]);
   });
 
   it("app_server, authenticated et anon n'ont aucun accès direct à app_private (tables)", async () => {

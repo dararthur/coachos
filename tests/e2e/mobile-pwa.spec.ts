@@ -102,7 +102,7 @@ test.describe("parcours mobiles", () => {
     await expect(tabs).toBeVisible();
     const box = await tabs.boundingBox();
     expect(box!.y + box!.height).toBeGreaterThan(844 - 2); // collée au bas de l'écran
-    await expect(tabs.getByRole("link")).toHaveCount(6);
+    await expect(tabs.getByRole("link")).toHaveCount(7);
     await noHorizontalOverflow(page, "dashboard");
     expect(await smallTargets(page), "dashboard").toEqual([]);
 
@@ -158,7 +158,7 @@ test.describe("parcours mobiles", () => {
     await expect(page).toHaveURL(/\/dashboard/);
   });
 
-  test("adhérent : espace personnel et navigation à quatre onglets", async ({ browser }) => {
+  test("adhérent : espace personnel et navigation à cinq onglets", async ({ browser }) => {
     const ctx = () => browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" });
     const ownerCtx = await ctx();
     const owner = await ownerCtx.newPage();
@@ -197,7 +197,7 @@ test.describe("parcours mobiles", () => {
     await member.goto(`/a/${club}/me`);
     await expect(member).toHaveURL(new RegExp(`/a/${club}/me`));
     const tabs = member.getByRole("navigation", { name: "Navigation principale" });
-    await expect(tabs.getByRole("link")).toHaveCount(4);
+    await expect(tabs.getByRole("link")).toHaveCount(5);
     await expect(tabs.getByRole("link", { name: "Pointer ma présence" })).toBeVisible();
     await noHorizontalOverflow(member, "mon espace");
     expect(await smallTargets(member), "mon espace").toEqual([]);

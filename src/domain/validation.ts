@@ -199,6 +199,14 @@ export const myProfileSchema = z.object({
 });
 
 // --- Catalogue ----------------------------------------------------------------------------------
+const noControl = (v: string) => !/[ --]/.test(v);
+
+/** Publication du club. La visibilité (« public » pour le futur site du club) n'est pas encore proposée : toujours « members ». */
+export const clubPostSchema = z.object({
+  title: z.string({ error: "Titre requis." }).trim().min(1, "Titre requis.").max(120, "120 caractères maximum.").refine(noControl, "Caractères non autorisés."),
+  body: z.string({ error: "Texte requis." }).trim().min(1, "Texte requis.").max(5000, "5 000 caractères maximum.").refine(noControl, "Caractères non autorisés."),
+});
+
 export const disciplineSchema = z.object({
   name: z.string({ error: "Nom requis." }).trim().min(2, "2 caractères minimum.").max(60, "60 caractères maximum.").refine((v) => !/[<>\u0000-\u001f]/.test(v), "Caractères non autorisés."),
 });

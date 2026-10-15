@@ -18,6 +18,7 @@ Hiérarchie : **propriétaire > administrateur > coach > membre**. Un compte peu
 | Exporter / effacer les données d'un membre | ✅ | ✅ | — | — |
 | Disciplines et types de cours | ✅ | ✅ | — | — |
 | Paramètres du club, journal d'audit | ✅ | ✅ | — | — |
+| Publier une actualité (`docs/news.md`) | ✅ | ✅ | ✅ (modifie les siennes) | lecture seule |
 | Inviter coachs/membres, changer leur rôle, les retirer | ✅ | ✅ | — | — |
 | Inviter / nommer / retirer un **admin ou propriétaire** | ✅ | — | — | — |
 | Supprimer le club | ✅ | — | — | — |

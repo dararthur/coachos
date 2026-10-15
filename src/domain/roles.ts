@@ -36,6 +36,8 @@ export const PERMISSIONS = {
   "reports.read": ["owner", "admin", "coach"],
   "reports.export": ["owner", "admin"],
   "audit.read": ["owner", "admin"],
+  // Publier une actualité (la lire : tout membre du club ; un coach ne modifie que les siennes, un administrateur toutes).
+  "news.manage": ["owner", "admin", "coach"],
 } as const satisfies Record<string, readonly Role[]>;
 
 export type Permission = keyof typeof PERMISSIONS;
