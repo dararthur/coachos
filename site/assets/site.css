@@ -1438,6 +1438,7 @@ a:hover {
 }
 
 .ledger dd {
+  max-width: 65ch;
   color: var(--ink-soft);
   font-size: 0.9375rem;
   line-height: 1.6;
