@@ -71,7 +71,7 @@ export default function PrivacyPage() {
           <li>Compte : jusqu&apos;à sa suppression. Une session de connexion expire après un an sans utilisation.</li>
           <li>Invitations : 30 jours après expiration ou acceptation. Demandes de création de club : 90 jours (180 jours au plus).</li>
           <li>Journal d&apos;audit : 24 mois. Compteurs anti-abus : moins de 24 heures.</li>
-          <li>Sauvegardes : [durée à compléter] ; les données effacées disparaissent des sauvegardes à leur expiration.</li>
+          <li>Sauvegardes : copies chiffrées conservées au plus environ 6 mois, et sauvegarde quotidienne du serveur par l&apos;hébergeur ; les données effacées disparaissent des sauvegardes à leur expiration.</li>
         </ul>
       </section>
 

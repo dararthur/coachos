@@ -18,7 +18,8 @@ Principe : limitation de la conservation (art. 5.1.e). Les durées marquées **c
 | Journal d'audit | 24 mois | événement | `purge_expired_data()` | choix produit, testé |
 | Compteurs anti-abus | < 24 h | fenêtre | `purge_expired_data()` | testé |
 | Jetons QR | ≤ 24 h après expiration | expiration | `purge_expired_data()` | testé |
-| Sauvegardes | Proposition : 14 quotidiennes, 8 hebdomadaires, 6 mensuelles | sauvegarde | `ops/backup/prune.sh` | **non validé, jamais exécuté** |
+| Sauvegardes chiffrées de la base | 14 quotidiennes, 8 hebdomadaires, 6 mensuelles (donc au plus ~6 mois) | sauvegarde | `prune.sh --apply` après chaque sauvegarde (`ExecStartPost`) | en place le 15/10/2026 |
+| Sauvegarde OVH du VPS | selon l'offre OVHcloud [durée à vérifier dans l'espace client] | sauvegarde | côté OVHcloud | contient aussi les fichiers bruts de la base et `/etc/coachos` |
 | Journaux Nginx / journald | [à fixer] | — | logrotate / journald | **à configurer** |
 | E-mails chez le fournisseur | 30 jours d'après sa documentation | envoi | côté fournisseur | **à vérifier** contractuellement |
 

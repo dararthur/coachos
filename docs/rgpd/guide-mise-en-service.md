@@ -34,6 +34,8 @@ Cocher ensuite la ligne « purge » de [checklist-mise-en-production.md](checkli
 
 ## 2. Sauvegardes chiffrées hors du serveur, et test de restauration
 
+> **Configuration réellement installée le 15/10/2026** (choix de l'éditeur, sans stockage objet) : `BACKUP_REMOTE=/var/backups/coachos-archive` (dossier local), copie hors machine assurée par la sauvegarde quotidienne OVH du VPS. Fichier `/etc/systemd/system/coachos-backup.service.d/override.conf` : `Environment=HOME=/var/lib/coachos-backup`, `ReadWritePaths=/var/lib/coachos-backup /var/backups/coachos-archive`, puis deux `ExecStartPost` : suppression des `coachos-*.age*` du dossier de travail et `prune.sh --apply`. Pas de `rclone.conf` (rclone écrit dans un chemin local ; ses avertissements « config file not found » sont sans effet). Restauration testée le même jour, clé copiée par `scp` dans `/dev/shm` puis effacée. Les sections 2.2 et 2.4 (stockage objet OVH) restent valables pour passer plus tard à une copie séparée.
+
 Principe (`docs/operations.md`) : `pg_dump` → chiffrement `age` avec une clé **publique** → copie vers un stockage distant → vérification. La clé **privée** ne vit jamais sur le serveur.
 
 ### 2.1 Sur votre ordinateur : la paire de clés age
