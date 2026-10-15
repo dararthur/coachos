@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { withApp } from "@/server/db/client";
 import {
@@ -250,5 +251,64 @@ describe("durcissement RGPD (migration 20261015000300)", () => {
     const [o] = await adminSql()<{ ranking_opt_in: boolean }[]>`select ranking_opt_in from public.people where id = ${other}`;
     expect(o?.ranking_opt_in).toBe(true);
     expect(await adminSql()`select 1 from public.academy_requests where email = 'autrui@example.invalid'`).not.toHaveLength(0);
+  });
+});
+
+describe("notifications push, actualités et responsables légaux (migration 20261015001300)", () => {
+  const hash = (t: string) => createHash("sha256").update(t).digest("hex");
+  const endpoint = (label: string) => `https://fcm.googleapis.com/fcm/send/${label}-${"x".repeat(30)}`;
+  // Valeurs factices de forme valide (pas de littéral : un détecteur de secrets les prendrait pour de vraies clés).
+  const P256DH = Buffer.concat([Buffer.from([4]), randomBytes(64)]).toString("base64url");
+  const AUTH = randomBytes(16).toString("base64url");
+
+  it("l'export du compte liste ses appareils de notification et ses actualités, sans adresse complète ni clé, et rien d'autrui", async () => {
+    const user = await createUser("notifie");
+    await addMember(w.academyA, user, "coach");
+    const other = await createUser("autre-notifie");
+    await asUser(user, (tx) => tx`select app_private.save_push_subscription(${endpoint("mon-appareil")}, ${P256DH}, ${AUTH})`);
+    await asUser(other, (tx) => tx`select app_private.save_push_subscription(${endpoint("appareil-autrui")}, ${P256DH}, ${AUTH})`);
+    await asUser(user, (tx) => tx`insert into public.club_posts (academy_id, title, body) values (${w.academyA}, 'Stage de printemps', 'Texte')`); // l'auteur est imposé par la base
+    await asUser(w.carl, (tx) => tx`insert into public.club_posts (academy_id, title, body) values (${w.academyA}, 'Annonce du voisin', 'Texte')`);
+
+    const [row] = await asUser(user, (tx) => tx<{ d: { push_devices: { push_service: string }[]; authored_posts: { title: string }[] } }[]>`select public.export_my_data() as d`);
+    expect(row!.d.push_devices).toHaveLength(1);
+    expect(row!.d.push_devices[0]!.push_service).toBe("fcm.googleapis.com");
+    expect(row!.d.authored_posts.map((p) => p.title)).toEqual(["Stage de printemps"]);
+    const text = JSON.stringify(row!.d);
+    expect(text).not.toMatch(/mon-appareil|appareil-autrui|Annonce du voisin/);
+    expect(text).not.toContain(P256DH);
+    expect(text).not.toContain(AUTH);
+  });
+
+  it("supprimer son compte retire ses appareils et détache ses actualités, qui restent au club", async () => {
+    const user = await createUser("auteur-partant");
+    await addMember(w.academyA, user, "coach");
+    await asUser(user, (tx) => tx`select app_private.save_push_subscription(${endpoint("partant")}, ${P256DH}, ${AUTH})`);
+    await asUser(user, (tx) => tx`insert into public.club_posts (academy_id, title, body) values (${w.academyA}, 'Reste au club', 'Texte')`);
+
+    await asUser(user, (tx) => tx`select public.delete_my_account()`);
+
+    expect(await adminSql()`select 1 from public.push_subscriptions where endpoint = ${endpoint("partant")}`).toHaveLength(0);
+    const [post] = await adminSql()<{ author_id: string | null }[]>`select author_id from public.club_posts where title = 'Reste au club'`;
+    expect(post).toBeDefined();
+    expect(post!.author_id).toBeNull();
+  });
+
+  it("supprimer le compte d'un responsable légal le détache de la fiche de l'enfant, qui reste au club avec l'accord déjà donné", async () => {
+    const parent = await createUser("parent-partant");
+    const token = randomBytes(16).toString("hex");
+    const [m] = await asUser(w.carl, (tx) => tx<{ id: string }[]>`
+      select public.create_minor_member(${w.academyA}, 'Enfant', 'Conservé', ${new Date(Date.now() - 10 * 365.25 * 86_400_000).toISOString().slice(0, 10)}::date,
+        null, null, 'Parent Partant', ${parent.email}, null, ${hash(token)}) as id`);
+    await adminSql()`update public.guardianships set guardian_user_id = ${parent.id}, consent_confirmed_at = now() where child_id = ${m!.id}`;
+    const exported = await asUser(parent, (tx) => tx<{ d: { children: { first_name: string }[] } }[]>`select public.export_my_data() as d`);
+    expect(exported[0]!.d.children.map((c) => c.first_name)).toEqual(["Enfant"]);
+
+    await asUser(parent, (tx) => tx`select public.delete_my_account()`);
+
+    const [g] = await adminSql()<{ guardian_user_id: string | null; consent_confirmed_at: Date | null }[]>`select guardian_user_id, consent_confirmed_at from public.guardianships where child_id = ${m!.id}`;
+    expect(g!.guardian_user_id).toBeNull();
+    expect(g!.consent_confirmed_at).toBeInstanceOf(Date);
+    expect(await adminSql()`select 1 from public.people where id = ${m!.id} and anonymized_at is null`).toHaveLength(1);
   });
 });
