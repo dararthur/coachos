@@ -50,7 +50,7 @@ export default async function NewsPage({ params, searchParams }: { params: Promi
                   ) : undefined
                 }
               >
-                <p className="whitespace-pre-line break-words text-base">{p.body}</p>
+                <p className="max-w-[68ch] whitespace-pre-line break-words text-base">{p.body}</p>
               </Card>
             </li>
           ))}

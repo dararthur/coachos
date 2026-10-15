@@ -46,7 +46,7 @@ test("actualités : l'équipe publie, modifie et supprime ; un membre lit sans p
   await expect(owner.getByRole("heading", { name: "Stage de samedi (10 h)" })).toBeVisible();
 
   await owner.getByRole("link", { name: /Modifier/ }).click();
-  await owner.getByRole("button", { name: "Supprimer la publication" }).click();
+  await owner.getByRole("button", { name: "Supprimer…" }).click();
   await owner.getByRole("dialog").getByRole("button", { name: "Supprimer définitivement" }).click();
   await expect(owner.getByText("Publication supprimée")).toBeVisible();
   await expect(owner.getByText("Aucune actualité pour le moment")).toBeVisible();

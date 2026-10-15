@@ -26,12 +26,12 @@ export default async function EditPostPage({ params }: { params: Promise<{ acade
         <Card>
           <PostForm action={updatePostAction.bind(null, academyId, postId)} initial={{ title: post.title, body: post.body }} submitLabel="Enregistrer" />
         </Card>
-        <Card title="Supprimer">
+        <Card title="Supprimer la publication" description="Elle disparaît pour tous les membres, définitivement.">
           <ConfirmAction
             action={deletePostAction.bind(null, academyId, postId)}
-            trigger={<>Supprimer la publication</>}
+            trigger={<>Supprimer…</>}
             title="Supprimer cette publication ?"
-            description="Elle disparaît pour tous les membres. Cette action est définitive."
+            description="Les membres ne la verront plus. Cette action est définitive."
             confirmLabel="Supprimer définitivement"
           />
         </Card>

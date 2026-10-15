@@ -13,9 +13,8 @@ export function PostForm({ action, initial, submitLabel }: { action: FormAction;
         name="body"
         defaultValue={initial?.body}
         required
-        maxLength={5000}
         rows={8}
-        hint="Visible par tous les membres du club. N'y mettez aucune information personnelle sur un membre (nom, santé, résultats)."
+        hint="Visible par tous les membres du club (5 000 caractères maximum). N'y mettez aucune information personnelle sur un membre (nom, santé, résultats)."
       />
       <SubmitButton pendingLabel="Publication…">{submitLabel}</SubmitButton>
     </ActionForm>
