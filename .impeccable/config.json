@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "archivo fallback",
+        "createdAt": "2026-10-15T09:27:13.301Z",
+        "reason": "agent: metric-adjusted local(Arial) fallback for Archivo to limit CLS, not a second family"
+      }
+    ]
+  }
+}

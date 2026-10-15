@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logiciel de gestion de club de JJB, grappling et MMA · Matnexa</title>
+<meta name="description" content="Appel en quelques secondes, pointage par QR code, réservations avec liste d'attente et membres à recontacter : Matnexa gère votre club de JJB, grappling ou MMA.">
+<link rel="canonical" href="https://www.matnexa.fr/">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1">
+<meta name="theme-color" content="#16191d">
+<meta name="color-scheme" content="light">
+<meta name="author" content="Matnexa">
+<meta name="format-detection" content="telephone=no">
+
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:site_name" content="Matnexa">
+<meta property="og:url" content="https://www.matnexa.fr/">
+<meta property="og:title" content="Matnexa · Rayez le cahier d'appel">
+<meta property="og:description" content="La gestion de club de JJB, grappling et MMA depuis le téléphone du coach : appel, pointage QR, réservations et membres à recontacter.">
+<meta property="og:image" content="https://www.matnexa.fr/assets/og-matnexa.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Un cahier d'appel de club barré d'un trait orange, et la feuille d'appel Matnexa posée dessus.">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="preload" href="/assets/fonts/archivo-latin-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/site.css?v=20261015">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.matnexa.fr/#organization",
+      "name": "Matnexa",
+      "url": "https://www.matnexa.fr/",
+      "logo": {"@type": "ImageObject", "url": "https://www.matnexa.fr/assets/icon-512.png", "width": 512, "height": 512},
+      "email": "contact@matnexa.fr",
+      "contactPoint": {"@type": "ContactPoint", "email": "contact@matnexa.fr", "contactType": "customer support", "availableLanguage": "French"}
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.matnexa.fr/#website",
+      "url": "https://www.matnexa.fr/",
+      "name": "Matnexa",
+      "inLanguage": "fr-FR",
+      "publisher": {"@id": "https://www.matnexa.fr/#organization"}
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://www.matnexa.fr/#webpage",
+      "url": "https://www.matnexa.fr/",
+      "name": "Logiciel de gestion de club de JJB, grappling et MMA · Matnexa",
+      "description": "Appel en quelques secondes, pointage par QR code, réservations avec liste d'attente et membres à recontacter : Matnexa gère votre club de JJB, grappling ou MMA.",
+      "inLanguage": "fr-FR",
+      "isPartOf": {"@id": "https://www.matnexa.fr/#website"},
+      "about": {"@id": "https://www.matnexa.fr/#software"},
+      "primaryImageOfPage": {"@type": "ImageObject", "url": "https://www.matnexa.fr/assets/og-matnexa.png", "width": 1200, "height": 630}
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://www.matnexa.fr/#software",
+      "name": "Matnexa",
+      "url": "https://app.matnexa.fr/",
+      "applicationCategory": "BusinessApplication",
+      "applicationSubCategory": "Gestion de club sportif",
+      "operatingSystem": "Web, Android, iOS",
+      "inLanguage": "fr-FR",
+      "description": "Outil de gestion des clubs de sports de combat (JJB, grappling, MMA) : membres, planning et réservations, feuille d'appel, pointage par QR code, classement, rapports, équipe et droits RGPD.",
+      "featureList": [
+        "Feuille d'appel Présent, En retard, Absent depuis le téléphone",
+        "Pointage des adhérents par QR code tournant ou fixe",
+        "Réservations avec liste d'attente et promotion automatique",
+        "Liste des membres actifs sans présence depuis 30 jours, contact WhatsApp",
+        "Planning hebdomadaire, séances uniques ou récurrentes",
+        "Import et export CSV des membres et des présences",
+        "Classement d'assiduité sur consentement de l'adhérent",
+        "Ceinture et barrettes de chaque adhérent",
+        "Équipe, rôles et invitations"
+      ],
+      "publisher": {"@id": "https://www.matnexa.fr/#organization"}
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://www.matnexa.fr/#faq",
+      "mainEntity": [
+        {"@type": "Question", "name": "Faut-il installer une application ?", "acceptedAnswer": {"@type": "Answer", "text": "Non. Matnexa s'ouvre dans le navigateur du téléphone, de la tablette ou de l'ordinateur. Sur Android comme sur iPhone, on peut l'ajouter à l'écran d'accueil : elle s'ouvre alors en plein écran, comme une application, sans passer par un magasin d'applications. Coachs et adhérents ne se connectent qu'une fois par appareil."}},
+        {"@type": "Question", "name": "Peut-on reprendre nos adhérents depuis un autre logiciel ?", "acceptedAnswer": {"@type": "Answer", "text": "Oui. L'import se fait depuis le fichier CSV exporté par votre ancien logiciel ou votre tableur, téléphone compris, en deux étapes : vous vérifiez l'aperçu avant d'enregistrer. Membres et présences s'exportent aussi en CSV à tout moment."}},
+        {"@type": "Question", "name": "Que se passe-t-il si le réseau coupe pendant l'appel ?", "acceptedAnswer": {"@type": "Answer", "text": "Un bandeau s'affiche et la liste reste figée jusqu'au retour du réseau. La feuille d'appel n'affiche comme enregistré que ce que le serveur a confirmé : vous savez toujours ce qui est passé et ce qui ne l'est pas."}},
+        {"@type": "Question", "name": "Comment les adhérents rejoignent-ils le club ?", "acceptedAnswer": {"@type": "Answer", "text": "Avec le code ou le lien permanent du club, que l'équipe peut régénérer à tout moment. L'adhérent crée son compte, sa fiche est créée automatiquement, puis il complète son profil : identité, téléphone, ceinture et barrettes, photo facultative."}},
+        {"@type": "Question", "name": "Matnexa convient-il aux sections enfants ?", "acceptedAnswer": {"@type": "Answer", "text": "Pas encore. Matnexa est réservé aux adhérents majeurs : les comptes enfants et parents ne sont pas pris en charge aujourd'hui."}},
+        {"@type": "Question", "name": "Où sont hébergées les données du club ?", "acceptedAnswer": {"@type": "Answer", "text": "En France, sur un serveur loué à OVHcloud dans le centre de données de Gravelines. L'application, la base de données et l'authentification sont auto-hébergées. Les e-mails sont envoyés par Resend depuis sa région d'envoi en Irlande. Aucune donnée personnelle n'est transmise à un fournisseur d'intelligence artificielle."}},
+        {"@type": "Question", "name": "Comment ouvrir Matnexa pour mon club ?", "acceptedAnswer": {"@type": "Answer", "text": "Remplissez la demande de création de club : nom du club, votre nom et votre adresse e-mail. Chaque demande est examinée à la main ; vous recevez ensuite un e-mail avec la marche à suivre pour créer votre compte et votre club."}}
+      ]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#contenu">Aller au contenu</a>
+
+<!-- Symboles réutilisés : silhouettes, ceintures, icônes. Masqués par classe (aucun attribut style : CSP). -->
+<svg class="sr-only" aria-hidden="true" focusable="false">
+  <symbol id="sil-woman" viewBox="0 0 48 48">
+    <path d="M9.5 26C9.5 11 16 5 24 5s14.5 6 14.5 21c0 5 1.5 8 3.5 11H6c2-3 3.5-6 3.5-11Z" fill="#6a6f76"/>
+    <path d="M7 48c0-9 7-14 17-14s17 5 17 14Z" fill="#6a6f76"/>
+    <rect x="20.5" y="28" width="7" height="8" rx="2" fill="#b9b2a6"/>
+    <ellipse cx="24" cy="20.5" rx="8.4" ry="9.8" fill="#b9b2a6"/>
+    <path d="M15.4 20C15.6 12.2 20 9.6 24 9.6s8.4 2.6 8.6 10.4C29.4 15 18.6 15 15.4 20Z" fill="#6a6f76"/>
+  </symbol>
+  <symbol id="sil-man" viewBox="0 0 48 48">
+    <path d="M2 48c0-10 8-15 22-15s22 5 22 15Z" fill="#6a6f76"/>
+    <rect x="19.5" y="25" width="9" height="11" rx="2.5" fill="#b9b2a6"/>
+    <rect x="15.8" y="9.5" width="16.4" height="19" rx="7" fill="#b9b2a6"/>
+    <path d="M15.4 17.5C15.4 9 19.6 6.2 24 6.2s8.6 2.8 8.6 11.3C30 13.6 18 13.6 15.4 17.5Z" fill="#6a6f76"/>
+  </symbol>
+  <symbol id="sil-neutral" viewBox="0 0 48 48">
+    <path d="M5 48c0-9.5 8-15 19-15s19 5.5 19 15Z" fill="#6a6f76"/>
+    <rect x="20" y="26" width="8" height="10" rx="2.5" fill="#b9b2a6"/>
+    <circle cx="24" cy="19" r="9" fill="#b9b2a6"/>
+  </symbol>
+  <symbol id="belt-blue-2" viewBox="0 0 72 18">
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="#1f56a8"/>
+    <path d="M4 7.2H44M4 10.8H44" stroke="#ffffff" stroke-opacity=".2" stroke-width=".8"/>
+    <rect x="46" y="3" width="16" height="12" fill="#16191d"/>
+    <rect x="47.4" y="3" width="2" height="12" fill="#ffffff"/><rect x="50.9" y="3" width="2" height="12" fill="#ffffff"/>
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="none" stroke="#173f7d"/>
+  </symbol>
+  <symbol id="belt-white-3" viewBox="0 0 72 18">
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="#f7f5f0"/>
+    <path d="M4 7.2H44M4 10.8H44" stroke="#16191d" stroke-opacity=".14" stroke-width=".8"/>
+    <rect x="46" y="3" width="16" height="12" fill="#16191d"/>
+    <rect x="47.4" y="3" width="2" height="12" fill="#ffffff"/><rect x="50.9" y="3" width="2" height="12" fill="#ffffff"/><rect x="54.4" y="3" width="2" height="12" fill="#ffffff"/>
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="none" stroke="#8a8378"/>
+  </symbol>
+  <symbol id="belt-white-1" viewBox="0 0 72 18">
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="#f7f5f0"/>
+    <path d="M4 7.2H44M4 10.8H44" stroke="#16191d" stroke-opacity=".14" stroke-width=".8"/>
+    <rect x="46" y="3" width="16" height="12" fill="#16191d"/>
+    <rect x="47.4" y="3" width="2" height="12" fill="#ffffff"/>
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="none" stroke="#8a8378"/>
+  </symbol>
+  <symbol id="belt-purple-0" viewBox="0 0 72 18">
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="#6d3fa8"/>
+    <path d="M4 7.2H44M4 10.8H44" stroke="#ffffff" stroke-opacity=".2" stroke-width=".8"/>
+    <rect x="46" y="3" width="16" height="12" fill="#16191d"/>
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="none" stroke="#512d80"/>
+  </symbol>
+  <symbol id="belt-brown-1" viewBox="0 0 72 18">
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="#6b4226"/>
+    <path d="M4 7.2H44M4 10.8H44" stroke="#ffffff" stroke-opacity=".2" stroke-width=".8"/>
+    <rect x="46" y="3" width="16" height="12" fill="#16191d"/>
+    <rect x="47.4" y="3" width="2" height="12" fill="#ffffff"/>
+    <rect x="1" y="3" width="70" height="12" rx="2.5" fill="none" stroke="#4c2e1a"/>
+  </symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4V5ZM8 9.5h8M8 12.5h5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5 10 17l9-10"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9.5l6 6 6-6"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M15.5 4.3a3.5 3.5 0 0 1 0 6.4M17.5 14.5c2 .8 3.5 2.9 3.5 5.5"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><path d="M4 6h16v14H4zM4 10h16M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-roll" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8.5 9l1.5 1.5 3-3M8.5 15h7"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M5 20V11M10 20V5M15 20v-7M20 20V8M3 20h18"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21c0-4 3.6-7 8-7s8 3 8 7"/></symbol>
+  <symbol id="mark" viewBox="0 0 32 32">
+    <rect width="32" height="32" rx="7" fill="#16191d"/>
+    <g fill="#ffffff"><rect x="7.25" y="8" width="2.5" height="16" rx=".5"/><rect x="12.25" y="8" width="2.5" height="16" rx=".5"/><rect x="17.25" y="8" width="2.5" height="16" rx=".5"/><rect x="22.25" y="8" width="2.5" height="16" rx=".5"/></g>
+    <path d="M5 22.5 27 9.5" stroke="#16191d" stroke-width="6.5"/>
+    <path d="M5 22.5 27 9.5" stroke="#ea6a2a" stroke-width="3"/>
+  </symbol>
+</svg>
+
+<header class="site-header on-bar">
+  <div class="wrap">
+    <a class="logo" href="/" aria-label="Matnexa, accueil">
+      <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#mark"/></svg>
+      <span>Matnexa</span>
+    </a>
+    <nav class="site-nav" aria-label="Navigation principale">
+      <a class="nav-anchor" href="#fonctionnalites">Fonctionnalités</a>
+      <a class="nav-anchor" href="#donnees">Vos données</a>
+      <a class="nav-anchor" href="#questions">Questions</a>
+      <a href="https://app.matnexa.fr/login">Se connecter</a>
+      <a class="btn btn-bar" href="https://app.matnexa.fr/request-club">Demander l'accès</a>
+    </nav>
+  </div>
+</header>
+
+<main id="contenu">
+
+  <section class="hero" aria-labelledby="titre">
+    <div class="wrap">
+      <div>
+        <h1 id="titre">
+          <span class="h1-main">Rayez le cahier d'appel.</span>
+          <span class="h1-sub">Matnexa gère votre club de JJB, de grappling ou de MMA depuis le téléphone du coach.</span>
+        </h1>
+        <p class="hero-lead">Le coach fait l'appel sur son téléphone entre deux cours. Les adhérents réservent leur place et pointent avec un QR code. Et chaque semaine, vous voyez qui ne vient plus, avec de quoi lui écrire.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://app.matnexa.fr/request-club">
+            Demander l'accès pour mon club
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="link-more" href="https://app.matnexa.fr/signup">J'ai un code de club</a>
+        </div>
+        <p class="hero-note">Chaque demande est examinée à la main. Réponse par e‑mail.</p>
+      </div>
+
+      <div class="stage">
+        <svg class="notebook" viewBox="0 0 640 480" role="img" aria-labelledby="nb-title" focusable="false">
+          <title id="nb-title">Page d'un cahier d'appel tenu au crayon, barrée d'un trait orange.</title>
+          <defs>
+            <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+              <path d="M16 0H0V16" fill="none" stroke="#e6e1d7" stroke-width="1"/>
+            </pattern>
+          </defs>
+          <rect x="24" y="16" width="592" height="448" rx="3" fill="#fbfaf6" stroke="#ddd8cf"/>
+          <rect x="25" y="17" width="590" height="446" fill="url(#grid)"/>
+          <path d="M118 17V463" stroke="#e2a19a" stroke-width="1.5"/>
+          <g fill="#f4f2ee" stroke="#ddd8cf" stroke-width="1.5">
+            <circle cx="52" cy="60" r="7"/><circle cx="52" cy="104" r="7"/><circle cx="52" cy="148" r="7"/><circle cx="52" cy="192" r="7"/><circle cx="52" cy="236" r="7"/><circle cx="52" cy="280" r="7"/><circle cx="52" cy="324" r="7"/><circle cx="52" cy="368" r="7"/><circle cx="52" cy="412" r="7"/>
+          </g>
+          <!-- Rond de tasse de café. -->
+          <path d="M574 132a40 40 0 1 1-34-40" fill="none" stroke="#c9b48e" stroke-width="3" stroke-opacity=".38" stroke-linecap="round"/>
+
+          <g class="nb-text">
+            <text class="nb-head" x="134" y="66" transform="rotate(-0.8 134 66)">Mar. 13 oct. · JJB tous niveaux, 19 h</text>
+            <text class="nb-small nb-faint" x="388" y="104">présences</text>
+            <text class="nb-name" x="134" y="146" transform="rotate(-0.6 134 146)">Martin Léa</text>
+            <text class="nb-name" x="134" y="190" transform="rotate(0.4 134 190)">Diallo Amadou</text>
+            <text class="nb-name" x="134" y="234" transform="rotate(-0.5 134 234)">Rossi Chiara</text>
+            <text class="nb-name" x="134" y="278" transform="rotate(0.6 134 278)">Nguyen Thomas</text>
+            <text class="nb-name" x="134" y="322" transform="rotate(-0.4 134 322)">Benali Sofiane</text>
+            <text class="nb-name" x="134" y="366" transform="rotate(0.3 134 366)">Lefèvre Julien</text>
+            <text class="nb-name" x="134" y="410" transform="rotate(-0.7 134 410)">Costa Marc</text>
+            <text class="nb-small" x="436" y="232" transform="rotate(-2 436 232)">retard</text>
+            <text class="nb-small" x="388" y="277" transform="rotate(-1.5 388 277)">abs ?</text>
+            <text class="nb-small" x="476" y="304" transform="rotate(-4 476 304)">rappeler ?</text>
+          </g>
+          <g class="nb-pencil">
+            <path d="M134 74c70-2 160-3 268-1"/>
+            <path d="M390 128l1.5 21M402 127l-.5 22M413 128l1 21M424 127l.5 22M384 146l47-15"/>
+            <path d="M390 172l1 21M401 171l.5 22M412 172l-.5 21"/>
+            <path d="M390 216l1 21M401 215l-.5 22"/>
+            <path d="M390 304l.5 21"/>
+            <path d="M130 360c40-3 85-4 118-2"/>
+            <path d="M390 392l1 21M401 391l-.5 22M412 392l1 21"/>
+            <path d="M472 310c-18 6-30 14-38 30"/>
+            <path d="M434 340l-1-9M434 340l8-4"/>
+          </g>
+
+          <!-- Le trait du symbole Matnexa, à l'échelle de la page. -->
+          <path class="strike-casing" d="M40 446 612 52" pathLength="1"/>
+          <path class="strike-tape" d="M40 446 612 52" pathLength="1"/>
+        </svg>
+
+        <section class="panel roll" aria-labelledby="roll-title roll-time">
+          <div class="panel-head roll-head">
+            <div>
+              <p class="panel-title" id="roll-title">Feuille d'appel · JJB tous niveaux</p>
+              <p class="time" id="roll-time">Mardi 19:00</p>
+              <p class="panel-desc">5 inscrits · 24 places</p>
+            </div>
+            <span class="badge badge-brand">Démo</span>
+          </div>
+          <p class="roll-try">Essayez : touchez un statut. Noms fictifs, rien n'est envoyé.</p>
+          <ul class="roll-list">
+            <li>
+              <fieldset>
+                <legend>
+                  <svg class="avatar" aria-hidden="true" focusable="false"><use href="#sil-woman"/></svg>
+                  <span><span class="last">Martin</span> Léa<svg class="belt who-belt" viewBox="0 0 72 18" role="img" aria-label="Ceinture bleue, 2 barrettes"><use href="#belt-blue-2"/></svg></span>
+                </legend>
+                <div class="status">
+                  <label><input class="st-present" type="radio" name="s1" id="s1-p" checked>Présent</label>
+                  <label><input class="st-late" type="radio" name="s1" id="s1-r">Retard</label>
+                  <label><input class="st-absent" type="radio" name="s1" id="s1-a">Absent</label>
+                </div>
+              </fieldset>
+            </li>
+            <li>
+              <fieldset>
+                <legend>
+                  <svg class="avatar" aria-hidden="true" focusable="false"><use href="#sil-man"/></svg>
+                  <span><span class="last">Diallo</span> Amadou<svg class="belt who-belt" viewBox="0 0 72 18" role="img" aria-label="Ceinture blanche, 3 barrettes"><use href="#belt-white-3"/></svg></span>
+                </legend>
+                <div class="status">
+                  <label><input class="st-present" type="radio" name="s2" id="s2-p" checked>Présent</label>
+                  <label><input class="st-late" type="radio" name="s2" id="s2-r">Retard</label>
+                  <label><input class="st-absent" type="radio" name="s2" id="s2-a">Absent</label>
+                </div>
+              </fieldset>
+            </li>
+            <li>
+              <fieldset>
+                <legend>
+                  <svg class="avatar" aria-hidden="true" focusable="false"><use href="#sil-woman"/></svg>
+                  <span><span class="last">Rossi</span> Chiara<svg class="belt who-belt" viewBox="0 0 72 18" role="img" aria-label="Ceinture violette"><use href="#belt-purple-0"/></svg></span>
+                </legend>
+                <div class="status">
+                  <label><input class="st-present" type="radio" name="s3" id="s3-p">Présent</label>
+                  <label><input class="st-late" type="radio" name="s3" id="s3-r" checked>Retard</label>
+                  <label><input class="st-absent" type="radio" name="s3" id="s3-a">Absent</label>
+                </div>
+              </fieldset>
+            </li>
+            <li>
+              <fieldset>
+                <legend>
+                  <svg class="avatar" aria-hidden="true" focusable="false"><use href="#sil-neutral"/></svg>
+                  <span><span class="last">Nguyen</span> Thomas<svg class="belt who-belt" viewBox="0 0 72 18" role="img" aria-label="Ceinture blanche, 1 barrette"><use href="#belt-white-1"/></svg></span>
+                </legend>
+                <div class="status">
+                  <label><input class="st-present" type="radio" name="s4" id="s4-p">Présent</label>
+                  <label><input class="st-late" type="radio" name="s4" id="s4-r">Retard</label>
+                  <label><input class="st-absent" type="radio" name="s4" id="s4-a">Absent</label>
+                </div>
+              </fieldset>
+            </li>
+            <li>
+              <fieldset>
+                <legend>
+                  <svg class="avatar" aria-hidden="true" focusable="false"><use href="#sil-man"/></svg>
+                  <span><span class="last">Benali</span> Sofiane<svg class="belt who-belt" viewBox="0 0 72 18" role="img" aria-label="Ceinture marron, 1 barrette"><use href="#belt-brown-1"/></svg></span>
+                </legend>
+                <div class="status">
+                  <label><input class="st-present" type="radio" name="s5" id="s5-p">Présent</label>
+                  <label><input class="st-late" type="radio" name="s5" id="s5-r">Retard</label>
+                  <label><input class="st-absent" type="radio" name="s5" id="s5-a">Absent</label>
+                </div>
+              </fieldset>
+            </li>
+          </ul>
+          <div class="roll-foot">
+            <div class="progress" aria-hidden="true"><span class="seg-1"></span><span class="seg-2"></span><span class="seg-3"></span><span class="seg-4"></span><span class="seg-5"></span></div>
+            <p class="counts"><span>Présents <strong class="c-present"></strong></span><span>En retard <strong class="c-late"></strong></span><span>Absents <strong class="c-absent"></strong></span><span>À marquer <strong class="c-todo"></strong></span></p>
+            <p class="hint">À la validation, les inscrits non venus passent absents.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <section class="chores" id="fonctionnalites" aria-labelledby="fonctionnalites-titre">
+    <div class="wrap">
+      <div class="section-intro">
+        <h2 id="fonctionnalites-titre">Ce que le cahier ne vous dit pas.</h2>
+        <p>Le cahier note qui est venu ce soir. Il ne dit pas qui a arrêté de venir, il ne gère pas les réservations, et il finit toujours par se perdre. Voici ce que Matnexa fait à sa place.</p>
+      </div>
+
+      <article class="chore" aria-labelledby="c1">
+        <div class="copy">
+          <p class="page-line"><s>Qui n'est pas venu depuis un mois ?</s></p>
+          <h3 id="c1">Sachez à qui parler cette semaine.</h3>
+          <p>Le tableau de bord liste les membres actifs qui ne sont pas venus depuis 30 jours, avec la date de leur dernière venue. Vous leur écrivez sur WhatsApp depuis votre téléphone, en un clic.</p>
+          <ul class="facts">
+            <li><strong>Assiduité sur 8 semaines</strong> dans chaque ligne de la liste des membres : on voit qui décroche sans ouvrir les fiches.</li>
+            <li><strong>Le message est pré-rempli</strong> : vous le modifiez si besoin, puis vous l'envoyez.</li>
+          </ul>
+        </div>
+        <figure class="screen">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">Membres à recontacter</p>
+                <p class="panel-desc">4 membres actifs sans présence depuis 30 jours.</p>
+              </div>
+            </div>
+            <ul class="rows">
+              <li>
+                <span class="who"><strong>Julien Lefèvre</strong><span class="meta">Dernière venue : 4 sept., 19:00</span></span>
+                <span class="tally" role="img" aria-label="2 semaines sur 8 avec une venue"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <span class="ghost"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg><span class="lbl">WhatsApp</span></span>
+              </li>
+              <li>
+                <span class="who"><strong>Inès Moreau</strong><span class="meta">Dernière venue : 8 sept., 18:15</span></span>
+                <span class="tally" role="img" aria-label="3 semaines sur 8 avec une venue"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i></span>
+                <span class="ghost"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg><span class="lbl">WhatsApp</span></span>
+              </li>
+              <li>
+                <span class="who"><strong>Karim Haddad</strong><span class="meta">Dernière venue : 11 sept., 20:30</span></span>
+                <span class="tally" role="img" aria-label="3 semaines sur 8 avec une venue"><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></span>
+                <span class="ghost"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg><span class="lbl">WhatsApp</span></span>
+              </li>
+              <li>
+                <span class="who"><strong>Paul Girard</strong><span class="meta">Jamais venu</span></span>
+                <span class="tally" role="img" aria-label="0 semaine sur 8 avec une venue"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                <span class="ghost"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chat"/></svg><span class="lbl">WhatsApp</span></span>
+              </li>
+            </ul>
+          </div>
+          <figcaption>Tableau de bord, panneau « Membres à recontacter ». Données fictives.</figcaption>
+        </figure>
+      </article>
+
+      <article class="chore" aria-labelledby="c2">
+        <div class="copy">
+          <p class="page-line"><s>Appel au stylo, recopié le soir dans le tableur</s></p>
+          <h3 id="c2">L'appel en quelques secondes, enregistré pour de vrai.</h3>
+          <p>Les inscrits du cours sont en haut de la liste. Le coach touche Présent, En retard ou Absent, d'une seule main. Une présence n'apparaît comme enregistrée qu'une fois confirmée par le serveur, et si le Wi-Fi de la salle coupe, un bandeau le signale.</p>
+          <ul class="facts">
+            <li><strong>À la validation</strong>, les inscrits qui ne sont pas venus passent absents.</li>
+            <li><strong>Une erreur ?</strong> Elle se corrige à tout moment, même pour un pointage fait par QR.</li>
+          </ul>
+        </div>
+        <figure class="screen">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">Feuille d'appel · jeudi 20:30, No-gi</p>
+                <p class="panel-desc">12 inscrits · 16 places</p>
+              </div>
+            </div>
+            <p class="alert-warning">Connexion perdue — liste figée à 20:41. Les modifications ne sont pas enregistrées tant que la connexion n'est pas revenue.</p>
+            <ul class="rows">
+              <li>
+                <span class="who"><strong><span class="last">Haddad</span> Karim</strong><span class="meta">Inscrit</span></span>
+                <span class="mini-status"><span class="is-present">Présent</span></span>
+              </li>
+              <li>
+                <span class="who"><strong><span class="last">Moreau</span> Inès</strong><span class="meta">Inscrite · en attente du réseau</span></span>
+                <span class="mini-status"><span class="is-pending">Non enregistré</span></span>
+              </li>
+            </ul>
+          </div>
+          <figcaption>Feuille d'appel quand la connexion de la salle tombe. Données fictives.</figcaption>
+        </figure>
+      </article>
+
+      <article class="chore" aria-labelledby="c3">
+        <div class="copy">
+          <p class="page-line"><s>La feuille qui fait le tour du tatami</s></p>
+          <h3 id="c3">Les adhérents pointent seuls, par QR code.</h3>
+          <p>Deux modes au choix du club. Le QR tournant s'affiche sur l'écran du coach et se renouvelle toutes les 45 secondes au plus. Le QR fixe s'imprime en affiche A4 avec le logo du club et retrouve le cours par l'heure. L'adhérent scanne avec le lecteur intégré à Matnexa, sans passer par l'appareil photo du téléphone.</p>
+          <ul class="facts">
+            <li><strong>Pas inscrit ?</strong> L'adhérent réserve et pointe en un seul geste.</li>
+            <li><strong>Deux cours en même temps ?</strong> Il choisit le sien.</li>
+          </ul>
+        </div>
+        <figure class="screen">
+          <div class="screen-pair">
+            <div class="panel">
+              <div class="qr-screen">
+                <p class="panel-title">Pointage ouvert</p>
+                <svg class="qr" viewBox="0 0 25 25" shape-rendering="crispEdges" role="img" aria-label="QR code d'exemple, il mène à www.matnexa.fr"><path fill="#ffffff" d="M0 0h25v25H0z"/><path stroke="#16191d" d="M0 0.5h7m2 0h1m1 0h4m1 0h1m1 0h7M0 1.5h1m5 0h1m2 0h1m1 0h1m3 0h2m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h3m4 0h2m1 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h3m1 0h4m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h1m2 0h2m3 0h1m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h1m1 0h1m4 0h1m2 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m2 0h2m1 0h1m1 0h1M0 8.5h1m1 0h5m5 0h2m4 0h5M0 9.5h2m1 0h1m4 0h1m4 0h1m2 0h2m1 0h1m3 0h1M1 10.5h1m1 0h1m2 0h1m1 0h1m4 0h3m1 0h5m1 0h2M0 11.5h3m2 0h1m9 0h3m1 0h1m4 0h1M0 12.5h5m1 0h1m1 0h1m1 0h1m1 0h9m1 0h3M0 13.5h1m2 0h1m1 0h1m2 0h1m1 0h1m5 0h2m1 0h1m1 0h1m1 0h1M0 14.5h1m3 0h1m1 0h1m1 0h14m1 0h2M0 15.5h1m1 0h2m1 0h1m2 0h1m2 0h1m3 0h1m1 0h1m1 0h2m3 0h1M0 16.5h1m3 0h1m1 0h1m2 0h3m1 0h8m1 0h1M8 17.5h1m3 0h1m1 0h3m3 0h2M0 18.5h7m2 0h1m3 0h1m2 0h1m1 0h1m1 0h1m1 0h3M0 19.5h1m5 0h1m1 0h3m1 0h1m3 0h1m3 0h2m1 0h1M0 20.5h1m1 0h3m1 0h1m1 0h3m1 0h2m1 0h6m1 0h3M0 21.5h1m1 0h3m1 0h1m1 0h1m4 0h1m4 0h1m1 0h5M0 22.5h1m1 0h3m1 0h1m1 0h1m2 0h4m1 0h1m4 0h2m1 0h1M0 23.5h1m5 0h1m2 0h1m1 0h1m2 0h4m1 0h3m2 0h1M0 24.5h7m1 0h1m1 0h3m6 0h6"/></svg>
+                <p class="panel-desc">QR tournant, renouvelé toutes les 45 s.</p>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="success-screen">
+                <p class="title"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-check"/></svg>Présence enregistrée</p>
+                <p class="panel-desc">JJB tous niveaux · mardi 19:00</p>
+                <hr>
+                <span class="tally tally-lg" role="img" aria-label="Cette semaine : ruban posé"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>
+                <dl>
+                  <dt>Venues en octobre</dt><dd>7</dd>
+                  <dt>Classement du mois</dt><dd>4e</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <figcaption>À gauche, l'écran du coach ; à droite, celui de l'adhérent après le scan. Le QR mène à ce site. Données fictives.</figcaption>
+        </figure>
+      </article>
+
+      <article class="chore" aria-labelledby="c4">
+        <div class="copy">
+          <p class="page-line"><s>« Il reste une place ce soir ? » par SMS à 18 h 50</s></p>
+          <h3 id="c4">Les réservations et la liste d'attente, sans SMS.</h3>
+          <p>L'adhérent réserve son cours depuis son téléphone. Si c'est complet, il s'inscrit sur la liste d'attente. Quand une place se libère avant le cours, le premier de la liste la récupère et reçoit un e‑mail. Le coach peut aussi ajouter quelqu'un à la main.</p>
+          <ul class="facts">
+            <li><strong>Planning récurrent</strong> : séances uniques ou chaque semaine, capacité par séance.</li>
+            <li><strong>Annulation possible</strong> jusqu'à la validation de la feuille d'appel.</li>
+          </ul>
+        </div>
+        <figure class="screen">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <p class="panel-title">Mardi 13 octobre</p>
+                <p class="panel-desc">Espace adhérent · planning du jour</p>
+              </div>
+            </div>
+            <ul class="sessions">
+              <li>
+                <span class="time">12:15</span>
+                <span class="what"><strong>JJB midi</strong><span>8 / 12 places</span></span>
+                <span class="badge badge-success">Inscrit</span>
+              </li>
+              <li class="is-next">
+                <span class="time">19:00</span>
+                <span class="what"><strong>JJB tous niveaux</strong><span>Complet · 24 / 24</span></span>
+                <span class="badge badge-warning">Liste d'attente · n°2</span>
+              </li>
+              <li>
+                <span class="time">20:30</span>
+                <span class="what"><strong>No-gi grappling</strong><span>11 / 16 places</span></span>
+                <span class="badge">Places libres</span>
+              </li>
+            </ul>
+          </div>
+          <figcaption>Espace adhérent, planning du jour. Données fictives.</figcaption>
+        </figure>
+      </article>
+
+      <article class="chore" aria-labelledby="c5">
+        <div class="copy">
+          <p class="page-line"><s>Ceinture notée dans un coin de la fiche papier</s></p>
+          <h3 id="c5">Chaque adhérent voit où il en est.</h3>
+          <p>Dans son espace, l'adhérent retrouve sa ceinture, ses barrettes et ses présences des dernières semaines. Il peut aussi apparaître au classement de la semaine, du mois ou de l'année, s'il l'a accepté.</p>
+          <ul class="facts">
+            <li><strong>Photo facultative</strong> ou silhouette : visible seulement du titulaire, de l'équipe et des membres qui ont accepté le classement.</li>
+            <li><strong>Historique des présences</strong> mois par mois.</li>
+          </ul>
+        </div>
+        <figure class="screen">
+          <div class="screen-pair">
+            <div class="panel belt-card">
+              <div class="who-row">
+                <svg class="avatar" aria-hidden="true" focusable="false"><use href="#sil-woman"/></svg>
+                <div>
+                  <p class="panel-title">Léa Martin</p>
+                  <p class="belt-line"><svg class="belt" viewBox="0 0 72 18" aria-hidden="true"><use href="#belt-blue-2"/></svg>Bleue <span class="panel-desc">· 2 barrettes</span></p>
+                </div>
+              </div>
+              <div class="assiduity">
+                <span class="tally" role="img" aria-label="7 semaines sur 8 avec une venue"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span>
+                <span>7 semaines sur 8</span>
+              </div>
+            </div>
+            <div class="panel">
+              <div class="panel-head">
+                <div>
+                  <p class="panel-title">Classement · octobre</p>
+                  <p class="panel-desc">Présences du mois</p>
+                </div>
+              </div>
+              <ol class="ranking">
+                <li><span class="rank">1</span><span>Amadou D.</span><span class="n">11</span></li>
+                <li><span class="rank">2</span><span>Chiara R.</span><span class="n">9</span></li>
+                <li><span class="rank">3</span><span>Sofiane B.</span><span class="n">8</span></li>
+                <li class="is-me"><span class="rank">4</span><span>Léa M. (vous)</span><span class="n">7</span></li>
+              </ol>
+            </div>
+          </div>
+          <figcaption>Espace adhérent : « Ma ceinture » et le classement du mois. Données fictives.</figcaption>
+        </figure>
+      </article>
+
+      <dl class="inventory" aria-label="Fonctionnalités par domaine">
+        <div>
+          <dt><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-users"/></svg>Membres</dt>
+          <dd>Liste paginée avec recherche et filtres, fiches, statut actif ou archivé, ceinture et barrettes, téléphone. Import CSV en deux étapes, export CSV.</dd>
+        </div>
+        <div>
+          <dt><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-calendar"/></svg>Planning</dt>
+          <dd>Semaine type, séances uniques ou récurrentes, capacité, disciplines et types de cours propres au club, annulation d'une séance.</dd>
+        </div>
+        <div>
+          <dt><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-roll"/></svg>Présences</dt>
+          <dd>Feuille d'appel, pointage par QR tournant ou fixe, fenêtre de pointage réglable, validation de la feuille.</dd>
+        </div>
+        <div>
+          <dt><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chart"/></svg>Rapports</dt>
+          <dd>Présences par semaine, rapports filtrables, export CSV des présences et des réservations.</dd>
+        </div>
+        <div>
+          <dt><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-settings"/></svg>Équipe</dt>
+          <dd>Propriétaire, administrateurs et coachs, invitations par e‑mail, journal d'audit. Un compte peut appartenir à plusieurs clubs.</dd>
+        </div>
+        <div>
+          <dt><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-user"/></svg>Adhérents</dt>
+          <dd>Inscription par code ou lien du club, profil, réservations, pointage, présences et classement sur consentement.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="ritual on-bar" id="rituel" aria-labelledby="rituel-titre">
+    <div class="wrap">
+      <h2 id="rituel-titre">Un cours, de la réservation à la relance.</h2>
+      <p class="lead">Ce qui est saisi à une étape sert aux suivantes. Plus besoin de tout recopier le soir.</p>
+      <ol class="steps">
+        <li>
+          <span class="when">Dès la publication du planning</span>
+          <h3>Réserver</h3>
+          <p>L'adhérent prend sa place. Complet : liste d'attente, promotion automatique.</p>
+        </li>
+        <li>
+          <span class="when">De 45 min avant à 30 min après le début</span>
+          <h3>Pointer</h3>
+          <p>Scan du QR à l'arrivée. Fenêtre réglable par le club.</p>
+        </li>
+        <li>
+          <span class="when">Pendant le cours</span>
+          <h3>Faire l'appel</h3>
+          <p>Le coach complète d'un doigt : présent, en retard, absent.</p>
+        </li>
+        <li>
+          <span class="when">À la fin du cours</span>
+          <h3>Valider</h3>
+          <p>Les inscrits non venus passent absents. L'assiduité se met à jour.</p>
+        </li>
+        <li>
+          <span class="when">Chaque semaine</span>
+          <h3>Recontacter</h3>
+          <p>Ceux qui ne viennent plus depuis 30 jours remontent sur le tableau de bord.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="data" id="donnees" aria-labelledby="donnees-titre">
+    <div class="wrap">
+      <div class="section-intro">
+        <h2 id="donnees-titre">Vos données restent en France.</h2>
+        <p>Matnexa ne demande que ce dont le club a besoin, et chaque adhérent choisit ce que les autres voient de lui.</p>
+      </div>
+      <dl class="ledger">
+        <div>
+          <dt>Hébergement</dt>
+          <dd>Application, base de données et authentification auto-hébergées sur un serveur OVHcloud en France (Gravelines). E-mails envoyés par Resend depuis l'Irlande.</dd>
+        </div>
+        <div>
+          <dt>Aucune donnée de santé</dt>
+          <dd>Ni blessure, ni certificat, ni sexe : l'avatar est une silhouette choisie par l'adhérent.</dd>
+        </div>
+        <div>
+          <dt>Adhérents majeurs</dt>
+          <dd>Matnexa est réservé aux adultes. La majorité est attestée par l'adhérent, ou par l'équipe à la création ou à l'import.</dd>
+        </div>
+        <div>
+          <dt>Visibilité choisie</dt>
+          <dd>Classement et photo relèvent du consentement de l'adhérent. Sans son accord, il n'apparaît pas.</dd>
+        </div>
+        <div>
+          <dt>Export et effacement</dt>
+          <dd>Chacun peut exporter ses données au format JSON et supprimer son compte. Le club exporte membres et présences en CSV.</dd>
+        </div>
+        <div>
+          <dt>Rien n'est envoyé à une IA</dt>
+          <dd>Aucune donnée personnelle n'est transmise à un fournisseur d'intelligence artificielle. Ce site ne dépose aucun cookie.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="faq" id="questions" aria-labelledby="questions-titre">
+    <div class="wrap">
+      <div class="section-intro">
+        <h2 id="questions-titre">Questions fréquentes</h2>
+        <p>Une autre question ? Écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a>.</p>
+      </div>
+      <div class="faq-list">
+        <details>
+          <summary>Faut-il installer une application ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>Non. Matnexa s'ouvre dans le navigateur du téléphone, de la tablette ou de l'ordinateur. Sur Android comme sur iPhone, on peut l'ajouter à l'écran d'accueil : elle s'ouvre alors en plein écran, comme une application, sans passer par un magasin d'applications. Coachs et adhérents ne se connectent qu'une fois par appareil.</p></div>
+        </details>
+        <details>
+          <summary>Peut-on reprendre nos adhérents depuis un autre logiciel ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>Oui. L'import se fait depuis le fichier CSV exporté par votre ancien logiciel ou votre tableur, téléphone compris, en deux étapes : vous vérifiez l'aperçu avant d'enregistrer. Membres et présences s'exportent aussi en CSV à tout moment.</p></div>
+        </details>
+        <details>
+          <summary>Que se passe-t-il si le réseau coupe pendant l'appel ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>Un bandeau s'affiche et la liste reste figée jusqu'au retour du réseau. La feuille d'appel n'affiche comme enregistré que ce que le serveur a confirmé : vous savez toujours ce qui est passé et ce qui ne l'est pas.</p></div>
+        </details>
+        <details>
+          <summary>Comment les adhérents rejoignent-ils le club ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>Avec le code ou le lien permanent du club, que l'équipe peut régénérer à tout moment. L'adhérent crée son compte, sa fiche est créée automatiquement, puis il complète son profil : identité, téléphone, ceinture et barrettes, photo facultative.</p></div>
+        </details>
+        <details>
+          <summary>Matnexa convient-il aux sections enfants ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>Pas encore. Matnexa est réservé aux adhérents majeurs : les comptes enfants et parents ne sont pas pris en charge aujourd'hui.</p></div>
+        </details>
+        <details>
+          <summary>Où sont hébergées les données du club ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>En France, sur un serveur loué à OVHcloud dans le centre de données de Gravelines. L'application, la base de données et l'authentification sont auto-hébergées. Les e‑mails sont envoyés par Resend depuis sa région d'envoi en Irlande. Aucune donnée personnelle n'est transmise à un fournisseur d'intelligence artificielle.</p><p>Le détail figure dans la <a href="https://app.matnexa.fr/privacy">notice de confidentialité</a>.</p></div>
+        </details>
+        <details>
+          <summary>Comment ouvrir Matnexa pour mon club ?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <div><p>Remplissez la <a href="https://app.matnexa.fr/request-club">demande de création de club</a> : nom du club, votre nom et votre adresse e‑mail. Chaque demande est examinée à la main ; vous recevez ensuite un e‑mail avec la marche à suivre pour créer votre compte et votre club.</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <section class="closing on-bar" aria-labelledby="cloture-titre">
+    <div class="wrap">
+      <div>
+        <h2 id="cloture-titre">Ouvrez Matnexa pour votre club.</h2>
+        <p>Le formulaire prend une minute : le nom du club, votre nom et votre adresse e‑mail. La réponse arrive par e‑mail.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="https://app.matnexa.fr/request-club">
+            Demander l'accès pour mon club
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="#i-arrow"/></svg>
+          </a>
+          <a class="link-more" href="https://app.matnexa.fr/login">Déjà inscrit ? Se connecter</a>
+        </div>
+      </div>
+      <svg class="closing-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#mark"/></svg>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer on-bar">
+  <div class="wrap">
+    <div>
+      <a class="logo" href="/" aria-label="Matnexa, accueil">
+        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="#mark"/></svg>
+        <span>Matnexa</span>
+      </a>
+      <p class="tagline">La gestion de club pour le JJB, le grappling et le MMA.</p>
+    </div>
+    <nav aria-labelledby="pied-app">
+      <h2 id="pied-app">Application</h2>
+      <ul>
+        <li><a href="https://app.matnexa.fr/request-club">Demander l'accès pour un club</a></li>
+        <li><a href="https://app.matnexa.fr/signup">Rejoindre son club avec un code</a></li>
+        <li><a href="https://app.matnexa.fr/login">Se connecter</a></li>
+      </ul>
+    </nav>
+    <nav aria-labelledby="pied-infos">
+      <h2 id="pied-infos">Informations</h2>
+      <ul>
+        <li><a href="https://app.matnexa.fr/privacy">Confidentialité</a></li>
+        <li><a href="/mentions-legales/">Mentions légales</a></li>
+        <li><a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a></li>
+      </ul>
+    </nav>
+    <p class="copyright">© 2026 Matnexa</p>
+  </div>
+</footer>
+</body>
+</html>
