@@ -126,7 +126,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
                     </LinkButton>
                   )}
                   {m.email && (
-                    <LinkButton href={`mailto:${m.email}`} variant="ghost" icon="mail" className="px-3">
+                    <LinkButton href={`mailto:${m.email}`} variant="ghost" icon="mail">
                       Écrire<span className="sr-only"> à {m.firstName} {m.lastName}</span>
                     </LinkButton>
                   )}

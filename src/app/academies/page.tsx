@@ -20,11 +20,11 @@ export default async function AcademiesPage() {
     <StandaloneFrame
       aside={
         <div className="flex">
-          <Link href="/account" className={buttonClasses({ variant: "ghost", className: "px-2! sm:px-3!" })}>
+          <Link href="/account" className={buttonClasses({ variant: "ghost", className: "px-2 sm:px-3" })}>
             Mon compte
           </Link>
           <form action={signOutAction}>
-            <button type="submit" className={buttonClasses({ variant: "ghost", className: "px-2! sm:px-3!" })}>
+            <button type="submit" className={buttonClasses({ variant: "ghost", className: "px-2 sm:px-3" })}>
               Déconnexion
             </button>
           </form>
