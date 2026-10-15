@@ -15,7 +15,7 @@ export default function PrivacyPage() {
       <PageHeader title="Confidentialité et données personnelles" back={<BackLink href="/">Retour</BackLink>} />
       <div className="max-w-[68ch] space-y-6 text-base leading-7 [&_h2]:mb-1.5 [&_h2]:text-lg [&_h2]:font-bold">
       <section>
-        <h2>Qui est responsable de vos données ?</h2>
+        <h2>Responsable du traitement</h2>
         <p>
           Pour les fiches membres, les présences, les réservations et les photos, le <strong>club</strong> auquel vous appartenez est responsable du traitement ; l&apos;éditeur de Matnexa agit comme son sous-traitant (art. 28 RGPD).
           Pour les comptes utilisateurs (connexion) et les demandes de création de club, l&apos;éditeur de Matnexa est responsable du traitement.
@@ -41,7 +41,7 @@ export default function PrivacyPage() {
             <strong>Présences et réservations</strong> (cours, date, statut présent / en retard / absent, inscrit ou en liste d&apos;attente) : organiser les cours et suivre l&apos;assiduité. Le pointage par QR code n&apos;utilise ni géolocalisation ni image : la caméra lit le code dans votre navigateur, sans envoi.
           </li>
           <li>
-            <strong>Classement des venues</strong> : vous y voyez toujours votre rang. Les autres membres ne voient votre nom, votre photo, votre ceinture et vos venues que si vous l&apos;acceptez ; vous pouvez retirer cet accord à tout moment depuis la page Classement. Base légale : votre consentement.
+            <strong>Classement des venues</strong> : vous y voyez toujours votre rang. Les autres membres ne voient votre nom, votre photo, votre ceinture et vos venues que si vous l&apos;acceptez ; vous pouvez retirer cet accord à tout moment depuis « Mon profil ». Base légale : votre consentement.
           </li>
           <li>
             <strong>E-mails</strong> : confirmation d&apos;adresse, réinitialisation de mot de passe, invitation, et avis de place confirmée quand vous quittez la liste d&apos;attente.
@@ -63,6 +63,23 @@ export default function PrivacyPage() {
       </section>
 
       <section>
+        <h2>Données obligatoires ou facultatives</h2>
+        <p>
+          Pour créer un compte, l&apos;adresse e-mail, un nom affiché et un mot de passe sont nécessaires : sans eux, le compte ne peut pas être créé. Pour une fiche membre, le prénom et le nom sont nécessaires ; l&apos;e-mail, le téléphone, la photo et l&apos;identifiant d&apos;origine sont facultatifs, et l&apos;apparition dans le classement relève de votre seul choix. Sans e-mail ni compte, vous restez membre du club mais ne pouvez pas réserver ni consulter votre espace en ligne.
+        </p>
+        <p className="mt-2">
+          Vos données viennent de vous, de votre club (qui crée ou importe votre fiche) et, pour les présences, de l&apos;équipe qui fait l&apos;appel ou de votre propre pointage.
+        </p>
+      </section>
+
+      <section>
+        <h2>Décisions automatisées et profilage</h2>
+        <p>
+          Matnexa ne prend aucune décision automatisée produisant des effets juridiques ou vous affectant de manière significative, et ne fait aucun profilage. Le classement est un simple comptage de venues, et la liste d&apos;attente suit l&apos;ordre d&apos;arrivée des réservations.
+        </p>
+      </section>
+
+      <section>
         <h2>Cookies et stockage sur votre appareil</h2>
         <p>
           Matnexa ne dépose rien chez un visiteur non connecté. Une fois connecté : un <strong>cookie de session</strong> pour rester connecté (renouvelé à l&apos;usage, expire après un an sans utilisation) ; pour l&apos;équipe d&apos;un club qui choisit l&apos;affichage « membre », un cookie qui mémorise ce choix (un an) ; si vous fermez le bandeau d&apos;installation de l&apos;application, ce choix est mémorisé dans votre navigateur. Ces éléments sont strictement nécessaires au service ou mémorisent un choix que vous avez fait : ils ne demandent pas de consentement et aucun bandeau cookies n&apos;est affiché.
@@ -70,7 +87,7 @@ export default function PrivacyPage() {
       </section>
 
       <section>
-        <h2>Combien de temps ?</h2>
+        <h2>Durées de conservation</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Fiche membre : tant que vous êtes membre actif ; une fois archivée, anonymisée automatiquement après le délai fixé par le club (24 mois par défaut). Les présences sont alors conservées sans identité, à des fins statistiques.</li>
           <li>Photo : jusqu&apos;à ce que vous la retiriez, ou à l&apos;anonymisation de la fiche ou à la suppression de votre compte.</li>
@@ -83,9 +100,25 @@ export default function PrivacyPage() {
 
       <section>
         <h2>Vos droits</h2>
+        <p>Vous disposez des droits suivants sur vos données personnelles :</p>
+        <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li><strong>Droit d&apos;accès</strong> (art. 15 RGPD) : obtenir une copie de vos données.</li>
+          <li><strong>Droit de rectification</strong> (art. 16) : faire corriger des données inexactes.</li>
+          <li><strong>Droit à l&apos;effacement</strong> (art. 17) : demander la suppression de vos données.</li>
+          <li><strong>Droit à la limitation</strong> (art. 18) : demander le gel de l&apos;utilisation de vos données.</li>
+          <li><strong>Droit à la portabilité</strong> (art. 20) : recevoir vos données dans un format structuré (téléchargement en JSON depuis « Mon compte »).</li>
+          <li><strong>Droit d&apos;opposition</strong> (art. 21) : vous opposer à un traitement fondé sur l&apos;intérêt légitime.</li>
+          <li><strong>Retrait du consentement</strong> (art. 7 §3) : à tout moment, par exemple pour le classement, sans effet sur ce qui a eu lieu avant.</li>
+        </ul>
+        <p className="mt-2">
+          Depuis <Link href="/account">Mon compte</Link>, vous pouvez télécharger vos données et supprimer votre compte : votre photo et votre présence dans le classement disparaissent alors aussi. Votre fiche membre relève de votre club : adressez-vous à ses responsables, qui disposent d&apos;outils d&apos;export, de rectification et d&apos;effacement. Pour votre compte, écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a> : réponse sous un mois (prolongeable de deux mois si la demande est complexe, avec information de votre part). Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr/fr/plaintes">cnil.fr/fr/plaintes</a>).
+        </p>
+      </section>
+
+      <section>
+        <h2>Contact et délégué à la protection des données</h2>
         <p>
-          Vous pouvez demander l&apos;accès, la rectification, l&apos;effacement, la limitation, la portabilité, vous opposer à un traitement et retirer votre consentement à tout moment. Depuis <Link href="/account">Mon compte</Link>, vous pouvez
-          télécharger vos données et supprimer votre compte : votre photo et votre présence dans le classement disparaissent alors aussi. Votre fiche membre relève de votre club : adressez-vous à ses responsables, qui disposent d&apos;outils d&apos;export et d&apos;effacement. Pour votre compte, écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a> : réponse sous un mois. Vous pouvez introduire une réclamation auprès de la CNIL (cnil.fr).
+          Aucun délégué à la protection des données (DPO) n&apos;est désigné : ce n&apos;est pas obligatoire pour ce traitement (art. 37 RGPD). Pour toute question ou demande concernant vos données : <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a>.
         </p>
       </section>
 
