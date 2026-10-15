@@ -20,7 +20,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const children = await withUser(user, (tx) => myChildrenWithSessions(tx));
   return (
     <StandaloneFrame>
-      <PageHeader title="Mon compte" back={<BackLink href="/academies">Mes clubs</BackLink>} />
+      <PageHeader title="Mon compte" back={<BackLink href="/">Retour</BackLink>} />
       <div className="space-y-6">
       <Card title="Profil" description={`Connecté en tant que ${user.email ?? ""}`}>
         <ActionForm action={updateProfileAction} className="space-y-4">
@@ -29,6 +29,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         </ActionForm>
       </Card>
       <ChildrenCard childrenRows={children} />
+      <Card title="Mes clubs" description="Changer de club, en rejoindre un autre ou en créer un.">
+        <LinkButton href="/academies" variant="secondary">
+          Voir mes clubs
+        </LinkButton>
+      </Card>
       <Card title="Application sur mon téléphone" description="Installez Matnexa sur l'écran d'accueil : elle s'ouvre en plein écran et vous restez connecté, sans ressaisir votre mot de passe.">
         <InstallApp />
       </Card>

@@ -69,7 +69,7 @@ function SideBar({ academy, role, viewAsMember, userLabel, items }: Shell & { us
   return (
     <aside data-surface="bar" className="hidden bg-bar text-bar-text md:sticky md:top-0 md:flex md:h-dvh md:flex-col print:hidden">
       <div className="px-5 pb-4 pt-6">
-        <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 items-center no-underline">
+        <Link href="/" title="Accueil" className="inline-flex min-h-11 items-center no-underline">
           <MatnexaLogo tone="light" />
         </Link>
         <div className="mt-5 flex items-center gap-3 border-t border-white/15 pt-4">
@@ -109,7 +109,7 @@ function MobileTopBar({ academy, role, viewAsMember }: Shell) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden print:hidden">
       <div className="flex items-center gap-3 px-4 py-1.5">
-        <Link href="/academies" title="Mes clubs" className="inline-flex min-h-11 shrink-0 items-center no-underline">
+        <Link href="/" title="Accueil" className="inline-flex min-h-11 shrink-0 items-center no-underline">
           <MatnexaLogo size="sm" />
         </Link>
         <div className="flex min-w-0 flex-1 items-center gap-2.5 border-l border-line pl-3 leading-tight">
