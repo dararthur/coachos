@@ -105,6 +105,8 @@ test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte 
   await expect(parent.getByRole("heading", { name: "Mes enfants" })).toBeVisible();
   await expect(parent.getByText("Inès Durand")).toBeVisible();
   // 16 ans : compte propre possible
+  await expect(parent.getByLabel("E-mail de Inès")).toBeHidden();
+  await parent.getByText("Donner un compte à Inès").click();
   await expect(parent.getByLabel("E-mail de Inès")).toBeVisible();
   await ctx.close();
 });

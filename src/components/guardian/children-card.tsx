@@ -39,7 +39,19 @@ export function ChildrenCard({ childrenRows, showClub = true }: { childrenRows: 
               </div>
             )}
             {c.consentConfirmedAt && !c.consentWithdrawnAt && c.canHaveAccount && (
-              c.hasAccount ? <p className="text-sm text-ink-soft">{c.firstName} a un compte propre.</p> : <MinorAccountForm childId={c.childId} firstName={c.firstName} />
+              c.hasAccount ? (
+                <p className="text-sm text-ink-soft">{c.firstName} a un compte propre.</p>
+              ) : (
+                <details className="group rounded-sm border border-line">
+                  <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-3 text-sm font-semibold">
+                    Donner un compte à {c.firstName}
+                    <span aria-hidden="true" className="text-ink-soft transition-transform group-open:rotate-180">⌄</span>
+                  </summary>
+                  <div className="border-t border-line p-3">
+                    <MinorAccountForm childId={c.childId} firstName={c.firstName} />
+                  </div>
+                </details>
+              )
             )}
           </li>
         ))}
