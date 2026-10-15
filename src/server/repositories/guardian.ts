@@ -22,6 +22,7 @@ export async function confirmConsent(tx: Tx, tokenHash: string, userId: string |
 
 export interface ChildRow {
   childId: string;
+  academyId: string;
   academyName: string;
   firstName: string;
   lastName: string;
@@ -35,7 +36,7 @@ export interface ChildRow {
 
 export async function myChildren(tx: Tx): Promise<ChildRow[]> {
   const rows = await tx<ChildRow[]>`
-    select child_id as "childId", academy_name as "academyName", first_name as "firstName", last_name as "lastName",
+    select child_id as "childId", academy_id as "academyId", academy_name as "academyName", first_name as "firstName", last_name as "lastName",
            ranking_opt_in as "rankingOptIn", consent_confirmed_at as "consentConfirmedAt",
            consent_withdrawn_at as "consentWithdrawnAt", last_attended_at as "lastAttendedAt",
            can_have_account as "canHaveAccount", has_account as "hasAccount"

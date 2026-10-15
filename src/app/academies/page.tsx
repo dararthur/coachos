@@ -7,13 +7,15 @@ import { signOutAction } from "@/server/actions/auth";
 import { requireUser } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { listAcademiesForUser } from "@/server/repositories/academies";
+import { ChildrenCard } from "@/components/guardian/children-card";
+import { myChildren } from "@/server/repositories/guardian";
 import { buttonClasses } from "@/components/ui/button-classes";
 
 export const metadata: Metadata = { title: "Mes clubs" };
 
 export default async function AcademiesPage() {
   const user = await requireUser();
-  const academies = await withUser(user, (tx) => listAcademiesForUser(tx, user.id));
+  const { academies, children } = await withUser(user, async (tx) => ({ academies: await listAcademiesForUser(tx, user.id), children: await myChildren(tx) }));
   return (
     <StandaloneFrame
       aside={
@@ -37,7 +39,10 @@ export default async function AcademiesPage() {
           </LinkButton>
         }
       />
-      {academies.length === 0 ? (
+      <div className="mb-6">
+        <ChildrenCard childrenRows={children} />
+      </div>
+      {academies.length === 0 && children.length > 0 ? null : academies.length === 0 ? (
         <EmptyState framed title="Aucun club pour le moment" action={<LinkButton href="/onboarding">Créer mon club</LinkButton>}>
           Créez votre club, ou demandez une invitation au propriétaire de votre club.
         </EmptyState>

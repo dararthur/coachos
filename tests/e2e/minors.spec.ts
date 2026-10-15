@@ -78,3 +78,33 @@ test("l'import CSV crée un mineur avec lien d'accord envoyé au responsable", a
   await expect(page.getByText(/1 mineur\(s\) : lien d'accord envoyé/)).toBeVisible();
   await waitForMail(parentEmail, "guardian_consent");
 });
+
+test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte rattaché à l'accord", async ({ page, browser }) => {
+  await signUp(page, uniqueEmail("minors-home"), "Coach Accueil");
+  const club = await createClub(page, "Club Accueil");
+  const parentEmail = uniqueEmail("parent-home");
+  const year = new Date().getFullYear() - 16;
+  await page.goto(`/a/${club}/members/new`);
+  await page.getByLabel("Prénom").fill("Inès");
+  await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Durand");
+  await page.getByLabel("Type de membre").selectOption("minor");
+  await page.getByLabel("Date de naissance").fill(`${year}-02-03`);
+  await page.getByLabel("Nom du responsable légal").fill("Paul Durand");
+  await page.getByLabel("E-mail du responsable légal").fill(parentEmail);
+  await page.getByRole("button", { name: "Créer le membre" }).click();
+  await expect(page.getByRole("heading", { name: "Inès Durand" })).toBeVisible();
+  const mail = await waitForMail(parentEmail, "guardian_consent");
+
+  const ctx = await browser.newContext();
+  const parent = await ctx.newPage();
+  await signUp(parent, parentEmail, "Paul Durand");
+  await parent.goto(mail.link);
+  await parent.getByRole("button", { name: "Je confirme mon accord" }).click();
+  await expect(parent.getByText("Merci : votre accord est enregistré.")).toBeVisible();
+  await parent.goto("/academies");
+  await expect(parent.getByRole("heading", { name: "Mes enfants" })).toBeVisible();
+  await expect(parent.getByText("Inès Durand")).toBeVisible();
+  // 16 ans : compte propre possible
+  await expect(parent.getByLabel("E-mail de Inès")).toBeVisible();
+  await ctx.close();
+});
