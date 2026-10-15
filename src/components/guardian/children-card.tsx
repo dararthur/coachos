@@ -42,7 +42,7 @@ export function ChildrenCard({ childrenRows, showClub = true }: { childrenRows: 
                       const label = `${s.className}, ${formatDateTime(s.startsAt, s.timezone)}`;
                       const full = s.capacity !== null && s.booked >= s.capacity;
                       return (
-                        <li key={s.sessionId} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm">
+                        <li key={s.sessionId} className="flex flex-col items-start gap-2 px-3 py-2.5 text-sm min-[30rem]:flex-row min-[30rem]:items-center min-[30rem]:justify-between">
                           <span className="min-w-0">
                             <span className="block font-semibold">{s.className}</span>
                             <span className="block text-ink-soft">{formatDateTime(s.startsAt, s.timezone)}</span>
