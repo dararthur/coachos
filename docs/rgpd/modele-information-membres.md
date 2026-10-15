@@ -8,7 +8,7 @@
 
 Pour gérer les adhésions, organiser les cours et suivre les présences, [nom du club] ([adresse], contact : [e-mail]) utilise l'application **Matnexa**, éditée par Arthur DARON (contact@matnexa.fr), qui agit pour notre compte.
 
-**Ce que nous enregistrons** : vos prénom et nom, votre e-mail et votre téléphone si vous nous les donnez, votre date d'inscription, votre ceinture, vos réservations et vos présences aux cours. Si vous créez un compte, vous pouvez aussi ajouter une photo. Nous n'enregistrons aucune information sur votre santé ni votre date de naissance. L'application est réservée aux adultes.
+**Ce que nous enregistrons** : vos prénom et nom, votre e-mail et votre téléphone si vous nous les donnez, votre date d'inscription, votre ceinture, vos réservations et vos présences aux cours. Si vous créez un compte, vous pouvez aussi ajouter une photo. Nous n'enregistrons aucune information sur votre santé. Votre date de naissance n'est conservée que si vous êtes mineur, jusqu'à votre majorité. Pour un mineur, nous enregistrons aussi le nom, l'e-mail et, si fourni, le téléphone de son responsable légal, ainsi que la date de son accord ; les messages du club sont adressés au responsable, jamais à l'enfant ; le classement et la photo sont désactivés sauf demande du responsable, qui peut retirer son accord à tout moment. Un mineur n'a pas de compte propre.
 
 **Pourquoi** : gérer votre adhésion et organiser les cours ([base légale retenue par le club, par exemple : exécution de votre contrat d'adhésion]). Votre téléphone peut servir à l'équipe pour vous recontacter, y compris par WhatsApp depuis le téléphone d'un encadrant.
 

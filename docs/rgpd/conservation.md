@@ -5,6 +5,7 @@ Principe : limitation de la conservation (art. 5.1.e). Les durées marquées **c
 | Donnée | Durée | Point de départ | Mécanisme (code) | Statut |
 |---|---|---|---|---|
 | Fiche membre active | Tant que le membre est actif | — | aucun (décision du club : archiver) | choix produit ; **pas de purge des fiches actives inactives depuis longtemps** — à décider |
+| Date de naissance et responsable légal d'un mineur | Jusqu'à la majorité (18 ans) | date de naissance | `graduate_minors()` (cron de purge) ; anonymisation/suppression de la fiche | testé (`tests/db/minors.test.ts`) |
 | Fiche membre archivée | `retention_months` du club (24 par défaut, 6–120) | archivage | `purge_expired_data()` → anonymisation | testé (`tests/db/privacy.test.ts`) |
 | Présences | Indéfinie, **sans identité** après anonymisation | — | anonymisation de la fiche | choix produit : statistiques non identifiantes ; vérifier qu'elles ne sont pas réidentifiables dans un petit club |
 | Réservations | Jusqu'à l'archivage/anonymisation de la fiche | — | trigger `people_drop_bookings` | testé |

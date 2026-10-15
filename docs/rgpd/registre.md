@@ -19,8 +19,9 @@ Pour chaque club client : [nom du club, contact]. Le club tient **son propre** r
 
 | Catégorie de traitement | Finalité (club) | Base légale à déterminer par le club | Données | Mesures |
 |---|---|---|---|---|
-| Fiches membres | Gestion des adhérents | Art. 6.1.b (contrat d'adhésion) ou 6.1.f | identité, contact (e-mail, téléphone), grade, silhouette, date d'inscription, attestation de majorité | RLS par club, rôles, export/effacement |
+| Fiches membres | Gestion des adhérents | Art. 6.1.b (contrat d'adhésion) ou 6.1.f | identité, contact (e-mail, téléphone), grade (dont ceintures enfants IBJJF), silhouette, date d'inscription, attestation de majorité | RLS par club, rôles, export/effacement |
 | Présences et réservations | Organisation des cours, assiduité | Art. 6.1.b / 6.1.f | séance, statut, réservation | idem |
+| Mineurs : date de naissance et responsable légal | Déterminer la minorité ; joindre le responsable ; preuve de son accord | Art. 6.1.b (contrat conclu par le responsable) ; accord horodaté conservé | date de naissance (effacée à la majorité), nom, e-mail, téléphone du responsable, dates de demande/confirmation/retrait de l'accord | table `guardianships` (RLS : staff du club et responsable lié), jeton haché, effacement avec la fiche |
 | Photo de profil | Reconnaissance des membres par l'équipe | **À trancher** : facultative et ajoutée par le membre ; base 6.1.a (consentement) ou 6.1.f possibles | image | facultative ; retrait libre ; supprimée avec le compte |
 | Classement des venues | Animation du club | **Art. 6.1.a (consentement)** — opt-in, désactivé par défaut, retrait en un clic | nom, photo, ceinture, venues visibles des autres membres | `ranking_opt_in` faux par défaut ; réinitialisé à la suppression du compte |
 | Recontact (WhatsApp) | Relancer un membre absent | Art. 6.1.f (à confirmer) | téléphone, prénom | action manuelle du staff depuis son appareil |

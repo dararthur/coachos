@@ -6,7 +6,9 @@
 
 | Catégorie | Qui | Remarques |
 |---|---|---|
-| Membres d'un club | Adultes inscrits (fiche créée par le staff, par import CSV, ou à l'inscription par code club) | Majorité **attestée**, pas vérifiée ; aucune date de naissance |
+| Membres d'un club | Adultes inscrits (fiche créée par le staff, par import CSV, ou à l'inscription par code club) | Majorité **attestée**, pas vérifiée ; date de naissance non conservée |
+| Membres mineurs | Fiche créée par le staff ou par import CSV (pas de compte propre) | Date de naissance conservée **jusqu'à la majorité** ; voir [mineurs.md](mineurs.md) |
+| Responsables légaux | Parent ou tuteur d'un mineur, indiqué par le club | Nom, e-mail, téléphone facultatif ; compte facultatif rattaché par le lien d'accord |
 | Staff d'un club | Propriétaire, administrateurs, coachs | Ont un compte |
 | Demandeurs de club | Personne qui remplit `/request-club` | Peut ne jamais avoir de compte |
 | Administrateur de la plateforme | Désigné par `PLATFORM_ADMIN_EMAIL` (variable d'environnement) | Adresse jamais stockée en base |

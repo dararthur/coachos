@@ -56,7 +56,10 @@ export default function PrivacyPage() {
             <strong>Compteurs anti-abus</strong> (empreintes irréversibles d&apos;adresse IP/e-mail) : limiter les tentatives répétées.
           </li>
         </ul>
-        <p className="mt-2">Matnexa ne collecte <strong>aucune donnée de santé, de blessure ni de date de naissance</strong>, et n&apos;est ouvert qu&apos;aux <strong>membres majeurs</strong>. Aucun traceur publicitaire ni outil de mesure d&apos;audience.</p>
+        <p className="mt-2">Matnexa ne collecte <strong>aucune donnée de santé ni de blessure</strong>. Aucun traceur publicitaire ni outil de mesure d&apos;audience.</p>
+        <p className="mt-2">
+          <strong>Mineurs.</strong> Le club peut inscrire un membre mineur. Un mineur n&apos;a pas de compte propre : le club enregistre sa <strong>date de naissance</strong> (effacée à sa majorité) et son <strong>responsable légal</strong> (nom, e-mail, téléphone facultatif). Le responsable reçoit un lien pour confirmer son accord ; la date de cet accord est conservée. Les messages du club lui sont adressés, jamais à l&apos;enfant. Le classement et la photo sont désactivés ; seul le responsable peut activer le classement. Il peut retirer son accord à tout moment depuis « Mon compte » (s&apos;il a rattaché un compte) ou auprès du club : la fiche est alors archivée et la photo supprimée. Les membres majeurs ne fournissent pas de date de naissance.
+        </p>
       </section>
 
       <section>

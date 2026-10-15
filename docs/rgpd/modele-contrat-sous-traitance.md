@@ -15,9 +15,9 @@ Le Sous-traitant traite des données personnelles pour le compte du Responsable,
 | Élément | Contenu |
 |---|---|
 | Nature et finalités | Gestion des adhérents ; organisation des cours, réservations et liste d'attente ; suivi des présences (y compris par QR code) ; classement des venues sur consentement des membres ; envoi d'e-mails de service ; exports à la demande du Responsable |
-| Catégories de personnes | Membres majeurs du club ; encadrants (propriétaire, administrateurs, coachs) |
-| Catégories de données | Identité (prénom, nom), contact (e-mail, téléphone), date d'inscription, identifiant interne facultatif, ceinture et barrettes, silhouette d'avatar, photo facultative, attestation de majorité, réservations, présences, consentement au classement |
-| Données exclues | Aucune donnée de santé ou de blessure, aucune date de naissance, aucune donnée biométrique ou de géolocalisation. Le Responsable s'engage à ne pas en saisir |
+| Catégories de personnes | Membres du club, majeurs ou mineurs ; responsables légaux des mineurs ; encadrants (propriétaire, administrateurs, coachs) |
+| Catégories de données | Identité (prénom, nom), contact (e-mail, téléphone), date d'inscription, identifiant interne facultatif, ceinture et barrettes, silhouette d'avatar, photo facultative, attestation de majorité, date de naissance et responsable légal (nom, e-mail, téléphone) des mineurs, accord du responsable, réservations, présences, consentement au classement |
+| Données exclues | Aucune donnée de santé ou de blessure, aucune date de naissance (hors mineurs, jusqu'à leur majorité), aucune donnée biométrique ou de géolocalisation. Le Responsable s'engage à ne pas en saisir |
 | Durées | Selon `docs/rgpd/conservation.md` : fiches archivées anonymisées après le délai choisi par le Responsable (24 mois par défaut, réglable de 6 à 120 mois) |
 
 ## 3. Instructions documentées (art. 28 §3.a)
