@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { addMember, adminSql, appSql, asUser, buildWorld, closeAll, createAcademy, createUser, failing } from "./support";
 
@@ -7,8 +8,9 @@ beforeAll(async () => {
 afterAll(closeAll);
 
 const endpoint = (label: string) => `https://fcm.googleapis.com/fcm/send/${label}-${"x".repeat(30)}`;
-const P256DH = "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM";
-const AUTH = "tBHItJI5svbpez7KI4CCXg";
+// Valeurs factices de forme valide (pas de littéral : un détecteur de secrets les prendrait pour de vraies clés).
+const P256DH = Buffer.concat([Buffer.from([4]), randomBytes(64)]).toString("base64url");
+const AUTH = randomBytes(16).toString("base64url");
 
 const save = (u: { id: string }, ep: string) => asUser(u, (tx) => tx`select app_private.save_push_subscription(${ep}, ${P256DH}, ${AUTH})`);
 

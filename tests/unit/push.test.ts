@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { isAllowedPushEndpoint, pushSubscriptionSchema } from "@/domain/push";
 
@@ -6,7 +7,7 @@ vi.mock("next/server", () => ({ after: () => {} }));
 vi.mock("@/server/env", () => ({ env: () => ({}) }));
 vi.mock("@/server/db/client", () => ({ withApp: async () => [] }));
 
-const keys = { p256dh: "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM", auth: "tBHItJI5svbpez7KI4CCXg" };
+const keys = { p256dh: Buffer.concat([Buffer.from([4]), randomBytes(64)]).toString("base64url"), auth: randomBytes(16).toString("base64url") };
 
 describe("adresses de notification acceptées", () => {
   it("accepte les services des navigateurs, en https", () => {
