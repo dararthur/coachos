@@ -259,6 +259,7 @@ export async function setRankingVisibilityAction(academyId: string, visible: boo
     const ctx = await authorizeAcademy(academyId);
     await inAcademy(ctx, (tx) => ranking.setMyRankingVisibility(tx, academyId, visible));
     revalidatePath(`/a/${academyId}/ranking`);
+    revalidatePath(`/a/${academyId}/profile`);
     return { ok: true, data: null, message: visible ? "Vous apparaissez dans le classement." : "Vous n'apparaissez plus dans le classement des autres membres." };
   });
 }

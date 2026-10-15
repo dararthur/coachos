@@ -5,8 +5,7 @@ import { ordinal, parseRankingPeriod, RANKING_LABELS, RANKING_PERIODS, rankingRa
 import { Avatar } from "@/components/ui/avatar";
 import { BeltIcon } from "@/components/ui/belt";
 import { Alert, Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid, TabNav } from "@/components/ui/ui";
-import { ActionForm, SubmitButton } from "@/components/ui/form";
-import { setRankingVisibilityAction } from "@/server/actions/members";
+import { RankingVisibilityCard } from "@/components/ui/ranking-visibility";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { attendanceRanking, myRankingVisibility } from "@/server/repositories/ranking";
 
@@ -22,7 +21,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
   const { from, to } = rankingRange(period, localDate(new Date(), ctx.academy.timezone));
   const { rows, visible } = await inAcademy(ctx, async (tx) => ({
     rows: await attendanceRanking(tx, academyId, from, to),
-    visible: staff ? null : await myRankingVisibility(tx, academyId),
+    visible: await myRankingVisibility(tx, academyId),
   }));
   const me = rows.find((r) => r.isMe);
   const total = rows[0]?.rankedTotal ?? 0;
@@ -56,25 +55,7 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
         </StatGrid>
       )}
 
-      {!staff && visible !== null && (
-        <Card className="mb-6" title="Ma visibilité" description="Votre rang vous reste toujours visible. Vous choisissez si les autres membres du club voient aussi votre nom, votre photo et votre ceinture dans ce classement, avec votre nombre de venues ; vous pouvez changer d'avis à tout moment.">
-          {visible ? (
-            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, false)}>
-              <p className="mb-3 text-sm">
-                <Badge tone="success">Visible</Badge> Votre nom, votre photo, votre ceinture et vos venues apparaissent dans le classement des autres membres.
-              </p>
-              <SubmitButton variant="secondary">Me retirer du classement des autres</SubmitButton>
-            </ActionForm>
-          ) : (
-            <ActionForm action={setRankingVisibilityAction.bind(null, academyId, true)}>
-              <p className="mb-3 text-sm">
-                <Badge>Masqué</Badge> Les autres membres ne voient ni votre nom, ni votre photo, ni votre ceinture. Le coach, lui, voit les présences comme d&apos;habitude.
-              </p>
-              <SubmitButton>Apparaître dans le classement</SubmitButton>
-            </ActionForm>
-          )}
-        </Card>
-      )}
+      {visible !== null && <RankingVisibilityCard academyId={academyId} visible={visible} className="mb-6" />}
       <Card title={RANKING_LABELS[period]} flush className="mb-6">
         {rows.filter((r) => r.visits > 0).length === 0 ? (
           <EmptyState level={3} title="Aucune venue sur cette période">Le classement se remplira dès les prochains appels.</EmptyState>

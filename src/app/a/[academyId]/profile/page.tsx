@@ -11,6 +11,8 @@ import { removePhotoAction, setMyPhotoAction } from "@/server/actions/photos";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
 import { photoVersions } from "@/server/repositories/photos";
+import { RankingVisibilityCard } from "@/components/ui/ranking-visibility";
+import { myRankingVisibility } from "@/server/repositories/ranking";
 import { ImageField } from "@/components/ui/image-field";
 
 export const metadata: Metadata = { title: "Mon profil" };
@@ -19,11 +21,11 @@ export const metadata: Metadata = { title: "Mon profil" };
 export default async function ProfilePage({ params }: { params: Promise<{ academyId: string }> }) {
   const { academyId } = await params;
   const ctx = await requireAcademy(academyId);
-  const { me, version } = await inAcademy(ctx, async (tx) => {
+  const { me, version, rankingVisible } = await inAcademy(ctx, async (tx) => {
     const me = await getMyProfile(tx, academyId);
-    return { me, version: me ? (await photoVersions(tx, academyId)).get(me.personId) : undefined };
+    return { me, version: me ? (await photoVersions(tx, academyId)).get(me.personId) : undefined, rankingVisible: me ? await myRankingVisibility(tx, academyId) : null };
   });
-  // Les comptes d'équipe (propriétaire, administrateur, coach) n'ont pas de fiche membre.
+  // Sans fiche dans ce club (compte d'équipe jamais passé en mode membre), rien à afficher.
   if (!me) notFound();
 
   return (
@@ -93,6 +95,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
           <SubmitButton>{me.completed ? "Enregistrer" : "Valider mon profil"}</SubmitButton>
         </ActionForm>
       </Card>
+      {me.completed && rankingVisible !== null && <RankingVisibilityCard academyId={academyId} visible={rankingVisible} className="mt-6 max-w-xl" />}
     </>
   );
 }
