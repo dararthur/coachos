@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Scripts shell et configurations serveur (Nginx, systemd, SQL) : toujours LF, même extraits sous
+# Windows (core.autocrlf=true). Le dépôt est déjà en LF : seul le poste Windows change, ni la CI ni le VPS.
+*.sh text eol=lf
+ops/** text eol=lf

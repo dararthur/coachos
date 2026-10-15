@@ -10,7 +10,8 @@ import { DEFAULT_POLICY, planRetention } from "../../scripts/lib/backup-retentio
  * logique avec de FAUX binaires placés en tête du PATH, et leurs garde-fous par analyse statique. Voir docs/operations.md.
  */
 const root = path.resolve(import.meta.dirname, "../..");
-const read = (p: string) => readFileSync(path.join(root, p), "utf8");
+// Fins de ligne normalisées : une copie de travail Windows extraite avant la règle eol=lf de .gitattributes est en CRLF.
+const read = (p: string) => readFileSync(path.join(root, p), "utf8").replace(/\r\n/g, "\n");
 const sh = (p: string) => path.join(root, p).replace(/\\/g, "/");
 const SCRIPTS = ["ops/backup/backup.sh", "ops/backup/prune.sh", "ops/backup/restore-verify.sh", "ops/release/activate.sh", "ops/release/rollback.sh"];
 
@@ -75,6 +76,13 @@ describe("rétention des sauvegardes (fonction pure)", () => {
 });
 
 describe("scripts d'exploitation : garde-fous statiques", () => {
+  it("scripts et configurations de ops/ toujours extraits en LF, y compris sous Windows (.gitattributes)", () => {
+    const files = [...SCRIPTS, "ops/nginx/coachos.conf", "ops/nginx/proxy.inc", "ops/systemd/coachos.service"];
+    const r = spawnSync("git", ["check-attr", "eol", "--", ...files], { cwd: root, encoding: "utf8" });
+    expect(r.status, r.stderr).toBe(0);
+    for (const f of files) expect(r.stdout).toContain(`${f}: eol: lf`);
+  });
+
   for (const s of SCRIPTS) {
     it(`${s} : mode strict, aucune suppression récursive, aucun secret affiché`, () => {
       const text = read(s);
@@ -151,7 +159,8 @@ describe("scripts d'exploitation : identifiants et retour arrière (analyse stat
 const PASS_SECRET = "motdepasse_fictif_0001";
 const q = (p: string) => p.replace(/\\/g, "/");
 
-describe.skipIf(!bashOk)("backup.sh : identifiants hors des arguments, avec de FAUX binaires (aucune sauvegarde réelle)", () => {
+// Les blocs suivants lancent bash pour de vrai : sous Git Bash chaque exécution coûte quelques secondes, d'où des délais explicites.
+describe.skipIf(!bashOk)("backup.sh : identifiants hors des arguments, avec de FAUX binaires (aucune sauvegarde réelle)", { timeout: 30_000 }, () => {
   function setup(mode = "600") {
     const dir = tmp();
     const bin = path.join(dir, "bin");
@@ -286,7 +295,7 @@ const modesHonored = (() => {
   return spawnSync("bash", ["-c", `echo x > "${f}" && chmod 640 "${f}" && test "$(stat -c %a "${f}")" = 640`]).status === 0;
 })();
 
-describe.skipIf(!bashOk || !modesHonored)("backup.sh : contrôle de mode RÉEL du fichier de mots de passe (système de fichiers Unix)", () => {
+describe.skipIf(!bashOk || !modesHonored)("backup.sh : contrôle de mode RÉEL du fichier de mots de passe (système de fichiers Unix)", { timeout: 30_000 }, () => {
   it("0640 refusé, 0600 accepté, avec le vrai `stat`", () => {
     const dir = tmp();
     const bin = path.join(dir, "bin");
@@ -306,7 +315,7 @@ describe.skipIf(!bashOk || !modesHonored)("backup.sh : contrôle de mode RÉEL d
   });
 });
 
-describe.skipIf(!bashOk)("restore-verify.sh avec de FAUX binaires (aucune restauration réelle)", () => {
+describe.skipIf(!bashOk)("restore-verify.sh avec de FAUX binaires (aucune restauration réelle)", { timeout: 30_000 }, () => {
   function setup(statMode = "600") {
     const dir = tmp();
     const bin = path.join(dir, "bin");
@@ -410,7 +419,8 @@ describe.skipIf(!bashOk)("restore-verify.sh avec de FAUX binaires (aucune restau
   });
 });
 
-describe.skipIf(!bashOk)("prune.sh", () => {
+// Deux exécutions complètes de prune.sh (des dizaines de sous-processus) : ~15 s sous Git Bash (fork émulé), bien au-delà des 5 s par défaut.
+describe.skipIf(!bashOk)("prune.sh", { timeout: 60_000 }, () => {
   it("simulation par défaut (aucune suppression), suppression seulement avec --apply", () => {
     const dir = tmp();
     const bin = path.join(dir, "bin");

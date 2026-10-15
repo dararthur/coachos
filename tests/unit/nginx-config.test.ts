@@ -7,7 +7,8 @@ import { describe, expect, it } from "vitest";
  * est faite par le job CI `nginx-syntax` (Docker), puis en préproduction sur le serveur. Ces tests protègent les EXIGENCES de sécurité.
  */
 const root = path.resolve(import.meta.dirname, "../..");
-const read = (p: string) => readFileSync(path.join(root, p), "utf8");
+// Fins de ligne normalisées : une copie de travail Windows extraite avant la règle eol=lf de .gitattributes est en CRLF.
+const read = (p: string) => readFileSync(path.join(root, p), "utf8").replace(/\r\n/g, "\n");
 const conf = read("ops/nginx/coachos.conf");
 const proxy = read("ops/nginx/proxy.inc");
 const active = (text: string) =>
