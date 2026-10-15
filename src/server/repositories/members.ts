@@ -19,6 +19,8 @@ export interface PersonRow {
   belt: Belt | null;
   beltStripes: number;
   avatarStyle: AvatarStyle;
+  /** Date de naissance : renseignée pour un mineur seulement (effacée à la majorité). */
+  birthDate: string | null;
   hasPhoto: boolean;
   /** Présent seulement si listPeople reçoit `assiduityTimezone` (lundis AAAA-MM-JJ des semaines avec une venue). */
   attendedWeeks?: string[];
@@ -56,7 +58,7 @@ export async function listPeople(
   const rows = await tx<PersonRow[]>`
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
-           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle",
+           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            (select max(s.starts_at) from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
              where a.person_id = p.id and a.academy_id = p.academy_id and a.status in ('present', 'late')) as "lastAttendedAt"
@@ -72,7 +74,7 @@ export async function getPerson(tx: Tx, academyId: string, personId: string): Pr
   const rows = await tx<PersonRow[]>`
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
-           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle",
+           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.id = ${personId} and p.academy_id = ${academyId}`;
@@ -93,6 +95,54 @@ export async function createPerson(tx: Tx, academyId: string, input: PersonInput
     values (${academyId}, ${input.firstName}, ${input.lastName}, ${input.email}, ${input.phone}, ${input.joinedOn})
     returning id`;
   return row!.id;
+}
+
+export interface MinorInput {
+  firstName: string;
+  lastName: string;
+  birthDate: string;
+  joinedOn: string | null;
+  externalRef: string | null;
+  guardian: { name: string; email: string; phone: string | null };
+}
+
+/** Fiche de mineur + responsable légal + demande de consentement (empreinte du jeton envoyé par e-mail). */
+export async function createMinor(tx: Tx, academyId: string, input: MinorInput, tokenHash: string): Promise<string> {
+  const [row] = await tx<{ id: string }[]>`
+    select public.create_minor_member(${academyId}, ${input.firstName}, ${input.lastName}, ${input.birthDate}::date, ${input.joinedOn}::date,
+      ${input.externalRef}, ${input.guardian.name}, ${input.guardian.email}, ${input.guardian.phone}, ${tokenHash}) as id`;
+  return row!.id;
+}
+
+export interface GuardianRow {
+  name: string;
+  email: string;
+  phone: string | null;
+  consentRequestedAt: Date;
+  consentConfirmedAt: Date | null;
+  consentWithdrawnAt: Date | null;
+}
+
+export async function getGuardian(tx: Tx, academyId: string, personId: string): Promise<GuardianRow | null> {
+  const rows = await tx<GuardianRow[]>`
+    select guardian_name as name, guardian_email as email, guardian_phone as phone, consent_requested_at as "consentRequestedAt",
+           consent_confirmed_at as "consentConfirmedAt", consent_withdrawn_at as "consentWithdrawnAt"
+    from public.guardianships where child_id = ${personId} and academy_id = ${academyId}`;
+  return rows[0] ?? null;
+}
+
+/** Invalide le lien précédent ; retourne l'adresse du responsable. */
+export async function renewGuardianConsent(tx: Tx, personId: string, tokenHash: string): Promise<string> {
+  const [row] = await tx<{ email: string }[]>`select public.renew_guardian_consent(${personId}, ${tokenHash}) as email`;
+  return row!.email;
+}
+
+export async function updateGuardian(tx: Tx, personId: string, g: { name: string; email: string; phone: string | null }): Promise<void> {
+  await tx`select public.update_guardian(${personId}, ${g.name}, ${g.email}, ${g.phone})`;
+}
+
+export async function withdrawGuardianConsent(tx: Tx, personId: string): Promise<void> {
+  await tx`select public.withdraw_guardian_consent(${personId})`;
 }
 
 /** `belt` absent : le grade n'est pas touché ; `null` : grade effacé. */
@@ -139,7 +189,8 @@ export async function findExistingKeys(tx: Tx, academyId: string, rows: readonly
 }
 
 /** Insertion en lot ; un conflit d'unicité (course entre deux imports) ignore la ligne au lieu de tout annuler. */
-export async function insertImported(tx: Tx, academyId: string, rows: readonly ImportRow[]): Promise<number> {
+export async function insertImported(tx: Tx, academyId: string, allRows: readonly ImportRow[]): Promise<number> {
+  const rows = allRows.filter((r) => !r.birthDate); // les mineurs passent par createMinor
   if (rows.length === 0) return 0;
   const payload = rows.map((r) => ({
     first_name: r.firstName,
@@ -166,7 +217,7 @@ export async function listAllForExport(tx: Tx, academyId: string): Promise<Perso
   const rows = await tx<PersonRow[]>`
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
-           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle",
+           p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.academy_id = ${academyId} and p.anonymized_at is null

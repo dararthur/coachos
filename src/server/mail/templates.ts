@@ -25,6 +25,20 @@ function layout(title: string, intro: string, action: string, link: string, outr
   return { text, html };
 }
 
+/** Au responsable légal d'un mineur : lien de confirmation de son accord. Ne cite que le prénom de l'enfant et le club. */
+export function guardianConsentEmail(to: string, link: string, info: { childFirstName: string; academyName: string }): MailMessage {
+  const child = oneLine(info.childFirstName);
+  const club = oneLine(info.academyName);
+  const body = layout(
+    "Accord du responsable légal",
+    `Le club « ${club} » souhaite inscrire ${child}, dont vous êtes le responsable légal, sur Matnexa (suivi des présences). Le club ne recueille aucune donnée de santé. Sans votre accord, la fiche reste inactive. L'affichage au classement et la photo sont désactivés par défaut.`,
+    "Confirmer mon accord",
+    link,
+    "Ce lien est valable 14 jours. Si vous n'êtes pas le responsable légal de cet enfant ou si vous ne souhaitez pas cette inscription, ignorez ce message et prévenez le club.",
+  );
+  return { to, kind: "guardian_consent", subject: `Accord pour l'inscription de ${child} — ${club}`, link, ...body };
+}
+
 export function verificationEmail(to: string, link: string): MailMessage {
   const body = layout(
     "Confirmez votre adresse e-mail",

@@ -21,7 +21,10 @@ export default async function ImportPage({ params }: { params: Promise<{ academy
             <li>
               Colonnes reconnues : <code>prénom</code>, <code>nom</code> (obligatoires), <code>email</code>, <code>téléphone</code>, <code>date_inscription</code> (AAAA-MM-JJ ou JJ/MM/AAAA, jour en premier), <code>id</code> (identifiant d&apos;origine).
             </li>
-            <li>Les autres colonnes (téléphone, adresse, date de naissance…) sont <strong>ignorées</strong> : Matnexa ne les conserve pas.</li>
+            <li>
+              <strong>Mineurs</strong> : renseignez <code>date_naissance</code>, <code>responsable</code> (nom) et <code>responsable_email</code> (<code>responsable_telephone</code> facultatif). Le responsable reçoit un lien pour confirmer son accord ; l&apos;e-mail et le téléphone de l&apos;enfant ne sont pas conservés. La date de naissance d&apos;un majeur est ignorée.
+            </li>
+            <li>Les autres colonnes (adresse…) sont <strong>ignorées</strong> : Matnexa ne les conserve pas.</li>
             <li>Les doublons (même e-mail ou même identifiant) sont ignorés, jamais écrasés.</li>
             <li>Chaque ligne invalide est signalée avec sa raison ; rien n&apos;est corrigé en silence.</li>
           </ul>

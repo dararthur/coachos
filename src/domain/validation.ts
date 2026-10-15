@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { addDays, daysBetween, isValidTimeZone, parseCalendarDate } from "./dates";
+import { isMinorBirthDate, todayIso } from "./minors";
 import { normalizePhone } from "./phone";
 import { AVATAR_STYLES, BELTS, MAX_STRIPES } from "./profile";
 
@@ -144,10 +145,41 @@ export const personFields = {
   joinedOn: optional(dateField),
 };
 
-export const personCreateSchema = z.object({
-  ...personFields,
-  // Le MVP est limité aux adultes : l'attestation est obligatoire et horodatée par la base.
-  adultConfirmed: z.literal("on", { error: "Vous devez attester que ce membre est majeur." }),
+export const guardianFields = {
+  guardianName: optional(nameField("Nom du responsable")),
+  guardianEmail: optional(emailField),
+  guardianPhone: optional(phoneField),
+};
+
+/**
+ * Majeur : attestation obligatoire, horodatée par la base, aucune date de naissance conservée.
+ * Mineur : date de naissance (effectivement mineure) et responsable légal (nom + e-mail) obligatoires ; l'e-mail et le
+ * téléphone de l'enfant ne sont pas enregistrés (les messages vont au responsable).
+ */
+export const personCreateSchema = z
+  .object({
+    ...personFields,
+    ageGroup: z.enum(["adult", "minor"], { error: "Indiquez si le membre est majeur ou mineur." }),
+    adultConfirmed: optional(z.literal("on")),
+    birthDate: optional(dateField),
+    ...guardianFields,
+  })
+  .superRefine((v, ctx) => {
+    if (v.ageGroup === "adult") {
+      if (v.adultConfirmed !== "on") ctx.addIssue({ code: "custom", path: ["adultConfirmed"], message: "Vous devez attester que ce membre est majeur." });
+      return;
+    }
+    if (!v.birthDate) ctx.addIssue({ code: "custom", path: ["birthDate"], message: "Date de naissance requise pour un mineur." });
+    else if (v.birthDate > todayIso()) ctx.addIssue({ code: "custom", path: ["birthDate"], message: "Date de naissance dans le futur." });
+    else if (!isMinorBirthDate(v.birthDate)) ctx.addIssue({ code: "custom", path: ["birthDate"], message: "Cette personne a 18 ans ou plus : choisissez « Majeur »." });
+    if (!v.guardianName) ctx.addIssue({ code: "custom", path: ["guardianName"], message: "Nom du responsable légal requis." });
+    if (!v.guardianEmail) ctx.addIssue({ code: "custom", path: ["guardianEmail"], message: "E-mail du responsable légal requis." });
+  });
+
+export const guardianUpdateSchema = z.object({
+  guardianName: nameField("Nom du responsable"),
+  guardianEmail: emailField,
+  guardianPhone: optional(phoneField),
 });
 export const personUpdateSchema = z.object({
   ...personFields,

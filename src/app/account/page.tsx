@@ -7,6 +7,10 @@ import { ConfirmAction } from "@/components/ui/confirm";
 import { deleteAccountAction, signOutAction, changePasswordAction, updateProfileAction } from "@/server/actions/auth";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { requireUser } from "@/server/auth/guards";
+import { withUser } from "@/server/db/client";
+import { setChildRankingAction, withdrawChildConsentAction } from "@/server/actions/guardian";
+import { myChildren } from "@/server/repositories/guardian";
+import { formatCalendarDate } from "@/domain/dates";
 import { InstallApp } from "@/components/ui/install-app";
 
 export const metadata: Metadata = { title: "Mon compte" };
@@ -14,6 +18,7 @@ export const metadata: Metadata = { title: "Mon compte" };
 export default async function AccountPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const params = await searchParams;
+  const children = await withUser(user, (tx) => myChildren(tx));
   return (
     <StandaloneFrame>
       <PageHeader title="Mon compte" back={<BackLink href="/academies">Mes clubs</BackLink>} />
@@ -24,6 +29,40 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <SubmitButton>Enregistrer</SubmitButton>
         </ActionForm>
       </Card>
+      {children.length > 0 && (
+        <Card title="Mes enfants" description="Les fiches des mineurs dont vous êtes le responsable légal.">
+          <ul className="divide-y divide-line">
+            {children.map((c) => (
+              <li key={c.childId} className="space-y-2 py-3 first:pt-0 last:pb-0">
+                <p className="font-semibold">
+                  {c.firstName} {c.lastName} <span className="font-normal text-ink-soft">· {c.academyName}</span>
+                </p>
+                <p className="text-sm text-ink-soft">
+                  {c.consentWithdrawnAt
+                    ? "Accord retiré : fiche archivée."
+                    : c.consentConfirmedAt
+                      ? `Accord confirmé. ${c.lastAttendedAt ? `Dernier cours : ${formatCalendarDate(c.lastAttendedAt.toISOString().slice(0, 10))}.` : "Aucun cours enregistré pour l'instant."}`
+                      : "Accord en attente : utilisez le lien reçu par e-mail."}
+                </p>
+                {c.consentConfirmedAt && !c.consentWithdrawnAt && (
+                  <div className="flex flex-wrap items-start gap-2">
+                    <ActionForm action={setChildRankingAction.bind(null, c.childId, !c.rankingOptIn)}>
+                      <SubmitButton variant="secondary">{c.rankingOptIn ? "Retirer du classement" : "Afficher au classement"}</SubmitButton>
+                    </ActionForm>
+                    <ConfirmAction
+                      action={withdrawChildConsentAction.bind(null, c.childId)}
+                      trigger="Retirer mon accord…"
+                      title="Retirer votre accord ?"
+                      description={<p>La fiche de {c.firstName} sera archivée, sa photo supprimée et le classement désactivé. Le club l&apos;anonymisera ensuite.</p>}
+                      confirmLabel="Retirer l'accord"
+                    />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
       <Card title="Application sur mon téléphone" description="Installez Matnexa sur l'écran d'accueil : elle s'ouvre en plein écran et vous restez connecté, sans ressaisir votre mot de passe.">
         <InstallApp />
       </Card>

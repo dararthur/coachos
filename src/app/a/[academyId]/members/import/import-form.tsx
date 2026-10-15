@@ -89,12 +89,13 @@ export function ImportForm({ academyId }: { academyId: string }) {
             {committed ? (
               <Alert tone="success">
                 {report.created} membre{report.created > 1 ? "s" : ""} importé{report.created > 1 ? "s" : ""}.{" "}
+                {report.minors > 0 && `${report.minors} mineur(s) : lien d'accord envoyé au responsable légal${report.consentFailed > 0 ? ` (${report.consentFailed} envoi(s) en échec : renvoyez le lien depuis la fiche)` : ""}. `}
                 {report.totalRows - report.created > 0 && `${report.totalRows - report.created} ligne(s) ignorée(s) (invalides ou déjà présentes).`}{" "}
                 <a href={`/a/${academyId}/members`}>Voir les membres</a>
               </Alert>
             ) : (
               <p className="mb-3 text-sm">
-                <strong>{report.totalRows}</strong> ligne(s) lue(s) · <strong>{report.toCreate}</strong> à créer · {report.invalid.length} invalide(s) · {report.duplicatesInFile.length} doublon(s) dans le fichier · {report.skippedExisting.length} déjà présent(s).
+                <strong>{report.totalRows}</strong> ligne(s) lue(s) · <strong>{report.toCreate}</strong> à créer{report.minors > 0 ? ` (dont ${report.minors} mineur${report.minors > 1 ? "s" : ""}, avec lien d'accord au responsable)` : ""} · {report.invalid.length} invalide(s) · {report.duplicatesInFile.length} doublon(s) dans le fichier · {report.skippedExisting.length} déjà présent(s).
               </p>
             )}
             {report.ignoredColumns.length > 0 && (
@@ -130,7 +131,7 @@ export function ImportForm({ academyId }: { academyId: string }) {
                 <div className="flex items-start gap-3">
                   <input id="adult" type="checkbox" checked={adult} onChange={(e) => setAdult(e.target.checked)} className="mt-1 size-5 accent-ink" aria-describedby={state?.ok === false ? "adult-error" : undefined} />
                   <label htmlFor="adult" className="text-sm">
-                    Je certifie que tous les membres de ce fichier sont majeurs et que le club est en droit de traiter leurs données.
+                    Je certifie que les membres sans date de naissance de mineur dans ce fichier sont majeurs, que le responsable légal de chaque mineur est bien celui indiqué, et que le club est en droit de traiter ces données.
                   </label>
                 </div>
                 <button type="button" className={buttonClasses()} disabled={!adult || pending} onClick={() => submit("commit")}>

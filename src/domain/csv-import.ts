@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import { z } from "zod";
 import { parseCalendarDate } from "./dates";
+import { isMinorBirthDate, todayIso } from "./minors";
 import { emailField, nameField, parseWith, phoneField } from "./validation";
 
 /** Limites défensives de l'import. */
@@ -15,6 +16,9 @@ export interface ImportRow {
   phone: string | null;
   joinedOn: string | null;
   externalRef: string | null;
+  /** Renseignés pour un mineur seulement (la date de naissance d'un majeur est ignorée). */
+  birthDate: string | null;
+  guardian: { name: string; email: string; phone: string | null } | null;
 }
 
 export interface RowIssue {
@@ -32,7 +36,7 @@ export interface ImportAnalysis {
   ignoredColumns: string[];
 }
 
-type Field = "firstName" | "lastName" | "email" | "phone" | "joinedOn" | "externalRef";
+type Field = "firstName" | "lastName" | "email" | "phone" | "joinedOn" | "externalRef" | "birthDate" | "guardianName" | "guardianEmail" | "guardianPhone";
 
 // Alias normalisés (minuscules, sans accent, séparateurs -> « _ »).
 const COLUMN_ALIASES: Record<Field, string[]> = {
@@ -41,6 +45,10 @@ const COLUMN_ALIASES: Record<Field, string[]> = {
   email: ["email", "e_mail", "mail", "courriel", "adresse_email", "adresse_e_mail"],
   phone: ["telephone", "tel", "phone", "mobile", "portable", "gsm", "numero_de_telephone", "numero_telephone"],
   joinedOn: ["date_inscription", "inscription", "date_d_inscription", "joined_on", "join_date", "membre_depuis", "start_date"],
+  birthDate: ["date_naissance", "date_de_naissance", "naissance", "birth_date", "birthdate", "date_of_birth", "dob"],
+  guardianName: ["responsable", "responsable_legal", "responsable_nom", "nom_responsable", "parent", "parent_nom", "guardian", "guardian_name"],
+  guardianEmail: ["responsable_email", "email_responsable", "responsable_mail", "email_parent", "parent_email", "guardian_email"],
+  guardianPhone: ["responsable_telephone", "telephone_responsable", "responsable_tel", "tel_parent", "parent_telephone", "guardian_phone"],
   externalRef: ["id", "identifiant", "reference", "ref", "external_id", "external_ref", "member_id", "numero_membre"],
 };
 
@@ -65,6 +73,12 @@ const rowSchema = z.object({
     (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
     z.string().trim().regex(/^[A-Za-z0-9][A-Za-z0-9._:/#-]{0,99}$/, "Identifiant : lettres, chiffres et . _ : / # - uniquement.").optional(),
   ),
+});
+
+const guardianSchema = z.object({
+  name: nameField("Nom"),
+  email: emailField,
+  phone: z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), phoneField.optional()),
 });
 
 function fatal(message: string, extra: Partial<ImportAnalysis> = {}): ImportAnalysis {
@@ -142,6 +156,22 @@ export function analyzeImport(input: string): ImportAnalysis {
     });
     if (!checked.ok) messages.push(...Object.values(checked.fieldErrors));
 
+    // Mineur : la date de naissance impose un responsable légal ; l'e-mail et le téléphone de l'enfant ne sont pas conservés
+    // (les messages vont au responsable).
+    let birthDate: string | null = null;
+    let guardian: ImportRow["guardian"] = null;
+    const rawBirth = get("birthDate");
+    if (rawBirth) {
+      const parsedBirth = parseCalendarDate(rawBirth);
+      if (!parsedBirth || parsedBirth > todayIso() || parsedBirth < "1900-01-01") messages.push("Date de naissance invalide (formats : AAAA-MM-JJ ou JJ/MM/AAAA).");
+      else if (isMinorBirthDate(parsedBirth)) {
+        birthDate = parsedBirth;
+        const g = parseWith(guardianSchema, { name: get("guardianName"), email: get("guardianEmail"), phone: get("guardianPhone") });
+        if (!g.ok) messages.push(...Object.values(g.fieldErrors).map((m) => "Responsable légal : " + m));
+        else guardian = { name: g.data.name, email: g.data.email, phone: g.data.phone ?? null };
+      }
+    }
+
     const rawDate = get("joinedOn");
     let joinedOn: string | null = null;
     if (rawDate) {
@@ -154,7 +184,9 @@ export function analyzeImport(input: string): ImportAnalysis {
       invalid.push({ line, messages: [...new Set(messages)] });
       return;
     }
-    const { firstName, lastName, email, phone, externalRef } = checked.data;
+    const { firstName, lastName, externalRef } = checked.data;
+    const email = birthDate ? undefined : checked.data.email;
+    const phone = birthDate ? undefined : checked.data.phone;
 
     const dupMessages: string[] = [];
     if (email) {
@@ -171,7 +203,7 @@ export function analyzeImport(input: string): ImportAnalysis {
       duplicatesInFile.push({ line, messages: dupMessages });
       return;
     }
-    rows.push({ line, firstName, lastName, email: email ?? null, phone: phone ?? null, joinedOn, externalRef: externalRef ?? null });
+    rows.push({ line, firstName, lastName, email: email ?? null, phone: phone ?? null, joinedOn, externalRef: externalRef ?? null, birthDate, guardian });
   });
 
   return { fatal: null, totalRows: dataRows.length, rows, invalid, duplicatesInFile, ignoredColumns };

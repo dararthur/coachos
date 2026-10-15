@@ -1,3 +1,4 @@
+import { ageOn, isMinorBirthDate } from "@/domain/minors";
 import { describe, expect, it } from "vitest";
 import { addDays, daysBetween, isoWeekday, isValidTimeZone, localDate, parseCalendarDate } from "@/domain/dates";
 import { csvCell, safeFilename, toCsv } from "@/domain/csv-export";
@@ -101,7 +102,24 @@ describe("validation", () => {
   it("membre : attestation de majorité obligatoire", () => {
     const base = { firstName: "Ana", lastName: "Test", email: "", joinedOn: "" };
     expect(parseWith(personCreateSchema, base).ok).toBe(false);
-    expect(parseWith(personCreateSchema, { ...base, adultConfirmed: "on" }).ok).toBe(true);
+    expect(parseWith(personCreateSchema, { ...base, ageGroup: "adult" }).ok).toBe(false);
+    expect(parseWith(personCreateSchema, { ...base, ageGroup: "adult", adultConfirmed: "on" }).ok).toBe(true);
+  });
+  it("membre mineur : date de naissance mineure et responsable légal obligatoires", () => {
+    const base = { firstName: "Léo", lastName: "Petit", ageGroup: "minor" };
+    const year = new Date().getFullYear();
+    const guardian = { guardianName: "Parent Petit", guardianEmail: "parent@example.invalid" };
+    expect(parseWith(personCreateSchema, base).ok).toBe(false);
+    expect(parseWith(personCreateSchema, { ...base, birthDate: `${year - 10}-03-04` }).ok).toBe(false);
+    expect(parseWith(personCreateSchema, { ...base, ...guardian, birthDate: `${year - 30}-03-04` }).ok).toBe(false);
+    expect(parseWith(personCreateSchema, { ...base, ...guardian, birthDate: `${year + 1}-03-04` }).ok).toBe(false);
+    expect(parseWith(personCreateSchema, { ...base, ...guardian, birthDate: `${year - 10}-03-04` }).ok).toBe(true);
+  });
+  it("âge : révolu à la date donnée", () => {
+    expect(ageOn("2010-06-15", "2026-06-14")).toBe(15);
+    expect(ageOn("2010-06-15", "2026-06-15")).toBe(16);
+    expect(isMinorBirthDate("2008-10-16", "2026-10-15")).toBe(true);
+    expect(isMinorBirthDate("2008-10-15", "2026-10-15")).toBe(false);
   });
   it("séance récurrente : bornes et jours", () => {
     const base = { classTypeId: crypto.randomUUID(), date: "2026-10-12", time: "18:30", durationMinutes: "60", repeat: "weekly", weekdays: ["1", "3"] };

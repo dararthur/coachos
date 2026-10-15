@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_IMPORT_BYTES, analyzeImport, planImport, type ImportRow, type RowIssue } from "@/domain/csv-import";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { myProfileSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
+import { guardianUpdateSchema, myProfileSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
+import { newConsentToken, sendGuardianConsent } from "@/server/guardian-consent";
 import * as members from "@/server/repositories/members";
 import * as profile from "@/server/repositories/profile";
 import * as ranking from "@/server/repositories/ranking";
@@ -21,22 +22,34 @@ export async function createMemberAction(academyId: string, _prev: FormState, fo
     const ctx = await authorizeAcademy(academyId, "members.create");
     const input = parseForm(personCreateSchema, formData);
     let id: string;
+    let consent: "sent" | "failed" | null = null;
     try {
-      id = await inAcademy(ctx, (tx) =>
-        members.createPerson(tx, academyId, {
-          firstName: input.firstName,
-          lastName: input.lastName,
-          email: input.email ?? null,
-          phone: input.phone ?? null,
-          joinedOn: input.joinedOn ?? null,
-        }),
-      );
+      if (input.ageGroup === "minor") {
+        // Mineur : responsable légal obligatoire, lien d'accord envoyé à SON adresse (jamais à celle de l'enfant).
+        const guardian = { name: input.guardianName!, email: input.guardianEmail!, phone: input.guardianPhone ?? null };
+        const { token, hash } = newConsentToken();
+        id = await inAcademy(ctx, (tx) =>
+          members.createMinor(tx, academyId, { firstName: input.firstName, lastName: input.lastName, birthDate: input.birthDate!, joinedOn: input.joinedOn ?? null, externalRef: null, guardian }, hash),
+        );
+        const sent = await sendGuardianConsent({ token, guardianEmail: guardian.email, childFirstName: input.firstName, academyName: ctx.academy.name });
+        consent = sent ? "sent" : "failed";
+      } else {
+        id = await inAcademy(ctx, (tx) =>
+          members.createPerson(tx, academyId, {
+            firstName: input.firstName,
+            lastName: input.lastName,
+            email: input.email ?? null,
+            phone: input.phone ?? null,
+            joinedOn: input.joinedOn ?? null,
+          }),
+        );
+      }
     } catch (e) {
       if (e instanceof AppError && e.code === "duplicate") return failure("duplicate", { email: "Un membre avec cet e-mail existe déjà." });
       throw e;
     }
     revalidatePath(`/a/${academyId}/members`);
-    redirect(`/a/${academyId}/members/${id}?created=1`);
+    redirect(`/a/${academyId}/members/${id}?created=1${consent ? `&consent=${consent}` : ""}`);
   });
 }
 
@@ -66,6 +79,50 @@ export async function updateMemberAction(academyId: string, personId: string, _p
     if (!ok) throw new AppError("not_found");
     revalidatePath(`/a/${academyId}/members`);
     return { ok: true, data: null, message: "Fiche mise à jour." };
+  });
+}
+
+/** Renvoie le lien d'accord au responsable légal (le lien précédent cesse de fonctionner). */
+export async function resendGuardianConsentAction(academyId: string, personId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("resendGuardianConsent", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.create");
+    await enforceRateLimit("guardian-consent", ctx.user.id, LIMITS.invitation.max, LIMITS.invitation.window);
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    const { token, hash } = newConsentToken();
+    const { email, firstName } = await inAcademy(ctx, async (tx) => {
+      const person = await members.getPerson(tx, academyId, id.data);
+      if (!person) throw new AppError("not_found");
+      return { email: await members.renewGuardianConsent(tx, id.data, hash), firstName: person.firstName };
+    });
+    const sent = await sendGuardianConsent({ token, guardianEmail: email, childFirstName: firstName, academyName: ctx.academy.name });
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    return sent ? { ok: true, data: null, message: "Lien envoyé au responsable légal." } : failure("mail_failed", { _form: "Le lien n'a pas pu être envoyé. Réessayez dans quelques minutes." });
+  });
+}
+
+export async function updateGuardianAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("updateGuardian", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.create");
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    const input = parseForm(guardianUpdateSchema, formData);
+    await inAcademy(ctx, (tx) => members.updateGuardian(tx, id.data, { name: input.guardianName, email: input.guardianEmail, phone: input.guardianPhone ?? null }));
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    return { ok: true, data: null, message: "Responsable légal mis à jour. Si l'adresse a changé, renvoyez le lien d'accord." };
+  });
+}
+
+/** L'administrateur retire l'accord (à la demande du responsable) : fiche archivée, classement et photo supprimés. */
+export async function withdrawGuardianConsentAction(academyId: string, personId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("withdrawGuardianConsent", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.update");
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    await inAcademy(ctx, (tx) => members.withdrawGuardianConsent(tx, id.data));
+    revalidatePath(`/a/${academyId}/members`);
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    return { ok: true, data: null, message: "Accord retiré : la fiche est archivée." };
   });
 }
 
@@ -108,12 +165,15 @@ export interface ImportReport {
   valid: number;
   toCreate: number;
   created: number;
+  /** Parmi les créations : mineurs (lien d'accord envoyé au responsable) et envois en échec. */
+  minors: number;
+  consentFailed: number;
   ignoredColumns: string[];
   invalid: RowIssue[];
   duplicatesInFile: RowIssue[];
   skippedExisting: RowIssue[];
   possibleHomonyms: RowIssue[];
-  sample: Pick<ImportRow, "line" | "firstName" | "lastName" | "email" | "phone" | "joinedOn" | "externalRef">[];
+  sample: Pick<ImportRow, "line" | "firstName" | "lastName" | "email" | "phone" | "joinedOn" | "externalRef" | "birthDate">[];
 }
 
 const REPORT_LIST_LIMIT = 50;
@@ -136,7 +196,7 @@ export async function importMembersAction(academyId: string, _prev: ActionResult
       return failure("validation", { file: "Format non pris en charge : fournissez un fichier .csv." });
     }
     if (mode === "commit" && formData.get("adultConfirmed") !== "on") {
-      return failure("validation", { adultConfirmed: "Vous devez attester que tous les membres importés sont majeurs." });
+      return failure("validation", { adultConfirmed: "Vous devez attester que les membres sans date de naissance de mineur sont majeurs." });
     }
 
     let text: string;
@@ -147,7 +207,7 @@ export async function importMembersAction(academyId: string, _prev: ActionResult
     }
     const analysis = analyzeImport(text);
     const empty: ImportReport = {
-      mode, fatal: analysis.fatal, totalRows: analysis.totalRows, valid: analysis.rows.length, toCreate: 0, created: 0,
+      mode, fatal: analysis.fatal, totalRows: analysis.totalRows, valid: analysis.rows.length, toCreate: 0, created: 0, minors: 0, consentFailed: 0,
       ignoredColumns: analysis.ignoredColumns, invalid: limited(analysis.invalid), duplicatesInFile: limited(analysis.duplicatesInFile),
       skippedExisting: [], possibleHomonyms: [], sample: [],
     };
@@ -157,15 +217,26 @@ export async function importMembersAction(academyId: string, _prev: ActionResult
       const existing = await members.findExistingKeys(tx, academyId, analysis.rows);
       const plan = planImport(analysis.rows, existing);
       let created = 0;
+      const pending: Parameters<typeof sendGuardianConsent>[0][] = [];
       if (mode === "commit") {
         created = await members.insertImported(tx, academyId, plan.toCreate);
+        for (const row of plan.toCreate) {
+          if (!row.birthDate || !row.guardian) continue;
+          const { token, hash } = newConsentToken();
+          await members.createMinor(tx, academyId, { firstName: row.firstName, lastName: row.lastName, birthDate: row.birthDate, joinedOn: row.joinedOn, externalRef: row.externalRef, guardian: row.guardian }, hash);
+          pending.push({ token, guardianEmail: row.guardian.email, childFirstName: row.firstName, academyName: ctx.academy.name });
+          created++;
+        }
         await members.recordEvent(tx, academyId, "members.imported", {
           rows: analysis.totalRows, created, invalid: analysis.invalid.length, duplicates: analysis.duplicatesInFile.length + plan.skippedExisting.length,
         });
       }
-      return { plan, created };
+      return { plan, created, pending };
     });
 
+    // E-mails après validation de la transaction : un échec d'envoi n'annule pas l'import (le lien se renvoie depuis la fiche).
+    let consentFailed = 0;
+    for (const p of report.pending) if (!(await sendGuardianConsent(p))) consentFailed++;
     if (mode === "commit") revalidatePath(`/a/${academyId}/members`);
     return {
       ok: true,
@@ -173,6 +244,8 @@ export async function importMembersAction(academyId: string, _prev: ActionResult
         ...empty,
         toCreate: report.plan.toCreate.length,
         created: report.created,
+        minors: mode === "commit" ? report.pending.length : report.plan.toCreate.filter((r) => r.birthDate).length,
+        consentFailed,
         skippedExisting: limited(report.plan.skippedExisting),
         possibleHomonyms: limited(report.plan.possibleHomonyms),
         sample: report.plan.toCreate.slice(0, 10),

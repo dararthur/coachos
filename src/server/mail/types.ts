@@ -8,7 +8,7 @@ export interface MailMessage {
   text: string;
   html: string;
   /** Catégorie fonctionnelle (journalisation et tests) : jamais de donnée personnelle. */
-  kind: "verification" | "password_reset" | "club_request" | "club_approved" | "booking_promoted";
+  kind: "verification" | "password_reset" | "club_request" | "club_approved" | "booking_promoted" | "guardian_consent";
   /** Lien principal du message, parfois à usage sensible (utilisé par la boîte d'envoi de test uniquement). */
   link: string;
 }

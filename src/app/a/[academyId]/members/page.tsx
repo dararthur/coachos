@@ -44,7 +44,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
     <>
       <PageHeader
         title="Membres"
-        description="Adhérents adultes du club. Aucune donnée de santé n'est collectée."
+        description="Adhérents du club, majeurs ou mineurs (avec accord du responsable légal). Aucune donnée de santé n'est collectée."
         actions={
           <>
             {can(ctx.role, "members.import") && (

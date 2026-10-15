@@ -22,8 +22,8 @@ function authorized(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 });
   try {
-    const rows = await withApp((tx) => tx<{ r: Record<string, number>; a: Record<string, number> }[]>`select app_private.purge_expired_data() as r, app_private.purge_expired_auth() as a`);
-    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}), club_requests: await purgeClubRequests() };
+    const rows = await withApp((tx) => tx<{ r: Record<string, number>; a: Record<string, number>; g: number }[]>`select app_private.purge_expired_data() as r, app_private.purge_expired_auth() as a, app_private.graduate_minors() as g`);
+    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}), minors_graduated: rows[0]?.g ?? 0, club_requests: await purgeClubRequests() };
     logger.info("cron.purge", result);
     let mail: { sent: number; failed: number };
     try {

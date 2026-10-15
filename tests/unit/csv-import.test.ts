@@ -103,3 +103,21 @@ describe("import : téléphone", () => {
     expect(r.invalid[0]?.messages.join(" ")).toMatch(/Numéro invalide/);
   });
 });
+
+describe("analyzeImport : mineurs", () => {
+  const year = new Date().getFullYear();
+  it("un mineur exige un responsable légal ; l'e-mail et le téléphone de l'enfant ne sont pas conservés", () => {
+    const csv = [
+      "prénom,nom,email,date_naissance,responsable,responsable_email",
+      `Léo,Petit,leo@example.invalid,${year - 10}-03-04,Parent Petit,parent@example.invalid`,
+      `Zoé,Sansparent,,${year - 9}-01-02,,`,
+      `Max,Grand,max@example.invalid,${year - 30}-05-06,,`,
+    ].join("\n");
+    const r = analyzeImport(csv);
+    expect(r.rows).toHaveLength(2);
+    expect(r.rows[0]).toMatchObject({ firstName: "Léo", email: null, birthDate: `${year - 10}-03-04`, guardian: { name: "Parent Petit", email: "parent@example.invalid" } });
+    expect(r.rows[1]).toMatchObject({ firstName: "Max", email: "max@example.invalid", birthDate: null, guardian: null });
+    expect(r.invalid).toHaveLength(1);
+    expect(r.invalid[0]?.messages.join(" ")).toContain("Responsable légal");
+  });
+});

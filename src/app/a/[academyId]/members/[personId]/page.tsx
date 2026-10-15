@@ -10,10 +10,11 @@ import { Avatar } from "@/components/ui/avatar";
 import { BeltLabel } from "@/components/ui/belt";
 import { BELT_LABELS, BELTS, MAX_STRIPES } from "@/domain/profile";
 import { ConfirmAction } from "@/components/ui/confirm";
-import { eraseMemberAction, setMemberArchivedAction, updateMemberAction } from "@/server/actions/members";
+import { eraseMemberAction, resendGuardianConsentAction, setMemberArchivedAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
+import { ageOn } from "@/domain/minors";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
-import { getPerson } from "@/server/repositories/members";
+import { getGuardian, getPerson } from "@/server/repositories/members";
 import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
 import { AttendanceHistory } from "@/components/ui/attendance-history";
 import { EraseForm } from "./erase-form";
@@ -29,10 +30,12 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
   const data = await inAcademy(ctx, async (tx) => {
     const person = await getPerson(tx, academyId, personId);
     if (!person) return null;
-    return { person, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
+    const guardian = person.birthDate ? await getGuardian(tx, academyId, personId) : null;
+    return { person, guardian, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
   });
   if (!data) notFound();
-  const { person, history, totals } = data;
+  const { person, guardian, history, totals } = data;
+  const isMinor = Boolean(person.birthDate);
   const tz = ctx.academy.timezone;
   const canEdit = can(ctx.role, "members.update") && !person.anonymizedAt;
 
@@ -45,11 +48,26 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
           <>
             {person.archivedAt ? <Badge>Archivé</Badge> : <Badge tone="success">Actif</Badge>}
             {person.anonymizedAt && <Badge tone="warning">Anonymisé</Badge>}
+            {person.birthDate && <Badge tone="warning">Mineur · {ageOn(person.birthDate)} ans</Badge>}
             {person.joinedOn && <span>Inscrit(e) le {formatCalendarDate(person.joinedOn)}</span>}
           </>
         }
         actions={
-          !person.anonymizedAt && (person.email || person.phone) ? (
+          !person.anonymizedAt && isMinor ? (
+            // Mineur : les messages vont au responsable légal, jamais à l'enfant (et seulement une fois son accord confirmé).
+            guardian && guardian.consentConfirmedAt && !guardian.consentWithdrawnAt ? (
+              <>
+                {guardian.phone && (
+                  <LinkButton href={whatsappHref(guardian.phone, `Bonjour ${guardian.name}, au sujet de ${person.firstName} : `)} newTab variant="secondary" icon="chat">
+                    WhatsApp au responsable
+                  </LinkButton>
+                )}
+                <LinkButton href={`mailto:${guardian.email}`} variant="secondary" icon="mail">
+                  Écrire au responsable
+                </LinkButton>
+              </>
+            ) : undefined
+          ) : !person.anonymizedAt && (person.email || person.phone) ? (
             <>
               {person.phone && (
                 <LinkButton href={whatsappHref(person.phone, `Bonjour ${person.firstName}, `)} newTab variant="secondary" icon="chat">
@@ -66,6 +84,8 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
         }
       />
       {sp.created && <Alert tone="success">Membre créé.</Alert>}
+      {sp.created && sp.consent === "sent" && <Alert tone="success">Un lien d&apos;accord a été envoyé au responsable légal.</Alert>}
+      {sp.created && sp.consent === "failed" && <Alert tone="warning">Le lien d&apos;accord n&apos;a pas pu être envoyé : utilisez « Renvoyer le lien » ci-dessous.</Alert>}
 
       <div className="mb-6 grid gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <StatGrid cols={3}>
@@ -97,8 +117,8 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
               <ActionForm action={updateMemberAction.bind(null, academyId, personId)} className="space-y-4">
                 <TextField label="Prénom" name="firstName" defaultValue={person.firstName} required maxLength={80} />
                 <TextField label="Nom" name="lastName" defaultValue={person.lastName} required maxLength={80} />
-                <TextField label="E-mail" name="email" type="email" defaultValue={person.email} maxLength={254} />
-                <TextField label="Téléphone" name="phone" type="tel" inputMode="tel" defaultValue={person.phone ? formatPhone(person.phone) : null} maxLength={30} hint="Pour le recontacter sur WhatsApp." />
+                {!isMinor && <TextField label="E-mail" name="email" type="email" defaultValue={person.email} maxLength={254} />}
+                {!isMinor && <TextField label="Téléphone" name="phone" type="tel" inputMode="tel" defaultValue={person.phone ? formatPhone(person.phone) : null} maxLength={30} hint="Pour le recontacter sur WhatsApp." />}
                 <TextField label="Date d'inscription" name="joinedOn" type="date" defaultValue={person.joinedOn} />
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <SelectField label="Ceinture" name="belt" defaultValue={person.belt ?? ""}>
@@ -136,6 +156,42 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
               </dl>
             )}
           </Card>
+
+          {guardian && !person.anonymizedAt && (
+            <Card title="Responsable légal">
+              <p className="mb-3 text-sm">
+                {guardian.consentWithdrawnAt ? (
+                  <Badge tone="warning">Accord retiré</Badge>
+                ) : guardian.consentConfirmedAt ? (
+                  <Badge tone="success">Accord confirmé le {formatCalendarDate(guardian.consentConfirmedAt.toISOString().slice(0, 10))}</Badge>
+                ) : (
+                  <Badge tone="warning">Accord en attente</Badge>
+                )}
+              </p>
+              <ActionForm action={updateGuardianAction.bind(null, academyId, personId)} className="space-y-4">
+                <TextField label="Nom" name="guardianName" defaultValue={guardian.name} required maxLength={80} />
+                <TextField label="E-mail" name="guardianEmail" type="email" defaultValue={guardian.email} required maxLength={254} />
+                <TextField label="Téléphone" name="guardianPhone" type="tel" inputMode="tel" defaultValue={guardian.phone ? formatPhone(guardian.phone) : null} maxLength={30} hint="Pour le recontacter sur WhatsApp." />
+                <SubmitButton>Enregistrer le responsable</SubmitButton>
+              </ActionForm>
+              {!guardian.consentConfirmedAt && !guardian.consentWithdrawnAt && (
+                <ActionForm action={resendGuardianConsentAction.bind(null, academyId, personId)} className="mt-4">
+                  <SubmitButton pendingLabel="Envoi…">Renvoyer le lien</SubmitButton>
+                </ActionForm>
+              )}
+              {can(ctx.role, "members.update") && !guardian.consentWithdrawnAt && (
+                <div className="mt-4">
+                  <ConfirmAction
+                    action={withdrawGuardianConsentAction.bind(null, academyId, personId)}
+                    trigger="Retirer l'accord…"
+                    title="Retirer l'accord du responsable ?"
+                    description={<p>À la demande du responsable légal : la fiche est archivée, la photo supprimée et le classement désactivé.</p>}
+                    confirmLabel="Retirer l'accord"
+                  />
+                </div>
+              )}
+            </Card>
+          )}
 
           {can(ctx.role, "members.update") && !person.anonymizedAt && (
             <Card title="Gestion">
