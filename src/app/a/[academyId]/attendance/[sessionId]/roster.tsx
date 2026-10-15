@@ -201,7 +201,8 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             </label>
             <input id="roster-search" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nom ou prénom" className="field" />
           </div>
-          <div role="group" aria-label="Afficher" className="flex rounded-sm border border-line-strong bg-surface p-0.5">
+          {/* Petits téléphones (360 px et moins) : 2 × 2, sinon le dernier filtre sortait de l'écran. */}
+          <div role="group" aria-label="Afficher" className="grid w-full grid-cols-2 rounded-sm border border-line-strong bg-surface p-0.5 sm:flex sm:w-auto">
             {(
               [
                 ["all", `Tous ${entries.length}`],
