@@ -8,14 +8,14 @@ import { requireUser } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { listAcademiesForUser } from "@/server/repositories/academies";
 import { ChildrenCard } from "@/components/guardian/children-card";
-import { myChildren } from "@/server/repositories/guardian";
+import { myChildrenWithSessions } from "@/server/repositories/guardian";
 import { buttonClasses } from "@/components/ui/button-classes";
 
 export const metadata: Metadata = { title: "Mes clubs" };
 
 export default async function AcademiesPage() {
   const user = await requireUser();
-  const { academies, children } = await withUser(user, async (tx) => ({ academies: await listAcademiesForUser(tx, user.id), children: await myChildren(tx) }));
+  const { academies, children } = await withUser(user, async (tx) => ({ academies: await listAcademiesForUser(tx, user.id), children: await myChildrenWithSessions(tx) }));
   return (
     <StandaloneFrame
       aside={

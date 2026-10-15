@@ -1,9 +1,10 @@
 import { formatCalendarDate } from "@/domain/dates";
-import { ConfirmAction } from "@/components/ui/confirm";
+import { ConfirmAction, InlineAction } from "@/components/ui/confirm";
+import { formatDateTime } from "@/domain/dates";
 import { ActionForm, SubmitButton } from "@/components/ui/form";
-import { Card } from "@/components/ui/ui";
+import { Badge, Card } from "@/components/ui/ui";
 import { MinorAccountForm } from "@/app/account/minor-account-form";
-import { setChildRankingAction, withdrawChildConsentAction } from "@/server/actions/guardian";
+import { bookForChildAction, cancelChildBookingAction, setChildRankingAction, withdrawChildConsentAction } from "@/server/actions/guardian";
 import type { ChildRow } from "@/server/repositories/guardian";
 
 /** Les enfants dont l'utilisateur est le responsable légal : statut de l'accord, classement, compte propre, retrait de l'accord. */
@@ -24,6 +25,54 @@ export function ChildrenCard({ childrenRows, showClub = true }: { childrenRows: 
                   ? `Accord confirmé. ${c.lastAttendedAt ? `Dernier cours : ${formatCalendarDate(c.lastAttendedAt.toISOString().slice(0, 10))}.` : "Aucun cours enregistré pour l'instant."}`
                   : "Accord en attente : utilisez le lien reçu par e-mail."}
             </p>
+            {c.sessions && (
+              <details className="group rounded-sm border border-line">
+                <summary className="flex min-h-11 cursor-pointer items-center justify-between gap-2 px-3 text-sm font-semibold">
+                  <span>
+                    Prochains cours de {c.firstName}
+                    {c.sessions.some((s) => s.childStatus === "booked") && <span className="font-normal text-ink-soft"> · {c.sessions.filter((s) => s.childStatus === "booked").length} inscrit{c.sessions.filter((s) => s.childStatus === "booked").length > 1 ? "s" : ""}</span>}
+                  </span>
+                  <span aria-hidden="true" className="text-ink-soft transition-transform group-open:rotate-180">⌄</span>
+                </summary>
+                {c.sessions.length === 0 ? (
+                  <p className="border-t border-line p-3 text-sm text-ink-soft">Aucun cours prévu dans les 14 prochains jours.</p>
+                ) : (
+                  <ul className="divide-y divide-line border-t border-line">
+                    {c.sessions.map((s) => {
+                      const label = `${s.className}, ${formatDateTime(s.startsAt, s.timezone)}`;
+                      const full = s.capacity !== null && s.booked >= s.capacity;
+                      return (
+                        <li key={s.sessionId} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5 text-sm">
+                          <span className="min-w-0">
+                            <span className="block font-semibold">{s.className}</span>
+                            <span className="block text-ink-soft">{formatDateTime(s.startsAt, s.timezone)}</span>
+                          </span>
+                          <span className="flex flex-wrap items-center gap-2">
+                            {s.childStatus === "booked" && <Badge tone="success">Inscrit</Badge>}
+                            {s.childStatus === "waitlisted" && <Badge tone="warning">Liste d&apos;attente{s.childPosition ? ` · n°${s.childPosition}` : ""}</Badge>}
+                            {s.childStatus === null ? (
+                              <InlineAction
+                                action={bookForChildAction.bind(null, c.childId, s.sessionId)}
+                                label={<>{full ? "Liste d'attente" : "Réserver"}<span className="sr-only"> pour {c.firstName} : {label}</span></>}
+                                pendingLabel="Réservation…"
+                                variant="secondary"
+                              />
+                            ) : (
+                              <InlineAction
+                                action={cancelChildBookingAction.bind(null, c.childId, s.sessionId)}
+                                label={<>{s.childStatus === "waitlisted" ? "Quitter la liste" : "Annuler"}<span className="sr-only"> pour {c.firstName} : {label}</span></>}
+                                pendingLabel="Annulation…"
+                                variant="quiet"
+                              />
+                            )}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </details>
+            )}
             {c.consentConfirmedAt && !c.consentWithdrawnAt && (
               <div className="flex flex-wrap items-start gap-2">
                 <ActionForm action={setChildRankingAction.bind(null, c.childId, !c.rankingOptIn)}>

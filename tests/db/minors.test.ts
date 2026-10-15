@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { adminSql, appSql, asUser, buildWorld, closeAll, createUser, failing, type World } from "./support";
+import { adminSql, appSql, asUser, buildWorld, closeAll, createSession, createUser, failing, type World } from "./support";
 
 let w: World;
 beforeAll(async () => {
@@ -192,5 +192,46 @@ describe("compte propre d'un mineur de 15 ans et plus", () => {
     const { id } = await consentedChild(16);
     const err = await failing(() => asUser(w.adam, (tx) => tx`select public.create_invitation(${w.academyA}, 'x@example.invalid', 'member', ${id}, ${hash("zz")})`));
     expect(err.message).toContain("invalid_person");
+  });
+});
+
+describe("le responsable réserve les cours de son enfant", () => {
+  async function consentedChild(age = 10) {
+    const { id, token } = await createMinor(w.carl, undefined, age);
+    const parent = await createUser(`parent-book-${randomBytes(3).toString("hex")}`);
+    await appSql()`select * from app_private.confirm_guardian_consent(${hash(token)}, ${parent.id})`;
+    return { id, parent };
+  }
+
+  it("réserve, voit son enfant inscrit, passe en liste d'attente quand c'est complet, annule", async () => {
+    const { id, parent } = await consentedChild();
+    const session = await createSession(w.academyA);
+    const sessions = () => asUser(parent, (tx) => tx<{ session_id: string; child_status: string | null; booked: number }[]>`select session_id, child_status, booked from public.child_sessions(${id})`);
+    expect((await sessions()).find((s) => s.session_id === session)?.child_status).toBeNull();
+    expect((await asUser(parent, (tx) => tx<{ s: string }[]>`select public.book_for_child(${session}, ${id}) as s`))[0]?.s).toBe("booked");
+    const after = (await sessions()).find((s) => s.session_id === session);
+    expect(after).toMatchObject({ child_status: "booked", booked: 1 });
+    // cours plein : l'enfant d'un autre parent passe en liste d'attente
+    await adminSql()`update public.sessions set capacity = 1 where id = ${session}`;
+    const other = await consentedChild();
+    expect((await asUser(other.parent, (tx) => tx<{ s: string }[]>`select public.book_for_child(${session}, ${other.id}) as s`))[0]?.s).toBe("waitlisted");
+    // le premier annule : le second est promu
+    await asUser(parent, (tx) => tx`select public.cancel_child_booking(${session}, ${id})`);
+    expect((await adminSql()`select status from public.session_bookings where session_id = ${session} and person_id = ${other.id}`)[0]?.status).toBe("booked");
+  });
+
+  it("refuse un tiers, un accord non confirmé ou retiré, et un cours d'un autre club", async () => {
+    const { id, parent } = await consentedChild();
+    const stranger = await createUser("stranger-book");
+    const session = await createSession(w.academyA);
+    expect((await failing(() => asUser(stranger, (tx) => tx`select public.book_for_child(${session}, ${id})`))).message).toContain("not_found");
+    expect((await failing(() => asUser(stranger, (tx) => tx`select * from public.child_sessions(${id})`))).message).toContain("not_found");
+    const foreign = await createSession(w.academyB);
+    expect((await failing(() => asUser(parent, (tx) => tx`select public.book_for_child(${foreign}, ${id})`))).message).toContain("not_found");
+    const pending = await createMinor(w.carl);
+    await adminSql()`update public.guardianships set guardian_user_id = ${parent.id} where child_id = ${pending.id}`;
+    expect((await failing(() => asUser(parent, (tx) => tx`select public.book_for_child(${session}, ${pending.id})`))).message).toContain("consent_required");
+    await asUser(parent, (tx) => tx`select public.withdraw_guardian_consent(${id})`);
+    expect((await failing(() => asUser(parent, (tx) => tx`select public.book_for_child(${session}, ${id})`))).message).toContain("consent_required");
   });
 });

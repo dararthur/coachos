@@ -10,6 +10,7 @@ import { withApp, withUser } from "@/server/db/client";
 import { env } from "@/server/env";
 import { clientIp, enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import * as guardian from "@/server/repositories/guardian";
+import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import { hashToken, parseForm } from "./helpers";
 import { z } from "zod";
 
@@ -56,6 +57,37 @@ export async function inviteMinorAccountAction(childId: string, _prev: FormState
     const token = randomBytes(32).toString("base64url");
     await withUser(user, (tx) => guardian.inviteMinorAccount(tx, id.data, input.email, hashToken(token)));
     return { ok: true, data: { link: `${env().SITE_URL}/invite/${token}`, email: input.email }, message: "Lien créé." };
+  });
+}
+
+/** Réserve un cours pour son enfant : place confirmée, ou liste d'attente si le cours est complet. */
+export async function bookForChildAction(childId: string, sessionId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("bookForChild", async () => {
+    const user = await authorizeUser();
+    await enforceRateLimit("writes", user.id, LIMITS.writes.max, LIMITS.writes.window);
+    const child = uuidField.safeParse(childId);
+    const session = uuidField.safeParse(sessionId);
+    if (!child.success || !session.success) throw new AppError("not_found");
+    const status = await withUser(user, (tx) => guardian.bookForChild(tx, session.data, child.data));
+    revalidatePath("/account");
+    revalidatePath("/academies");
+    revalidatePath("/a", "layout");
+    return { ok: true, data: { status }, message: status === "booked" ? "Place réservée." : "Cours complet : votre enfant est sur la liste d'attente." };
+  });
+}
+
+export async function cancelChildBookingAction(childId: string, sessionId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("cancelChildBooking", async () => {
+    const user = await authorizeUser();
+    const child = uuidField.safeParse(childId);
+    const session = uuidField.safeParse(sessionId);
+    if (!child.success || !session.success) throw new AppError("not_found");
+    await withUser(user, (tx) => guardian.cancelChildBooking(tx, session.data, child.data));
+    deliverBookingPromotionsAfterResponse(); // une place rendue promeut le premier de la liste d'attente
+    revalidatePath("/account");
+    revalidatePath("/academies");
+    revalidatePath("/a", "layout");
+    return { ok: true, data: null, message: "Réservation annulée." };
   });
 }
 

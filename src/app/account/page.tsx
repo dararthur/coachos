@@ -9,7 +9,7 @@ import { buttonClasses } from "@/components/ui/button-classes";
 import { requireUser } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { ChildrenCard } from "@/components/guardian/children-card";
-import { myChildren } from "@/server/repositories/guardian";
+import { myChildrenWithSessions } from "@/server/repositories/guardian";
 import { InstallApp } from "@/components/ui/install-app";
 
 export const metadata: Metadata = { title: "Mon compte" };
@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Mon compte" };
 export default async function AccountPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const params = await searchParams;
-  const children = await withUser(user, (tx) => myChildren(tx));
+  const children = await withUser(user, (tx) => myChildrenWithSessions(tx));
   return (
     <StandaloneFrame>
       <PageHeader title="Mon compte" back={<BackLink href="/academies">Mes clubs</BackLink>} />

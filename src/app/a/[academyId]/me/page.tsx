@@ -23,7 +23,7 @@ import { attachBookings, type BookableSession } from "@/server/repositories/book
 import { getCheckinSettings } from "@/server/repositories/checkin";
 import { listSessions } from "@/server/repositories/schedule";
 import { ChildrenCard } from "@/components/guardian/children-card";
-import { myChildren } from "@/server/repositories/guardian";
+import { myChildrenWithSessions } from "@/server/repositories/guardian";
 
 export const metadata: Metadata = { title: "Mon espace" };
 
@@ -47,7 +47,7 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
     const profile = await getMyProfile(tx, academyId);
     return {
       profile,
-      children: (await myChildren(tx)).filter((c) => c.academyId === academyId),
+      children: (await myChildrenWithSessions(tx)).filter((c) => c.academyId === academyId),
       photoVersion: profile ? (await photoVersions(tx, academyId)).get(profile.personId) : undefined,
       rank: profile ? myRank(await attendanceRanking(tx, academyId, month.from, month.to)) : null,
       checkin: await getCheckinSettings(tx, academyId),

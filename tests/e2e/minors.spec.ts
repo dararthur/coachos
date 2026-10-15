@@ -1,4 +1,4 @@
-import { createClub, expect, mailsTo, signUp, test, uniqueEmail, waitForMail } from "./support/helpers";
+import { createClub, expect, mailsTo, parisToday, signUp, test, uniqueEmail, waitForMail } from "./support/helpers";
 
 test("mineur : fiche avec responsable légal, accord par lien, ceinture enfant, retrait de l'accord", async ({ page, browser }) => {
   await signUp(page, uniqueEmail("minors"), "Coach Mineurs");
@@ -83,6 +83,11 @@ test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte 
   await signUp(page, uniqueEmail("minors-home"), "Coach Accueil");
   const club = await createClub(page, "Club Accueil");
   const parentEmail = uniqueEmail("parent-home");
+  await page.goto(`/a/${club}/schedule/new`);
+  await page.getByLabel("Date de la première séance").fill(parisToday(1));
+  await page.getByLabel("Heure de début").fill("18:30");
+  await page.getByRole("button", { name: "Créer" }).click();
+  await expect(page.getByText("Création effectuée : 1")).toBeVisible();
   const year = new Date().getFullYear() - 16;
   await page.goto(`/a/${club}/members/new`);
   await page.getByLabel("Prénom").fill("Inès");
@@ -108,5 +113,13 @@ test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte 
   await expect(parent.getByLabel("E-mail de Inès")).toBeHidden();
   await parent.getByText("Donner un compte à Inès").click();
   await expect(parent.getByLabel("E-mail de Inès")).toBeVisible();
+
+  // Le parent réserve puis annule le cours de son enfant.
+  await parent.waitForLoadState("networkidle");
+  await parent.getByText("Prochains cours de Inès").click();
+  await parent.getByRole("button", { name: /Réserver pour Inès/ }).click();
+  await expect(parent.getByText("Inscrit", { exact: true })).toBeVisible();
+  await parent.getByRole("button", { name: /Annuler pour Inès/ }).click();
+  await expect(parent.getByRole("button", { name: /Réserver pour Inès/ })).toBeVisible();
   await ctx.close();
 });
