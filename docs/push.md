@@ -33,3 +33,19 @@ L'abonnement dépend du service du navigateur (réseau) : les tests automatiques
 ## Évolutions possibles
 
 Notification « place confirmée » (liste d'attente, en plus de l'e-mail), rappel de séance, préférences par type de message, plafond d'envois par club.
+
+## Rappel de séance (« 🥋 séance dans 1 h, tout est prêt ? »)
+
+- **Qui** : les adhérents dont la réservation est **confirmée** (pas la liste d'attente), avec un compte rattaché à leur fiche, membres du club, fiche ni archivée ni anonymisée, et au moins un appareil abonné. Séance annulée : aucun rappel.
+- **Quand** : la tâche `coachos-reminders.timer` appelle `/api/cron/reminders` toutes les 5 minutes ; la base choisit les séances qui commencent dans 35 à 65 minutes et les marque (`session_reminders`) dans la même instruction : jamais deux rappels pour une séance, même si deux appels se croisent. Une séance déplacée est rappelée pour son nouvel horaire. Le libellé dit « dans 1 h » (60–65 min) ou « dans N min » pour une séance créée tard.
+- **Message** : titre « 🥋 *Club* : séance dans 1 h », texte « *Cours* à 19:00. Tout est prêt ? » ; un toucher ouvre « Mon espace ». Aucune donnée de membre.
+- **Au mieux** : un rappel manqué n'est pas rejoué (il serait périmé). Sans clés VAPID, rien n'est marqué ni envoyé.
+- **Installation de la tâche** (une fois, après le déploiement de cette version) :
+
+```bash
+sudo cp /srv/coachos/current/ops/systemd/coachos-reminders.service /srv/coachos/current/ops/systemd/coachos-reminders.timer /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now coachos-reminders.timer
+sudo systemctl start coachos-reminders.service && systemctl status coachos-reminders.service --no-pager
+```
+
+Le service réutilise `/etc/coachos/purge.header` (jeton `CRON_SECRET`). Réponse attendue de l'appel : `{"sessions":0,"sent":0,"failed":0}` hors d'une séance imminente. Journal : `journalctl -u coachos | grep push.reminders`.

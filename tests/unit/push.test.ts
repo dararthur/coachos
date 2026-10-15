@@ -56,3 +56,20 @@ describe("envoi", () => {
     expect(result.gone.sort()).toEqual(["gone404", "gone410"]);
   });
 });
+
+describe("rappel de séance : libellé", () => {
+  it("« dans 1 h » autour d'une heure, sinon des minutes arrondies à 5", async () => {
+    const { reminderDelay, reminderPayload } = await import("@/server/session-reminders");
+    const now = new Date("2026-10-20T17:00:00Z");
+    const at = (min: number) => new Date(now.getTime() + min * 60_000);
+    expect(reminderDelay(at(61), now)).toBe("dans 1 h");
+    expect(reminderDelay(at(56), now)).toBe("dans 1 h");
+    expect(reminderDelay(at(44), now)).toBe("dans 45 min");
+    expect(reminderDelay(at(36), now)).toBe("dans 35 min");
+    const p = reminderPayload({ academyId: "a1", academyName: "Dojo Nord", className: "JJB — Tous niveaux", startsAt: at(60), timezone: "Europe/Paris" }, now);
+    expect(p.title).toBe("🥋 Dojo Nord : séance dans 1 h");
+    expect(p.body).toContain("JJB — Tous niveaux à ");
+    expect(p.body.endsWith("Tout est prêt ?")).toBe(true);
+    expect(p.url).toBe("/a/a1/me");
+  });
+});

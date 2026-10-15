@@ -72,7 +72,7 @@ export interface NewsPushInput {
 
 /** Prévient les membres du club (hors l'auteur) d'une nouvelle publication. */
 export async function notifyNews(input: NewsPushInput, deps: { sql?: Sql; send?: PushSender } = {}): Promise<{ sent: number; failed: number }> {
-  if (!vapidPublicKey() && !deps.send) return { sent: 0, failed: 0 };
+  if (!deps.send && !vapidPublicKey()) return { sent: 0, failed: 0 };
   const targets = await withApp(
     (tx) => tx<PushTarget[]>`select id, endpoint, p256dh, auth from app_private.push_targets_for_club(${input.academyId}, ${input.authorId})`,
     deps.sql,

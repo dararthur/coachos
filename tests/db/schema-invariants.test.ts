@@ -78,7 +78,7 @@ describe("invariants du schéma", () => {
   });
 
   it("les tables tenant portent academy_id et une clé unique (id, academy_id) pour les FK composites", async () => {
-    const tenantTables = ["people", "disciplines", "class_types", "sessions", "attendance", "invitations", "session_bookings", "booking_notifications", "guardianships"];
+    const tenantTables = ["people", "disciplines", "class_types", "sessions", "attendance", "invitations", "session_bookings", "booking_notifications", "session_reminders", "guardianships"];
     for (const t of tenantTables) {
       const cols = await adminSql()`select 1 from information_schema.columns where table_schema = 'public' and table_name = ${t} and column_name = 'academy_id' and is_nullable = 'NO'`;
       expect(cols, `${t}.academy_id`).toHaveLength(1);
