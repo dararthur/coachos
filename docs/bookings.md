@@ -68,9 +68,3 @@ La ligne est supprimée sans envoi, au moment de l'envoi, si :
   d'actualité, échec et abandon, envois simultanés, deux clubs, file fermée aux rôles applicatifs.
 - `tests/unit/mail.test.ts` : contenu, fuseau du club, échappement HTML, objet sur une ligne.
 - `tests/e2e/bookings.spec.ts` : la place accordée par le coach écrit l'e-mail dans la boîte d'envoi de test.
-
-## Limite connue
-
-- L'effacement **définitif** d'un membre (`erase_person` en mode `delete`) supprime ses réservations sans faire avancer la liste
-  d'attente (l'anonymisation et l'archivage, eux, la font avancer). La place se libère au prochain événement qui appelle la
-  promotion (annulation, changement de capacité).

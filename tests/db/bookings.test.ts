@@ -142,6 +142,26 @@ describe("réservation, capacité et liste d'attente", () => {
   });
 });
 
+describe("effacement définitif d'un membre", () => {
+  it("libère sa place, la liste d'attente avance et l'e-mail « place confirmée » est mis en file", async () => {
+    const owner = await createUser("bk7d-owner");
+    const academy = await createAcademy(owner);
+    const session = await createSession(academy, { startsAt: future() });
+    await setCapacity(session, 1);
+    const [a, b] = [await member(academy, "bk7d-a"), await member(academy, "bk7d-b")];
+    await book(a.user, session);
+    await book(b.user, session);
+    expect(await status(session, b.person)).toBe("waitlisted");
+    await asUser(owner, (tx) => tx`select public.erase_person(${a.person}, 'delete')`);
+    expect(await adminSql()`select 1 from public.people where id = ${a.person}`).toHaveLength(0);
+    expect(await status(session, b.person)).toBe("booked");
+    expect(
+      await adminSql()`select 1 from public.booking_notifications n join public.session_bookings k on k.id = n.booking_id
+        where k.session_id = ${session} and k.person_id = ${b.person}`,
+    ).toHaveLength(1);
+  });
+});
+
 describe("annulation et clôture de la feuille d'appel", () => {
   it("annulation possible tant que la feuille n'est pas validée et qu'aucune présence n'est enregistrée", async () => {
     const owner = await createUser("bk8-owner");
