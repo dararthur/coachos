@@ -35,11 +35,12 @@ export function ConfirmAction({
   triggerClassName?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const triggerButton = useRef<HTMLButtonElement>(null);
   const titleId = useId();
   const [message, setMessage] = useState<State>(null);
   return (
     <>
-      <button type="button" className={buttonClasses({ variant: triggerVariant, className: triggerClassName })} onClick={() => dialog.current?.showModal()}>
+      <button ref={triggerButton} type="button" className={buttonClasses({ variant: triggerVariant, className: triggerClassName })} onClick={() => dialog.current?.showModal()}>
         {trigger}
       </button>
       {message && !message.ok && (
@@ -51,7 +52,13 @@ export function ConfirmAction({
         ref={dialog}
         aria-labelledby={titleId}
         className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-md border border-line bg-surface p-0 text-ink shadow-overlay"
-        onClose={() => setMessage(null)}
+        onClose={() => {
+          setMessage(null);
+          // Safari ne donne pas le focus à un bouton cliqué ou touché : le <dialog> n'a alors personne à qui le rendre, le focus
+          // reste dans la modale fermée puis retombe sur la page. On le rend au déclencheur (Chrome et Firefox l'ont déjà fait).
+          const active = document.activeElement;
+          if (!active || active === document.body || dialog.current?.contains(active)) triggerButton.current?.focus();
+        }}
       >
         <ActionForm
           action={action}
