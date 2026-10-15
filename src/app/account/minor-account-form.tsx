@@ -19,7 +19,7 @@ export function MinorAccountForm({ childId, firstName }: { childId: string; firs
         hideMessage={Boolean(created)}
         onResult={(r: ActionResult<Created> | null) => setCreated(r && r.ok ? r.data : null)}
       >
-        <TextField label={`E-mail de ${firstName}`} name="email" type="email" required autoComplete="off" hint="Facultatif : un compte permet à votre enfant de voir ses présences. Vous gardez le classement, la photo et le retrait de l'accord." />
+        <TextField label={`E-mail de ${firstName}`} name="email" type="email" required autoComplete="off" hint="Si vous le souhaitez, votre enfant peut avoir son propre compte pour suivre ses cours. Vous restez maître du classement, de la photo et de votre accord : vous pouvez le retirer à tout moment." />
         <SubmitButton variant="secondary" pendingLabel="Création…">
           Créer un lien pour son compte
         </SubmitButton>
