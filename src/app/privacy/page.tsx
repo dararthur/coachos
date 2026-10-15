@@ -47,6 +47,12 @@ export default function PrivacyPage() {
             <strong>E-mails</strong> : confirmation d&apos;adresse, réinitialisation de mot de passe, invitation, et avis de place confirmée quand vous quittez la liste d&apos;attente.
           </li>
           <li>
+            <strong>Notifications</strong> (facultatives, activées appareil par appareil depuis « Mon compte ») : pour vous prévenir d&apos;une actualité du club ou d&apos;une séance qui commence dans une heure, nous enregistrons une adresse technique de votre appareil fournie par votre navigateur et des clés de chiffrement. Le message (nom du club, titre de l&apos;actualité ou du cours) transite chiffré par le service de notification de votre navigateur (Google, Apple, Mozilla ou Microsoft) qui n&apos;en connaît pas le contenu. Base légale : votre consentement, retirable en désactivant les notifications.
+          </li>
+          <li>
+            <strong>Actualités du club</strong> (titre, texte, auteur) : informer les membres. Rédigées par l&apos;équipe du club, lisibles par ses seuls membres connectés.
+          </li>
+          <li>
             <strong>Demande de création de club</strong> (nom du club, votre nom, votre e-mail, message facultatif) : étudier la demande.
           </li>
           <li>
@@ -65,7 +71,7 @@ export default function PrivacyPage() {
       <section>
         <h2>Données obligatoires ou facultatives</h2>
         <p>
-          Pour créer un compte, l&apos;adresse e-mail, un nom affiché et un mot de passe sont nécessaires : sans eux, le compte ne peut pas être créé. Pour une fiche membre, le prénom et le nom sont nécessaires ; l&apos;e-mail, le téléphone, la photo et l&apos;identifiant d&apos;origine sont facultatifs, et l&apos;apparition dans le classement relève de votre seul choix. Sans e-mail ni compte, vous restez membre du club mais ne pouvez pas réserver ni consulter votre espace en ligne.
+          Pour créer un compte, l&apos;adresse e-mail, un nom affiché et un mot de passe sont nécessaires : sans eux, le compte ne peut pas être créé. Pour une fiche membre, le prénom et le nom sont nécessaires ; l&apos;e-mail, le téléphone, la photo et l&apos;identifiant d&apos;origine sont facultatifs, et l&apos;apparition dans le classement relève de votre seul choix. Sans e-mail ni compte, vous restez membre du club mais ne pouvez pas réserver ni consulter votre espace en ligne. Pour un mineur, le nom et l&apos;e-mail du responsable légal sont nécessaires : sans eux, la fiche ne peut pas être créée.
         </p>
         <p className="mt-2">
           Vos données viennent de vous, de votre club (qui crée ou importe votre fiche) et, pour les présences, de l&apos;équipe qui fait l&apos;appel ou de votre propre pointage.
@@ -96,6 +102,8 @@ export default function PrivacyPage() {
           <li>Photo : jusqu&apos;à ce que vous la retiriez, ou à l&apos;anonymisation de la fiche ou à la suppression de votre compte.</li>
           <li>Compte : jusqu&apos;à sa suppression. Une session de connexion expire après un an sans utilisation.</li>
           <li>Invitations : 30 jours après expiration ou acceptation. Demandes de création de club : 90 jours (180 jours au plus).</li>
+          <li>Appareils de notification : jusqu&apos;à ce que vous les désactiviez, qu&apos;ils expirent ou que vous supprimiez votre compte.</li>
+          <li>Actualités : jusqu&apos;à leur suppression par le club. Si leur auteur supprime son compte, elles restent au club sans son nom.</li>
           <li>Journal d&apos;audit : 24 mois. Compteurs anti-abus : moins de 24 heures.</li>
           <li>Sauvegardes : une sauvegarde chiffrée par jour, conservée 7 jours, et une sauvegarde quotidienne du serveur par l&apos;hébergeur, conservée 7 jours. Une donnée effacée disparaît donc des sauvegardes au plus tard une semaine après.</li>
         </ul>
@@ -114,7 +122,7 @@ export default function PrivacyPage() {
           <li><strong>Retrait du consentement</strong> (art. 7 §3) : à tout moment, par exemple pour le classement, sans effet sur ce qui a eu lieu avant.</li>
         </ul>
         <p className="mt-2">
-          Depuis <Link href="/account">Mon compte</Link>, vous pouvez télécharger vos données et supprimer votre compte : votre photo et votre présence dans le classement disparaissent alors aussi. Votre fiche membre relève de votre club : adressez-vous à ses responsables, qui disposent d&apos;outils d&apos;export, de rectification et d&apos;effacement. Pour votre compte, écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a> : réponse sous un mois (prolongeable de deux mois si la demande est complexe, avec information de votre part). Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr/fr/plaintes">cnil.fr/fr/plaintes</a>).
+          Depuis <Link href="/account">Mon compte</Link>, vous pouvez télécharger vos données et supprimer votre compte : votre photo et votre présence dans le classement disparaissent alors aussi. Votre fiche membre relève de votre club : adressez-vous à ses responsables, qui disposent d&apos;outils d&apos;export, de rectification et d&apos;effacement. Pour votre compte, écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a> : réponse sous un mois (prolongeable de deux mois si la demande est complexe, avec information de votre part). Pour un mineur, ces droits sont exercés par son responsable légal, depuis « Mes enfants » ou auprès du club. Si un responsable supprime son compte, ses coordonnées de responsable restent sur la fiche de l&apos;enfant tant que l&apos;enfant est membre (le club en a besoin pour le joindre) : pour les faire effacer, retirez votre accord, ce qui archive la fiche. Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a href="https://www.cnil.fr/fr/plaintes">cnil.fr/fr/plaintes</a>).
         </p>
       </section>
 
@@ -128,7 +136,7 @@ export default function PrivacyPage() {
       <section>
         <h2>Hébergement et sous-traitants</h2>
         <p>
-          L&apos;application, sa base de données et l&apos;authentification sont auto-hébergées sur un serveur loué à OVHcloud, situé en France (centre de données de Gravelines). Les e-mails sont envoyés par Resend depuis sa région d&apos;envoi en Irlande ; les métadonnées et journaux de ces e-mails sont conservés par ce prestataire aux États-Unis, transfert encadré par les clauses contractuelles types de la Commission européenne et la certification Data Privacy Framework du prestataire. Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;intelligence artificielle.
+          L&apos;application, sa base de données et l&apos;authentification sont auto-hébergées sur un serveur loué à OVHcloud, situé en France (centre de données de Gravelines). Les e-mails sont envoyés par Resend depuis sa région d&apos;envoi en Irlande ; les métadonnées et journaux de ces e-mails sont conservés par ce prestataire aux États-Unis, transfert encadré par les clauses contractuelles types de la Commission européenne et la certification Data Privacy Framework du prestataire. Les notifications passent par le service de notification de votre navigateur (Google, Apple, Mozilla ou Microsoft), qui reçoit un message chiffré et l&apos;adresse technique de votre appareil, aucune autre donnée de votre fiche. Aucune donnée personnelle n&apos;est transmise à un fournisseur d&apos;intelligence artificielle.
         </p>
       </section>
 
