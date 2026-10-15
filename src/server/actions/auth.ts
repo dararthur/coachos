@@ -1,13 +1,16 @@
 "use server";
 
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { normalizeJoinCode } from "@/domain/join-code";
 import { changePasswordSchema, loginSchema, profileSchema, resetPasswordSchema, resetRequestSchema, signupSchema } from "@/domain/validation";
 import { getAuth } from "@/server/auth/auth";
 import { apiErrorInfo } from "@/server/auth/api-error";
+import { revokeConnectedDevice, revokeOtherConnectedDevices } from "@/server/auth/devices";
 import { authorizeUser, runAction } from "@/server/auth/guards";
 import { isConfiguredAdminEmail } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
@@ -159,6 +162,53 @@ export async function changePasswordAction(_prev: FormState, formData: FormData)
     }
     // Better Auth remplace la session de l'appareil courant : on recharge la page avec le nouveau cookie.
     redirect("/account?updated=password");
+  });
+}
+
+const sessionId = z.uuid();
+
+/**
+ * « Mes appareils connectés » : déconnecte un autre appareil de l'utilisateur. L'identifiant reçu du navigateur n'est jamais
+ * cru : il n'est cherché que parmi les sessions de l'utilisateur de la requête (src/server/auth/devices.ts).
+ */
+export async function revokeDeviceAction(id: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("revokeDevice", async () => {
+    const user = await authorizeUser();
+    await enforceRateLimit("write", user.id, LIMITS.writes.max, LIMITS.writes.window);
+    if (!sessionId.safeParse(id).success) return failure("not_found", undefined, "Cet appareil est déjà déconnecté.");
+    let outcome;
+    try {
+      outcome = await revokeConnectedDevice(getAuth(), await headers(), id);
+    } catch (error) {
+      const api = apiStatus(error);
+      if (!api) throw error;
+      if (api.status === 401) return failure("not_authenticated");
+      logger.warn("auth.revoke_device_failed", { status: api.status, code: api.code });
+      return failure("internal");
+    }
+    if (outcome === null) return failure("not_authenticated");
+    if (outcome === "current") return failure("invalid_action", undefined, "Pour cet appareil, utilisez « Se déconnecter ».");
+    revalidatePath("/account");
+    if (outcome === "not_found") return failure("not_found", undefined, "Cet appareil est déjà déconnecté.");
+    return { ok: true, data: null, message: "Appareil déconnecté." };
+  });
+}
+
+export async function revokeOtherDevicesAction(_prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("revokeOtherDevices", async () => {
+    const user = await authorizeUser();
+    await enforceRateLimit("write", user.id, LIMITS.writes.max, LIMITS.writes.window);
+    try {
+      if (!(await revokeOtherConnectedDevices(getAuth(), await headers()))) return failure("not_authenticated");
+    } catch (error) {
+      const api = apiStatus(error);
+      if (!api) throw error;
+      if (api.status === 401) return failure("not_authenticated");
+      logger.warn("auth.revoke_other_devices_failed", { status: api.status, code: api.code });
+      return failure("internal");
+    }
+    revalidatePath("/account");
+    return { ok: true, data: null, message: "Vos autres appareils ont été déconnectés." };
   });
 }
 
