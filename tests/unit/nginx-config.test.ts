@@ -112,6 +112,10 @@ describe("ops/nginx : sécurité exigée par l'application", () => {
     }
   });
 
+  it("/checkin sans barre finale a son propre bloc : sinon nginx redirige vers /checkin/ et Next.js renvoie vers /checkin (boucle)", () => {
+    expect(cfg).toMatch(/location\s+=\s+\/checkin\s/);
+  });
+
   it("taille des requêtes, délais et limitation de débit explicites ; 429 plutôt que 503", () => {
     expect(cfg).toMatch(/client_max_body_size\s+3m;/);
     expect(cfg).toMatch(/client_header_timeout\s+\d+s;/);
