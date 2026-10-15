@@ -19,6 +19,8 @@ import { DevicesCard } from "./devices-card";
 
 export const metadata: Metadata = { title: "Mon compte" };
 
+const DEVICE_NOTICES: Record<string, string> = { device: "Appareil déconnecté.", devices: "Vos autres appareils ont été déconnectés." };
+
 export default async function AccountPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -49,7 +51,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <PushToggle publicKey={pushKey} />
         </Card>
       )}
-      <DevicesCard devices={devices} />
+      <DevicesCard devices={devices} notice={DEVICE_NOTICES[params.updated ?? ""]} />
       <Card title="Mot de passe">
         {params.updated === "password" && <Alert tone="success">Mot de passe mis à jour. Vos autres appareils ont été déconnectés.</Alert>}
         <ActionForm action={changePasswordAction} className="space-y-4" resetOnSuccess>

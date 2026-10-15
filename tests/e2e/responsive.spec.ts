@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import postgres from "postgres";
 import type { Page } from "@playwright/test";
-import { completeProfile, createClub, expect, signUp, test, uniqueEmail } from "./support/helpers";
+import { completeProfile, createClub, expect, logIn, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
 
 /**
  * Balayage responsive : TOUTES les pages, vues gestionnaire et membre, avec un club rempli de données « difficiles »
@@ -95,7 +95,8 @@ async function sweep(page: Page, paths: readonly string[], label: string): Promi
 
 test("responsive : aucune page ne déborde, aucun contrôle hors écran (gestionnaire, membre, visiteur)", async ({ page, browser }) => {
   test.setTimeout(process.env.RESPONSIVE_ALL ? 900_000 : 420_000);
-  await signUp(page, uniqueEmail("resp"), "Propriétaire au nom vraiment très long pour l'en-tête");
+  const email = uniqueEmail("resp");
+  await signUp(page, email, "Propriétaire au nom vraiment très long pour l'en-tête");
   const club = await createClub(page, "Académie de Jiu-Jitsu Brésilien et de Grappling du Grand Est");
   const { person, session, post } = await seed(club);
   const a = `/a/${club}`;
@@ -104,6 +105,12 @@ test("responsive : aucune page ne déborde, aucun contrôle hors écran (gestion
     `${a}/schedule/${session}`, `${a}/attendance`, `${a}/attendance/${session}`, `${a}/reports`, `${a}/settings`, `${a}/settings/qr`,
     `${a}/news`, `${a}/news/new`, `${a}/news/${post}`, `${a}/ranking`, "/academies", "/account", "/checkin", "/privacy",
   ];
+  // Un second appareil : « Mes appareils connectés » (/account) montre aussi une ligne « Déconnecter » et « Déconnecter tous les autres appareils ».
+  const phone = await browser.newContext({ userAgent: "Mozilla/5.0 (Linux; Android 14; SM-S921B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/26.0 Chrome/122.0.0.0 Mobile Safari/537.36", extraHTTPHeaders: { "x-real-ip": randomIp() } });
+  const phonePage = await phone.newPage();
+  await logIn(phonePage, email, "/account");
+  await expect(phonePage).toHaveURL(/\/account/);
+  await phone.close();
   const problems = await sweep(page, staff, "gestion");
 
   await page.setViewportSize({ width: 1280, height: 720 });

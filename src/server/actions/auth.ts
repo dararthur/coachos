@@ -1,7 +1,6 @@
 "use server";
 
 import { randomBytes, scrypt as scryptCallback } from "node:crypto";
-import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -188,9 +187,9 @@ export async function revokeDeviceAction(id: string, _prev: FormState, _formData
     }
     if (outcome === null) return failure("not_authenticated");
     if (outcome === "current") return failure("invalid_action", undefined, "Pour cet appareil, utilisez « Se déconnecter ».");
-    revalidatePath("/account");
     if (outcome === "not_found") return failure("not_found", undefined, "Cet appareil est déjà déconnecté.");
-    return { ok: true, data: null, message: "Appareil déconnecté." };
+    // La ligne disparaît avec son formulaire : la confirmation s'affiche en tête de la carte (comme ?updated=password).
+    redirect("/account?updated=device#appareils");
   });
 }
 
@@ -207,8 +206,7 @@ export async function revokeOtherDevicesAction(_prev: FormState, _formData: Form
       logger.warn("auth.revoke_other_devices_failed", { status: api.status, code: api.code });
       return failure("internal");
     }
-    revalidatePath("/account");
-    return { ok: true, data: null, message: "Vos autres appareils ont été déconnectés." };
+    redirect("/account?updated=devices#appareils");
   });
 }
 

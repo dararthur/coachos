@@ -159,6 +159,59 @@ test.describe("authentification auto-hébergée : inscription, confirmation, ré
     await logIn(page, email);
     await expect(page.getByRole("alert").filter({ hasText: "Adresse e-mail ou mot de passe incorrect." })).toBeVisible();
   });
+
+  test("mes appareils connectés : un téléphone perdu se déconnecte à distance, puis tous les autres appareils", async ({ page, browser }) => {
+    const ANDROID = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36";
+    const IPHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1";
+    const email = uniqueEmail("appareils");
+    await register(page, email);
+    await confirmAndLogIn(page, email);
+    const device = async (userAgent: string) => {
+      const ctx = await browser.newContext({ userAgent, extraHTTPHeaders: { "x-real-ip": randomIp() } });
+      const p = await ctx.newPage();
+      await logIn(p, email, "/account");
+      await expect(p).toHaveURL(/\/account/);
+      return { ctx, page: p };
+    };
+
+    const phone = await device(ANDROID);
+    await expect(phone.page.locator('[data-device="current"]')).toContainText("Chrome sur Android");
+
+    await page.goto("/account");
+    const card = page.getByRole("region", { name: "Mes appareils connectés" });
+    await expect(card.locator('[data-device="current"]')).toContainText("Cet appareil");
+    await expect(card.locator('[data-device="current"]').getByRole("button", { name: /Déconnecter/ })).toHaveCount(0); // seulement « Se déconnecter »
+    const others = card.locator('[data-device="other"]');
+    await expect(others).toHaveCount(1);
+    await expect(others).toContainText("Chrome sur Android");
+    await expect(others).toContainText("Dernière activité aujourd'hui");
+    await others.getByRole("button", { name: /^Déconnecter : Chrome sur Android/ }).click();
+    await expect(card.getByRole("status").filter({ hasText: "Appareil déconnecté." })).toBeVisible();
+    await expect(others).toHaveCount(0);
+    await expect(card.getByRole("button", { name: "Déconnecter tous les autres appareils" })).toHaveCount(0);
+
+    // Le téléphone est renvoyé à la connexion dès sa navigation suivante ; cet appareil reste connecté.
+    await phone.page.goto("/account");
+    await expect(phone.page).toHaveURL(/\/login/);
+    await page.goto("/account");
+    await expect(page).toHaveURL(/\/account/);
+
+    // Plusieurs appareils : un seul bouton les déconnecte tous, sauf celui-ci.
+    const a = await device(IPHONE);
+    const b = await device(ANDROID);
+    await page.goto("/account");
+    await expect(others).toHaveCount(2);
+    await card.getByRole("button", { name: "Déconnecter tous les autres appareils" }).click();
+    await expect(card.getByRole("status").filter({ hasText: "Vos autres appareils ont été déconnectés." })).toBeVisible();
+    await expect(others).toHaveCount(0);
+    for (const d of [a, b]) {
+      await d.page.goto("/account");
+      await expect(d.page).toHaveURL(/\/login/);
+    }
+    await page.goto("/account");
+    await expect(page).toHaveURL(/\/account/);
+    for (const d of [phone, a, b]) await d.ctx.close();
+  });
 });
 
 test.describe("authentification : abus et surface HTTP", () => {
