@@ -30,6 +30,11 @@ describe("adhérents mineurs", () => {
     expect(g?.consent_confirmed_at).toBeNull();
   });
 
+  it("le staff crée un adulte directement sous RLS (les déclencheurs ne demandent aucun droit à l'appelant)", async () => {
+    const [p] = await asUser(w.carl, (tx) => tx<{ id: string; a: Date | null }[]>`insert into public.people (academy_id, first_name, last_name) values (${w.academyA}, 'Direct', 'Adulte') returning id, adult_attested_at as a`);
+    expect(p?.a).not.toBeNull();
+  });
+
   it("refuse un mineur sans responsable, un adulte via create_minor_member et un membre simple", async () => {
     const err = await failing(() => adminSql()`insert into public.people (academy_id, first_name, last_name, birth_date)
       values (${w.academyA}, 'Sans', 'Parent', ${yearsAgo(10)}::date)`);

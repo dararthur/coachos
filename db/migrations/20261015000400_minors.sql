@@ -20,7 +20,7 @@ alter table public.people add constraint people_adult_attested_check
   check (anonymized_at is not null or adult_attested_at is not null or user_id is not null or archived_at is not null or birth_date is not null);
 
 create or replace function app_private.stamp_person_insert() returns trigger
-language plpgsql set search_path = '' as $$
+language plpgsql security definer set search_path = '' as $$
 begin
   new.created_by := (select auth.uid());
   if new.user_id is not null then
@@ -258,7 +258,7 @@ $$;
 
 -- Un mineur n'apparaît au classement qu'avec l'accord confirmé de son responsable.
 create function app_private.minor_ranking_guard() returns trigger
-language plpgsql set search_path = '' as $$
+language plpgsql security definer set search_path = '' as $$
 begin
   if new.ranking_opt_in and app_private.is_minor(new.birth_date)
      and not exists (select 1 from public.guardianships g where g.child_id = new.id and g.consent_confirmed_at is not null and g.consent_withdrawn_at is null) then

@@ -24,7 +24,7 @@ test("pages publiques et authentifiées sans violation axe (WCAG AA)", async ({ 
   await page.goto(`/a/${club}/members/new`);
   await page.getByLabel("Prénom").fill("Ada");
   await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Lovelace");
-  await page.getByLabel("Ce membre est").selectOption("adult");
+  await page.getByLabel("Type de membre").selectOption("adult");
   await page.getByLabel("Je confirme que ce membre est majeur.").check();
   await page.getByRole("button", { name: "Créer le membre" }).click();
   await expect(page.getByRole("heading", { name: "Ada Lovelace" })).toBeVisible();

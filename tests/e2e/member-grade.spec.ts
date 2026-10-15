@@ -6,7 +6,7 @@ test("l'administrateur renseigne la ceinture et les barrettes depuis la fiche du
   await page.goto(`/a/${club}/members/new`);
   await page.getByLabel("Prénom").fill("Paul");
   await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Grade");
-  await page.getByLabel("Ce membre est").selectOption("adult");
+  await page.getByLabel("Type de membre").selectOption("adult");
   await page.getByLabel("Je confirme que ce membre est majeur.").check();
   await page.getByRole("button", { name: "Créer le membre" }).click();
   await expect(page.getByRole("heading", { name: "Paul Grade" })).toBeVisible();

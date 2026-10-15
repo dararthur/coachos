@@ -16,7 +16,7 @@ test.describe("isolation entre clubs et rôles", () => {
     await a.page.goto(`/a/${clubA}/members/new`);
     await a.page.getByLabel("Prénom").fill("Secret");
     await a.page.getByRole("textbox", { name: "Nom", exact: true }).fill("Alpha-Only");
-    await a.page.getByLabel("Ce membre est").selectOption("adult");
+    await a.page.getByLabel("Type de membre").selectOption("adult");
     await a.page.getByLabel("Je confirme que ce membre est majeur.").check();
     await a.page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(a.page).toHaveURL(/members\/[0-9a-f-]{36}/);
@@ -240,7 +240,7 @@ test("rôle membre : espace personnel limité, aucune page de gestion, ne voit q
     await owner.page.goto(`/a/${club}/members/new`);
     await owner.page.getByLabel("Prénom").fill(first);
     await owner.page.getByRole("textbox", { name: "Nom", exact: true }).fill(last);
-    await owner.page.getByLabel("Ce membre est").selectOption("adult");
+    await owner.page.getByLabel("Type de membre").selectOption("adult");
     await owner.page.getByLabel("Je confirme que ce membre est majeur.").check();
     await owner.page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(owner.page.getByRole("heading", { name: `${first} ${last}` })).toBeVisible();

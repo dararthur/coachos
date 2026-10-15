@@ -18,7 +18,7 @@ export default async function NewMemberPage({ params }: { params: Promise<{ acad
             <TextField label="Prénom" name="firstName" required maxLength={80} autoComplete="off" />
             <TextField label="Nom" name="lastName" required maxLength={80} autoComplete="off" />
           </div>
-          <SelectField label="Ce membre est" name="ageGroup" required defaultValue="">
+          <SelectField label="Type de membre" name="ageGroup" required defaultValue="">
             <option value="" disabled>
               Choisir…
             </option>

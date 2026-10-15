@@ -42,10 +42,10 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
     await page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(page.getByText("Je confirme que ce membre est majeur.")).toBeVisible();
     // validation native du navigateur : le formulaire n'est pas soumis tant que majeur/mineur n'est pas choisi
-    expect(await page.getByLabel("Ce membre est").evaluate((el) => (el as HTMLSelectElement).validity.valid)).toBe(false);
+    expect(await page.getByLabel("Type de membre").evaluate((el) => (el as HTMLSelectElement).validity.valid)).toBe(false);
     await expect(page).toHaveURL(/members\/new/);
     await expect(page.getByLabel("Prénom")).toHaveValue("Alice");
-    await page.getByLabel("Ce membre est").selectOption("adult");
+    await page.getByLabel("Type de membre").selectOption("adult");
     await page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(page.getByText("Vous devez attester que ce membre est majeur.")).toBeVisible();
     await page.getByLabel("Je confirme que ce membre est majeur.").check();
@@ -64,7 +64,7 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
     await expect(page.getByText("téléphone", { exact: true })).toBeVisible(); // colonne ignorée signalée
     const importButton = page.getByRole("button", { name: "Importer 3 membres" });
     await expect(importButton).toBeDisabled(); // attestation requise
-    await page.getByLabel(/Je certifie que tous les membres/).check();
+    await page.getByLabel(/Je certifie que les membres sans date/).check();
     await importButton.click();
     await expect(page.getByText("3 membres importés.")).toBeVisible();
 
