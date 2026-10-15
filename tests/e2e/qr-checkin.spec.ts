@@ -33,6 +33,7 @@ async function setup(browser: Browser) {
     await coach.page.goto(`/a/${club}/members/new`);
     await coach.page.getByLabel("Prénom").fill(first);
     await coach.page.getByRole("textbox", { name: "Nom", exact: true }).fill(last);
+    await coach.page.getByLabel("Ce membre est").selectOption("adult");
     await coach.page.getByLabel("Je confirme que ce membre est majeur.").check();
     await coach.page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(coach.page.getByRole("heading", { name: `${first} ${last}` })).toBeVisible();

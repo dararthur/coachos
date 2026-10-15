@@ -124,3 +124,13 @@ describe("adhérents mineurs", () => {
     expect(await adminSql()`select 1 from public.guardianships where child_id = ${c.id}`).toHaveLength(0);
   });
 });
+
+describe("ceintures enfants IBJJF", () => {
+  it("la base accepte les ceintures enfants et refuse une ceinture inconnue", async () => {
+    const [p] = await adminSql()<{ id: string }[]>`insert into public.people (academy_id, first_name, last_name) values (${w.academyA}, 'Kid', 'Belt') returning id`;
+    for (const belt of ["grey_white", "yellow", "orange_black", "green"]) {
+      await adminSql()`update public.people set belt = ${belt} where id = ${p!.id}`;
+    }
+    await expect(adminSql()`update public.people set belt = 'pink' where id = ${p!.id}`).rejects.toThrow();
+  });
+});

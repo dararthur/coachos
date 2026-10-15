@@ -41,10 +41,13 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
     await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Manuelle");
     await page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(page.getByText("Je confirme que ce membre est majeur.")).toBeVisible();
-    // validation native du navigateur : le formulaire n'est pas soumis tant que la case n'est pas cochée
-    expect(await page.getByLabel("Je confirme que ce membre est majeur.").evaluate((el) => (el as HTMLInputElement).validity.valid)).toBe(false);
+    // validation native du navigateur : le formulaire n'est pas soumis tant que majeur/mineur n'est pas choisi
+    expect(await page.getByLabel("Ce membre est").evaluate((el) => (el as HTMLSelectElement).validity.valid)).toBe(false);
     await expect(page).toHaveURL(/members\/new/);
     await expect(page.getByLabel("Prénom")).toHaveValue("Alice");
+    await page.getByLabel("Ce membre est").selectOption("adult");
+    await page.getByRole("button", { name: "Créer le membre" }).click();
+    await expect(page.getByText("Vous devez attester que ce membre est majeur.")).toBeVisible();
     await page.getByLabel("Je confirme que ce membre est majeur.").check();
     await page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(page.getByRole("heading", { name: "Alice Manuelle" })).toBeVisible();

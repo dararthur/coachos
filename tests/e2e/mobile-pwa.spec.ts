@@ -112,6 +112,7 @@ test.describe("parcours mobiles", () => {
     await page.getByRole("link", { name: "Ajouter un membre" }).tap();
     await page.getByLabel("Prénom").fill("Tactile");
     await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Mobile");
+    await page.getByLabel("Ce membre est").selectOption("adult");
     await page.getByLabel("Je confirme que ce membre est majeur.").tap();
     expect(await smallTargets(page), "nouveau membre").toEqual([]);
     await page.getByRole("button", { name: "Créer le membre" }).tap();

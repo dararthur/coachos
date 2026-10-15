@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { AVATAR_LABELS, AVATAR_STYLES, BELT_LABELS, BELTS, MAX_STRIPES } from "@/domain/profile";
+import { AVATAR_LABELS, AVATAR_STYLES, MAX_STRIPES } from "@/domain/profile";
 import { formatPhone } from "@/domain/phone";
 import { Alert, BackLink, Card, PageHeader } from "@/components/ui/ui";
 import { ActionForm, CheckboxField, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { Avatar } from "@/components/ui/avatar";
-import { BeltLabel } from "@/components/ui/belt";
+import { BeltLabel, BeltOptions } from "@/components/ui/belt";
 import { updateMyProfileAction } from "@/server/actions/members";
 import { removePhotoAction, setMyPhotoAction } from "@/server/actions/photos";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
@@ -72,12 +72,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectField label="Ceinture" name="belt" defaultValue={me.belt ?? ""} hint="Facultatif.">
-              <option value="">Non renseigné</option>
-              {BELTS.map((b) => (
-                <option key={b} value={b}>
-                  {BELT_LABELS[b]}
-                </option>
-              ))}
+              <BeltOptions />
             </SelectField>
             <SelectField label="Barrettes" name="beltStripes" defaultValue={String(me.beltStripes)}>
               {Array.from({ length: MAX_STRIPES + 1 }, (_, n) => (

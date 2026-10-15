@@ -7,8 +7,8 @@ import { can } from "@/domain/roles";
 import { Alert, BackLink, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { Avatar } from "@/components/ui/avatar";
-import { BeltLabel } from "@/components/ui/belt";
-import { BELT_LABELS, BELTS, MAX_STRIPES } from "@/domain/profile";
+import { BeltLabel, BeltOptions } from "@/components/ui/belt";
+import { MAX_STRIPES } from "@/domain/profile";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { eraseMemberAction, resendGuardianConsentAction, setMemberArchivedAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
 import { ageOn } from "@/domain/minors";
@@ -122,12 +122,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                 <TextField label="Date d'inscription" name="joinedOn" type="date" defaultValue={person.joinedOn} />
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                   <SelectField label="Ceinture" name="belt" defaultValue={person.belt ?? ""}>
-                    <option value="">Non renseigné</option>
-                    {BELTS.map((b) => (
-                      <option key={b} value={b}>
-                        {BELT_LABELS[b]}
-                      </option>
-                    ))}
+                    <BeltOptions />
                   </SelectField>
                   <SelectField label="Barrettes" name="beltStripes" defaultValue={String(person.beltStripes)}>
                     {Array.from({ length: MAX_STRIPES + 1 }, (_, n) => (
