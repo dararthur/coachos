@@ -7,6 +7,7 @@ import { rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import webpush from "web-push";
 import { startEmbeddedDb } from "../../support/embedded-db.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
@@ -20,8 +21,14 @@ const db = await startEmbeddedDb();
 
 writeFileSync(dbInfo, JSON.stringify({ adminUrl: db.adminUrl }));
 
+// Clés VAPID jetables : le bouton de notifications apparaît, aucun envoi réel n'a lieu en test.
+const vapid = webpush.generateVAPIDKeys();
+
 const env = {
   ...process.env,
+  VAPID_PUBLIC_KEY: vapid.publicKey,
+  VAPID_PRIVATE_KEY: vapid.privateKey,
+  VAPID_SUBJECT: "mailto:vapid-e2e@example.invalid",
   NODE_ENV: "production",
   // Configuration de TEST explicite : seule cette valeur (avec une SITE_URL locale) autorise MAIL_PROVIDER=outbox.
   APP_ENV: "test",

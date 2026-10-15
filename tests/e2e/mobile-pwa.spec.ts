@@ -75,10 +75,16 @@ test.describe("PWA : manifeste, icônes, métadonnées", () => {
     expect(await page.locator('meta[name="theme-color"]').first().getAttribute("content")).toBe("#16191d");
     expect(await page.locator('meta[name="viewport"]').getAttribute("content")).toContain("viewport-fit=cover");
 
-    // Aucun cache hors ligne de données authentifiées : pas de service worker enregistré.
+    // Aucun cache hors ligne de données authentifiées : rien n'est enregistré tant qu'on n'active pas les notifications, et le
+    // service worker disponible (notifications uniquement) n'intercepte aucune requête et n'utilise aucun cache.
     const registrations = await page.evaluate(async () => (await navigator.serviceWorker?.getRegistrations())?.length ?? 0);
     expect(registrations).toBe(0);
-    expect((await request.get("/sw.js")).status()).toBe(404);
+    const sw = await request.get("/sw.js");
+    expect(sw.status()).toBe(200);
+    const code = await sw.text();
+    expect(code).toContain('addEventListener("push"');
+    expect(code).not.toMatch(/addEventListener\(\s*["']fetch["']/);
+    expect(code).not.toMatch(/\bcaches\b/);
   });
 
   test("les pages authentifiées ne sont pas mises en cache par le navigateur ni un CDN", async ({ page }) => {

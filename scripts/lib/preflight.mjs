@@ -14,7 +14,7 @@ const fail = (id, label, detail) => ({ id, label, status: "fail", detail });
 const warn = (id, label, detail) => ({ id, label, status: "warn", detail });
 
 export const REQUIRED_ENV = ["DATABASE_URL", "AUTH_DATABASE_URL", "SITE_URL", "APP_SECRET", "BETTER_AUTH_SECRET", "MAIL_PROVIDER"];
-export const OPTIONAL_ENV = ["CRON_SECRET", "DATABASE_SSL", "DATABASE_POOL_SIZE", "CHECKIN_TOKEN_TTL_SECONDS", "APP_ENV", "RESEND_API_KEY", "MAIL_FROM", "MAIL_OUTBOX_FILE", "PLATFORM_ADMIN_EMAIL"];
+export const OPTIONAL_ENV = ["CRON_SECRET", "DATABASE_SSL", "DATABASE_POOL_SIZE", "CHECKIN_TOKEN_TTL_SECONDS", "APP_ENV", "RESEND_API_KEY", "MAIL_FROM", "MAIL_OUTBOX_FILE", "PLATFORM_ADMIN_EMAIL", "VAPID_PUBLIC_KEY", "VAPID_PRIVATE_KEY", "VAPID_SUBJECT"];
 
 const isLocalHost = (h) => ["localhost", "127.0.0.1", "::1", "[::1]"].includes(h);
 

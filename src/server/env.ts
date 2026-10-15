@@ -49,12 +49,21 @@ const schema = z
      * une URL ou un message d'erreur.
      */
     PLATFORM_ADMIN_EMAIL: z.email().max(254).optional(),
+    /**
+     * Notifications push (Web Push, clés VAPID — générées une fois par `node scripts/generate-vapid.mjs`). Les trois ensemble ou aucune :
+     * sans elles, la fonction est désactivée et n'apparaît nulle part. La clé publique est destinée au navigateur ; la privée ne quitte jamais le serveur.
+     */
+    VAPID_PUBLIC_KEY: z.string().min(80).max(100).optional(),
+    VAPID_PRIVATE_KEY: z.string().min(40).max(60).optional(),
+    VAPID_SUBJECT: z.string().regex(/^(mailto:[^\s@]+@[^\s@]+|https:\/\/\S+)$/).optional(),
   })
   .superRefine((v, ctx) => {
     const issue = (path: string, message: string) => ctx.addIssue({ code: "custom", path: [path], message });
     if ((v.APP_ENV === "staging" || v.APP_ENV === "production") && !v.PLATFORM_ADMIN_EMAIL) {
       issue("PLATFORM_ADMIN_EMAIL", `requis avec APP_ENV=${v.APP_ENV} (sans administrateur, aucune demande de club ne peut être approuvée)`);
     }
+    const vapid = [v.VAPID_PUBLIC_KEY, v.VAPID_PRIVATE_KEY, v.VAPID_SUBJECT].filter(Boolean).length;
+    if (vapid !== 0 && vapid !== 3) issue("VAPID_PUBLIC_KEY", "VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY et VAPID_SUBJECT vont ensemble");
     if (v.APP_SECRET === v.BETTER_AUTH_SECRET) issue("BETTER_AUTH_SECRET", "doit être distinct d'APP_SECRET");
     if (v.MAIL_PROVIDER === "resend") {
       if (!v.RESEND_API_KEY) issue("RESEND_API_KEY", "requis avec MAIL_PROVIDER=resend");

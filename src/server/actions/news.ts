@@ -6,6 +6,7 @@ import { AppError, type ActionResult } from "@/domain/errors";
 import { clubPostSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import * as news from "@/server/repositories/news";
+import { notifyNewsAfterResponse } from "@/server/push";
 import { parseForm } from "./helpers";
 
 type FormState = ActionResult<unknown> | null;
@@ -15,6 +16,7 @@ export async function createPostAction(academyId: string, _prev: FormState, form
     const ctx = await authorizeAcademy(academyId, "news.manage");
     const input = parseForm(clubPostSchema, formData);
     await inAcademy(ctx, (tx) => news.createPost(tx, academyId, input));
+    if (formData.get("notify") === "on") notifyNewsAfterResponse({ academyId, academyName: ctx.academy.name, title: input.title, authorId: ctx.user.id });
     revalidatePath(`/a/${academyId}/news`);
     redirect(`/a/${academyId}/news?published=1`);
   });

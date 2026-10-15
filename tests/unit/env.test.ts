@@ -104,6 +104,15 @@ describe("configuration : autres refus au démarrage", () => {
     expect(refusal({ CRON_SECRET: "trop-court" })).toMatch(/CRON_SECRET/); // renseignée mais invalide : refusée
   });
 
+  it("les clés de notifications push vont ensemble ou pas du tout", () => {
+    const pub = "B".repeat(87);
+    const priv = "k".repeat(43);
+    expect(parseEnv(testConfig()).VAPID_PUBLIC_KEY).toBeUndefined();
+    expect(parseEnv({ ...testConfig(), VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, VAPID_SUBJECT: "mailto:contact@matnexa.fr" }).VAPID_SUBJECT).toBe("mailto:contact@matnexa.fr");
+    expect(refusal({ VAPID_PUBLIC_KEY: pub })).toMatch(/VAPID_PUBLIC_KEY/);
+    expect(refusal({ VAPID_PUBLIC_KEY: pub, VAPID_PRIVATE_KEY: priv, VAPID_SUBJECT: "contact" })).toMatch(/VAPID_SUBJECT/);
+  });
+
   it("les messages de refus ne contiennent JAMAIS de valeur de configuration", () => {
     const base = prodConfig();
     const cfg: Record<string, string> = { ...base, MAIL_PROVIDER: "outbox", MAIL_OUTBOX_FILE: "/tmp/x", BETTER_AUTH_SECRET: base.APP_SECRET! };

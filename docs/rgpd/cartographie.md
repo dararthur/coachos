@@ -27,6 +27,7 @@ Aucune catégorie particulière (art. 9) n'est collectée par conception : ni sa
 | `public.person_photos` | photo (WebP ≤ 200 Ko, ~256 px) | staff ; le membre ; autres membres **si** consentement classement | retrait, anonymisation, suppression de fiche ou de compte |
 | `public.attendance` | présence d'une personne à une séance, auteur, origine (manuel/QR) | staff ; le membre les siennes | conservée anonymisée après anonymisation ; supprimée avec la fiche |
 | `public.session_bookings` | réservation / liste d'attente | staff ; le membre les siennes | retirées à l'archivage/anonymisation ; cascade |
+| `public.push_subscriptions` | adresse technique de l'appareil (service de notification du navigateur) + clés de chiffrement, rattachées au compte | le titulaire seul (RLS) ; envoi par `app_server` via fonctions dédiées | suppression par l'utilisateur (désactivation), appareil expiré (404/410), cascade compte |
 | `public.booking_notifications` | identifiants seuls (file d'envoi) | aucun rôle applicatif | supprimée à l'envoi ou à l'abandon |
 | `public.invitations` | e-mail invité, rôle, hachage du jeton | admins | purge 30 j après expiration/acceptation |
 | `public.academy_requests` | nom du club, nom et e-mail du demandeur, note | administrateur de la plateforme | purge 90/180 j ; suppression du compte du demandeur |

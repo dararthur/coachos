@@ -11,6 +11,8 @@ import { withUser } from "@/server/db/client";
 import { ChildrenCard } from "@/components/guardian/children-card";
 import { myChildrenWithSessions } from "@/server/repositories/guardian";
 import { InstallApp } from "@/components/ui/install-app";
+import { PushToggle } from "@/components/ui/push-toggle";
+import { vapidPublicKey } from "@/server/push";
 
 export const metadata: Metadata = { title: "Mon compte" };
 
@@ -18,6 +20,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
   const user = await requireUser();
   const params = await searchParams;
   const children = await withUser(user, (tx) => myChildrenWithSessions(tx));
+  const pushKey = vapidPublicKey();
   return (
     <StandaloneFrame>
       <PageHeader title="Mon compte" back={<BackLink href="/">Retour</BackLink>} />
@@ -37,6 +40,11 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <Card title="Application sur mon téléphone" description="Installez Matnexa sur l'écran d'accueil : elle s'ouvre en plein écran et vous restez connecté, sans ressaisir votre mot de passe.">
         <InstallApp />
       </Card>
+      {pushKey && (
+        <Card title="Notifications" description="Les annonces de vos clubs sur cet appareil. Chaque téléphone ou ordinateur s'active séparément.">
+          <PushToggle publicKey={pushKey} />
+        </Card>
+      )}
       <Card title="Session">
         <form action={signOutAction}>
           <button type="submit" className={buttonClasses({ variant: "secondary" })}>

@@ -13,13 +13,15 @@
 - **Installation guidée** (`src/components/ui/install-app.tsx`) : sur Android/Chrome, bouton « Installer l'application » (événement `beforeinstallprompt`) ; sur iPhone/iPad, mode d'emploi « Partager → Sur l'écran d'accueil » (Safari n'a pas d'invite programmable). Bandeau refermable dans l'application (mémorisé sur l'appareil) et bloc permanent dans « Mon compte ». Rien n'est affiché une fois installée.
 - **Raccourci** du manifeste : « Pointer ma présence » (appui long sur l'icône, Android).
 
+- **Notifications push** (`public/sw.js`, `docs/push.md`) : activables par chaque utilisateur depuis « Mon compte ». Le service worker ne sert QU'À afficher la notification et ouvrir la bonne page au clic.
+
 ## Ce qui n'est volontairement PAS implémenté : le hors ligne
 
-**Aucun service worker, aucun cache de données.** Une page authentifiée contient des données personnelles de membres ; la mettre en cache sur l'appareil ou dans un cache partagé exigerait une stratégie validée (chiffrement, purge à la déconnexion, invalidation à la révocation d'un accès, appareils partagés). Tant qu'elle n'existe pas :
+**Aucun cache de données, aucun gestionnaire `fetch`** (le service worker des notifications n'intercepte aucune requête ; testé). Une page authentifiée contient des données personnelles de membres ; la mettre en cache sur l'appareil ou dans un cache partagé exigerait une stratégie validée (chiffrement, purge à la déconnexion, invalidation à la révocation d'un accès, appareils partagés). Tant qu'elle n'existe pas :
 
 - l'application exige du réseau ; hors ligne, le navigateur affiche sa page d'erreur habituelle ;
 - les pages authentifiées sont servies `no-store` (testé) ;
-- `tests/e2e/mobile-pwa.spec.ts` vérifie qu'aucun service worker n'est enregistré.
+- `tests/e2e/mobile-pwa.spec.ts` vérifie qu'aucun service worker n'est enregistré avant l'activation des notifications, et que `sw.js` n'a ni gestionnaire `fetch` ni cache.
 
 ## Installation : différences iOS / Android
 
@@ -34,7 +36,7 @@
 | Session / cookies | Partagés avec Chrome | **Stockage séparé du navigateur** : une session Safari n'est pas reprise dans l'app installée → se reconnecter une fois après l'installation |
 | Liens ouverts depuis l'extérieur (invitation, e-mail de reset) | S'ouvrent dans Chrome ou, selon la version, dans l'app installée | S'ouvrent dans Safari, **pas** dans l'app installée : terminer l'action dans Safari puis se reconnecter dans l'app |
 | Caméra (pointage par QR, `/checkin`) | Demande de permission du navigateur ; en app installée, permission du site conservée | Demande possible à chaque ouverture ; nécessite HTTPS ; le scan natif de l'appareil photo ouvre le lien dans Safari, **pas** dans l'app installée (la session de l'app est séparée : se reconnecter dans Safari) |
-| Notifications push | Non implémenté | Non implémenté (iOS ne les autorise qu'aux PWA installées) |
+| Notifications push | Bouton « Activer les notifications » dans « Mon compte » | Idem, **uniquement depuis l'application installée** sur l'écran d'accueil (iOS 16.4+) ; dans Safari : mode d'emploi affiché |
 | Mise à jour | Immédiate (pas de cache d'application) | Immédiate |
 
 ## Liste de contrôle sur appareils réels (à faire avant le pilote)

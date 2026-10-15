@@ -15,6 +15,7 @@ export async function proxy(request: NextRequest) {
     "img-src 'self' data: blob:",
     "font-src 'self'",
     "connect-src 'self'" + (isDev ? " ws: wss:" : ""),
+    "worker-src 'self'", // service worker des notifications (public/sw.js), rien d'autre
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

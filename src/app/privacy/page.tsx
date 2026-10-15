@@ -84,6 +84,9 @@ export default function PrivacyPage() {
         <p>
           Matnexa ne dépose rien chez un visiteur non connecté. Une fois connecté : un <strong>cookie de session</strong> pour rester connecté (renouvelé à l&apos;usage, expire après un an sans utilisation) ; pour l&apos;équipe d&apos;un club qui choisit l&apos;affichage « membre », un cookie qui mémorise ce choix (un an) ; si vous fermez le bandeau d&apos;installation de l&apos;application, ce choix est mémorisé dans votre navigateur. Ces éléments sont strictement nécessaires au service ou mémorisent un choix que vous avez fait : ils ne demandent pas de consentement et aucun bandeau cookies n&apos;est affiché.
         </p>
+        <p>
+          <strong>Notifications (facultatives).</strong> Si vous les activez depuis « Mon compte », votre appareil est enregistré (une adresse technique fournie par votre navigateur et des clés de chiffrement, sans lien avec votre identité autre que votre compte). Les annonces de vos clubs vous sont alors envoyées chiffrées via le service de notification de votre navigateur (Google, Mozilla, Apple ou Microsoft selon l&apos;appareil), qui ne voit passer qu&apos;un message qu&apos;il ne peut pas lire. Vous pouvez les désactiver à tout moment ; elles sont supprimées avec votre compte.
+        </p>
       </section>
 
       <section>

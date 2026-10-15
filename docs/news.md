@@ -25,3 +25,7 @@ La colonne `visibility` vaut `members` (défaut) ou `public`. L'application ne p
 ## Pas encore fait
 
 Notification (e-mail, push) à la publication ; image ; épinglage ; accueil du membre (« Mon espace ») affichant la dernière annonce.
+
+## Notification à la publication
+
+À la création (pas à la modification), une case « Prévenir les membres par notification » — cochée par défaut, affichée seulement si les notifications sont configurées — envoie une notification push aux appareils des membres du club qui l'ont activée (hors l'auteur). Voir `docs/push.md`.
