@@ -28,6 +28,7 @@ const PATHS = {
   check: "M5 12.5 10 17l9-10",
   edit: "M4 20h4L19 9l-4-4L4 16v4ZM13 7l4 4",
   news: "M5 4h11v16H5zM16 8h3v10a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h3",
+  menu: "M4 7h16M4 12h16M4 17h16",
   swap: "M7 4 4 7l3 3M4 7h12M17 14l3 3-3 3M20 17H8",
 } as const;
 

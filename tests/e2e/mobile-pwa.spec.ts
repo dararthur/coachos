@@ -102,7 +102,14 @@ test.describe("parcours mobiles", () => {
     await expect(tabs).toBeVisible();
     const box = await tabs.boundingBox();
     expect(box!.y + box!.height).toBeGreaterThan(844 - 2); // collée au bas de l'écran
-    await expect(tabs.getByRole("link")).toHaveCount(7);
+    // Équipe : quatre onglets larges + « Plus » (actualités, rapports, réglages), pas sept cibles minuscules.
+    await expect(tabs.getByRole("link")).toHaveCount(4);
+    await tabs.getByRole("button", { name: "Plus" }).tap();
+    for (const name of ["Actualités", "Rapports", "Paramètres"]) await expect(tabs.getByRole("link", { name })).toBeVisible();
+    await tabs.getByRole("link", { name: "Actualités" }).tap();
+    await expect(page).toHaveURL(/\/news$/);
+    await expect(tabs.getByRole("link", { name: "Rapports" })).toHaveCount(0); // le panneau s'est refermé avec la navigation
+    await page.goto(`/a/${club}/dashboard`);
     await noHorizontalOverflow(page, "dashboard");
     expect(await smallTargets(page), "dashboard").toEqual([]);
 
