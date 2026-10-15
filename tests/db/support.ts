@@ -59,8 +59,9 @@ export async function createPerson(academyId: string, first = "Ana", last = "Tes
   return row!.id;
 }
 
+/** Le type de cours créé avec le club (« JJB — Tous niveaux ») : ordre explicite, sinon PostgreSQL renvoie n'importe lequel. */
 export async function firstClassType(academyId: string): Promise<string> {
-  const [row] = await adminSql()<{ id: string }[]>`select id from public.class_types where academy_id = ${academyId} limit 1`;
+  const [row] = await adminSql()<{ id: string }[]>`select id from public.class_types where academy_id = ${academyId} order by created_at, id limit 1`;
   return row!.id;
 }
 
