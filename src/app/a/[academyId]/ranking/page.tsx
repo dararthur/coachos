@@ -57,18 +57,18 @@ export default async function RankingPage({ params, searchParams }: { params: Pr
       )}
 
       {!staff && visible !== null && (
-        <Card className="mb-6" title="Ma visibilité" description="Votre rang vous reste toujours visible. Vous choisissez si les autres membres voient aussi votre nom dans ce classement ; vous pouvez changer d'avis à tout moment.">
+        <Card className="mb-6" title="Ma visibilité" description="Votre rang vous reste toujours visible. Vous choisissez si les autres membres du club voient aussi votre nom, votre photo et votre ceinture dans ce classement, avec votre nombre de venues ; vous pouvez changer d'avis à tout moment.">
           {visible ? (
             <ActionForm action={setRankingVisibilityAction.bind(null, academyId, false)}>
               <p className="mb-3 text-sm">
-                <Badge tone="success">Visible</Badge> Votre nom apparaît dans le classement des autres membres.
+                <Badge tone="success">Visible</Badge> Votre nom, votre photo, votre ceinture et vos venues apparaissent dans le classement des autres membres.
               </p>
               <SubmitButton variant="secondary">Me retirer du classement des autres</SubmitButton>
             </ActionForm>
           ) : (
             <ActionForm action={setRankingVisibilityAction.bind(null, academyId, true)}>
               <p className="mb-3 text-sm">
-                <Badge>Masqué</Badge> Les autres membres ne voient pas votre nom. Le coach, lui, voit les présences comme d&apos;habitude.
+                <Badge>Masqué</Badge> Les autres membres ne voient ni votre nom, ni votre photo, ni votre ceinture. Le coach, lui, voit les présences comme d&apos;habitude.
               </p>
               <SubmitButton>Apparaître dans le classement</SubmitButton>
             </ActionForm>
