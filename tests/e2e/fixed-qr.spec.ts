@@ -27,8 +27,9 @@ test.describe("pointage par QR fixe du club", () => {
     await coach.getByRole("button", { name: "Enregistrer" }).last().click();
     await expect(coach.getByText("Réglages du pointage enregistrés.")).toBeVisible();
 
-    // Un cours qui commence dans 10 minutes.
-    const { date, time } = parisTimeIn(10);
+    // Un cours qui commence dans 10 minutes, ou qui a commencé il y a 10 minutes s'il est presque minuit : toujours le jour même
+    // (dans les deux cas, la fenêtre de pointage, 45 min avant à 30 min après, est ouverte).
+    const { date, time } = parisTimeIn(parisTimeIn(10).date === parisToday(0) ? 10 : -10);
     expect(date).toBe(parisToday(0));
     await coach.goto(`/a/${club}/schedule/new`);
     await coach.getByLabel("Date de la première séance").fill(date);
