@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HSTS_MAX_ALLOWED, hstsHeader } from "@/server/security-headers";
+import { HSTS_MAX_ALLOWED, hstsHeader, upgradeInsecureRequests } from "@/server/security-headers";
 
 const https = "https://coach.example.invalid";
 
@@ -31,5 +31,18 @@ describe("HSTS : émetteur unique, prudent", () => {
         expect(value).not.toMatch(/includeSubDomains|preload/i);
       }
     }
+  });
+});
+
+describe("CSP upgrade-insecure-requests : seulement pour une instance en https", () => {
+  it("émise pour une SITE_URL en https (production, staging)", () => {
+    expect(upgradeInsecureRequests(https)).toBe(true);
+  });
+
+  it("jamais pour une SITE_URL en http ou absente : WebKit réécrirait 127.0.0.1 en https et la page ne chargerait aucun script", () => {
+    expect(upgradeInsecureRequests("http://127.0.0.1:3100")).toBe(false);
+    expect(upgradeInsecureRequests("http://localhost:3000")).toBe(false);
+    expect(upgradeInsecureRequests(undefined)).toBe(false);
+    expect(upgradeInsecureRequests("")).toBe(false);
   });
 });

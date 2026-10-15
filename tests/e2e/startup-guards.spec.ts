@@ -161,6 +161,7 @@ test.describe("démarrage de production : écoute locale uniquement", () => {
 });
 
 test.describe("HSTS : émetteur unique (l'application), prudent, lu dans l'environnement d'EXÉCUTION", () => {
+  /** HSTS lu sur une vraie instance ; vérifie au passage que la CSP ne contient `upgrade-insecure-requests` qu'avec une SITE_URL en https. */
   async function hstsOf(over: Record<string, string>): Promise<string | null> {
     const port = await freePort();
     const outbox = path.join(os.tmpdir(), `coachos-startup-${rand().slice(0, 8)}.jsonl`);
@@ -169,6 +170,9 @@ test.describe("HSTS : émetteur unique (l'application), prudent, lu dans l'envir
     try {
       expect(await waitForHealth(port), "le serveur doit démarrer avec cette configuration").toBe(true);
       const res = await fetch(`http://127.0.0.1:${port}/api/live`);
+      const csp = (await fetch(`http://127.0.0.1:${port}/login`)).headers.get("content-security-policy") ?? "";
+      expect(csp, "CSP présente").toContain("default-src 'self'");
+      expect(csp.includes("upgrade-insecure-requests"), `upgrade-insecure-requests pour SITE_URL=${over.SITE_URL}`).toBe(over.SITE_URL!.startsWith("https://"));
       return res.headers.get("strict-transport-security");
     } finally {
       killTree(child);
