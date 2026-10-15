@@ -252,7 +252,17 @@ export function Pagination({ page, total, pageSize, hrefFor }: { page: number; t
 
 export function Notice({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
   const one = (k: string) => (Array.isArray(searchParams[k]) ? searchParams[k]?.[0] : (searchParams[k] as string | undefined));
-  if (one("created")) return <Alert tone="success">Création effectuée : {one("created")} élément(s).{one("skipped") ? ` ${one("skipped")} déjà existant(s) ignoré(s).` : ""}</Alert>;
+  if (one("created")) {
+    const n = Number(one("created")) || 1;
+    const skipped = Number(one("skipped")) || 0;
+    return (
+      <Alert tone="success" title={n > 1 ? `${n} séances créées` : "Séance créée"}>
+        Création effectuée : {n} séance{n > 1 ? "s" : ""}, visible{n > 1 ? "s" : ""} dans le planning ci-dessous.
+        {skipped > 0 ? ` ${skipped} existai${skipped > 1 ? "ent" : "t"} déjà et ${skipped > 1 ? "ont" : "a"} été ignorée${skipped > 1 ? "s" : ""}.` : ""}
+      </Alert>
+    );
+  }
+  if (one("updated")) return <Alert tone="success" title="Séance enregistrée">Vos modifications sont prises en compte dans le planning ci-dessous.</Alert>;
   if (one("erased")) return <Alert tone="success">{one("erased") === "delete" ? "Membre supprimé définitivement." : "Membre anonymisé : ses présences sont conservées sous forme de statistiques non identifiantes."}</Alert>;
   if (one("deleted")) return <Alert tone="success">Élément supprimé.</Alert>;
   return null;

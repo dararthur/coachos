@@ -38,7 +38,8 @@ export async function createSessionsAction(academyId: string, _prev: FormState, 
       return failure("duplicate", undefined, "Ces séances existent déjà : rien n'a été créé.");
     }
     const skipped = result.skipped > 0 ? ` ${result.skipped} existaient déjà et ont été ignorées.` : "";
-    redirect(`/a/${academyId}/schedule?created=${result.created}${skipped ? `&skipped=${result.skipped}` : ""}`);
+    // La semaine de la première séance : la nouvelle séance est visible tout de suite, même si elle tombe dans une autre semaine.
+    redirect(`/a/${academyId}/schedule?created=${result.created}${skipped ? `&skipped=${result.skipped}` : ""}&week=${dates[0]}`);
   });
 }
 
@@ -62,7 +63,8 @@ export async function updateSessionAction(academyId: string, sessionId: string, 
     // Une capacité augmentée ou retirée fait avancer la liste d'attente : les adhérents promus sont prévenus par e-mail.
     deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/schedule`);
-    return { ok: true, data: null, message: "Séance mise à jour." };
+    // Retour au planning, sur la semaine de la séance, avec un bandeau de confirmation.
+    redirect(`/a/${academyId}/schedule?updated=1&week=${input.date}`);
   });
 }
 

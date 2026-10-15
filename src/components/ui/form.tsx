@@ -60,6 +60,8 @@ export function ActionForm<S extends State>({
   useEffect(() => {
     if (result) onResult?.(result);
     if (result?.ok && resetOnSuccess) ref.current?.reset();
+    // Le message est en tête du formulaire : sur un long formulaire (mobile), il serait hors de l'écran au moment de l'enregistrement.
+    if (result) ref.current?.querySelector('[role="status"], [role="alert"]')?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [held]);
 
@@ -83,7 +85,7 @@ export function FormMessage({ result }: { result: State }) {
   const failed = result && !result.ok;
   const hasFieldErrors = failed && result.fieldErrors && Object.keys(result.fieldErrors).length > 0;
   return (
-    <div role={failed ? "alert" : "status"} aria-live={failed ? "assertive" : "polite"} className="empty:hidden">
+    <div role={failed ? "alert" : "status"} aria-live={failed ? "assertive" : "polite"} className="scroll-mt-24 empty:hidden">
       {failed && (
         <p className="mb-4 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm font-medium text-danger-ink">
           {hasFieldErrors && result.code === "validation" ? "Certaines informations sont invalides : corrigez les champs signalés." : result.error}

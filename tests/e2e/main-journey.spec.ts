@@ -86,7 +86,7 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
     await page.getByLabel("Heure de début").fill("12:00");
     await page.getByRole("button", { name: "Créer" }).click();
     await expect(page).toHaveURL(/schedule\?created=1/);
-    await expect(page.getByText("Création effectuée : 1 élément(s).")).toBeVisible();
+    await expect(page.getByText("Création effectuée : 1 séance")).toBeVisible();
 
     await page.goto(`/a/${academyId}/schedule/new`);
     await page.getByLabel("Date de la première séance").fill(parisToday(1));
@@ -95,7 +95,7 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
     for (const day of ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche"]) await page.getByLabel(day, { exact: true }).check();
     await page.getByLabel("Répéter jusqu'au").fill(parisToday(7));
     await page.getByRole("button", { name: "Créer" }).click();
-    await expect(page.getByText("Création effectuée : 7 élément(s).")).toBeVisible();
+    await expect(page.getByText("Création effectuée : 7 séances")).toBeVisible();
 
     // créer deux fois le même créneau n'est pas un faux succès
     await page.goto(`/a/${academyId}/schedule/new`);
