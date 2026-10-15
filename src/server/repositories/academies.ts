@@ -89,6 +89,16 @@ export async function createClassType(
     values (${academyId}, ${input.disciplineId}, ${input.name}, ${input.durationMinutes}, ${input.capacity})`;
 }
 
+/** Suppression définitive : refusée par la base (`catalog_in_use`) dès qu'une séance utilise l'élément. */
+export async function deleteClassType(tx: Tx, academyId: string, id: string): Promise<void> {
+  await tx`select public.delete_class_type(${academyId}, ${id})`;
+}
+
+/** Supprime la discipline et ses types de cours (tous inutilisés, sinon refus `catalog_in_use`). */
+export async function deleteDiscipline(tx: Tx, academyId: string, id: string): Promise<void> {
+  await tx`select public.delete_discipline(${academyId}, ${id})`;
+}
+
 export async function setClassTypeArchived(tx: Tx, academyId: string, id: string, archived: boolean): Promise<boolean> {
   const r = await tx`update public.class_types set archived_at = ${archived ? new Date() : null} where id = ${id} and academy_id = ${academyId}`;
   return r.count === 1;

@@ -88,6 +88,26 @@ export async function createClassTypeAction(academyId: string, _prev: FormState,
   });
 }
 
+export async function deleteClassTypeAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("deleteClassType", async () => {
+    const ctx = await authorizeAcademy(academyId, "catalog.manage");
+    const { id } = parseForm(idSchema, formData);
+    await inAcademy(ctx, (tx) => academies.deleteClassType(tx, academyId, id));
+    revalidatePath(`/a/${academyId}/settings`);
+    return { ok: true, data: null, message: "Type de cours supprimé." };
+  });
+}
+
+export async function deleteDisciplineAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("deleteDiscipline", async () => {
+    const ctx = await authorizeAcademy(academyId, "catalog.manage");
+    const { id } = parseForm(idSchema, formData);
+    await inAcademy(ctx, (tx) => academies.deleteDiscipline(tx, academyId, id));
+    revalidatePath(`/a/${academyId}/settings`);
+    return { ok: true, data: null, message: "Discipline supprimée." };
+  });
+}
+
 export async function toggleClassTypeArchivedAction(academyId: string, archive: boolean, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("archiveClassType", async () => {
     const ctx = await authorizeAcademy(academyId, "catalog.manage");

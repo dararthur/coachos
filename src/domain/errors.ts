@@ -18,6 +18,7 @@ export const ERROR_MESSAGES = {
   invitation_invalid: "Cette invitation est invalide, expirée ou destinée à un autre compte.",
   join_code_invalid: "Ce code de club est inconnu. Vérifiez-le auprès de votre coach.",
   academy_request_limit: "Trop de demandes en attente pour cette adresse.",
+  catalog_in_use: "Des séances utilisent encore cet élément : archivez-le plutôt, ou supprimez d'abord ces séances.",
   email_not_confirmed: "Confirmez d'abord votre adresse e-mail.",
   last_owner: "Une académie doit conserver au moins un propriétaire.",
   sole_owner:

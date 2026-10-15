@@ -7,7 +7,7 @@ import { Badge, Card, DataTable, PageHeader } from "@/components/ui/ui";
 import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction, InlineAction } from "@/components/ui/confirm";
 import {
-  createClassTypeAction, createDisciplineAction, deleteAcademyAction, toggleClassTypeArchivedAction, toggleDisciplineArchivedAction, updateAcademyAction,
+  createClassTypeAction, createDisciplineAction, deleteAcademyAction, deleteClassTypeAction, deleteDisciplineAction, toggleClassTypeArchivedAction, toggleDisciplineArchivedAction, updateAcademyAction,
 } from "@/server/actions/academy";
 import { changeRoleAction, removeMemberAction, revokeInvitationAction } from "@/server/actions/team";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
@@ -28,7 +28,24 @@ import { removeAcademyLogoAction, setAcademyLogoAction } from "@/server/actions/
 
 export const metadata: Metadata = { title: "Paramètres" };
 
+/** Suppression définitive d'un type de cours (confirmation obligatoire ; refusée par la base si une séance l'utilise). */
+function DeleteClassType({ academyId, id, name }: { academyId: string; id: string; name: string }) {
+  return (
+    <ConfirmAction
+      action={deleteClassTypeAction.bind(null, academyId)}
+      trigger={<>Supprimer<span className="sr-only"> le type de cours {name}</span></>}
+      title={`Supprimer le type de cours « ${name} » ?`}
+      description="Le type de cours est effacé définitivement. Impossible si une séance (passée ou à venir) l'utilise : archivez-le plutôt, ou supprimez d'abord ces séances."
+      confirmLabel="Supprimer définitivement"
+    >
+      <input type="hidden" name="id" value={id} />
+    </ConfirmAction>
+  );
+}
+
 const AUDIT_LABELS: Record<string, string> = {
+  "catalog.class_type_deleted": "Type de cours supprimé",
+  "catalog.discipline_deleted": "Discipline supprimée",
   "academy.created": "Club créé",
   "academy.settings_updated": "Paramètres du club modifiés",
   "academy.logo_set": "Logo du club modifié",
@@ -141,11 +158,22 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
             {data.disciplines.map((d) => (
               <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
                 <span className={d.archivedAt ? "text-ink-soft line-through" : "font-medium"}>{d.name}</span>
-                <InlineAction
-                  action={toggleDisciplineArchivedAction.bind(null, academyId, !d.archivedAt)}
-                  hidden={{ id: d.id }}
-                  label={d.archivedAt ? "Restaurer" : "Archiver"}
-                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <InlineAction
+                    action={toggleDisciplineArchivedAction.bind(null, academyId, !d.archivedAt)}
+                    hidden={{ id: d.id }}
+                    label={d.archivedAt ? "Restaurer" : "Archiver"}
+                  />
+                  <ConfirmAction
+                    action={deleteDisciplineAction.bind(null, academyId)}
+                    trigger={<>Supprimer<span className="sr-only"> la discipline {d.name}</span></>}
+                    title={`Supprimer la discipline « ${d.name} » ?`}
+                    description="La discipline et ses types de cours sont effacés définitivement. Impossible si une séance (passée ou à venir) les utilise : archivez-la plutôt."
+                    confirmLabel="Supprimer définitivement"
+                  >
+                    <input type="hidden" name="id" value={d.id} />
+                  </ConfirmAction>
+                </div>
               </li>
             ))}
           </ul>
@@ -166,7 +194,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                   <td className="px-4 py-2.5">{t.durationMinutes} min</td>
                   <td className="px-4 py-2.5">{t.capacity ?? "—"}</td>
                   <td className="px-4 py-2.5 text-right">
-                    <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
+                      <DeleteClassType academyId={academyId} id={t.id} name={t.name} />
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -181,7 +212,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                       {t.disciplineName} · {t.durationMinutes} min{t.capacity ? ` · ${t.capacity} places` : ""}
                     </p>
                   </div>
-                  <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
+                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                    <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
+                    <DeleteClassType academyId={academyId} id={t.id} name={t.name} />
+                  </div>
                 </li>
               ))}
             </ul>

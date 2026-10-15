@@ -60,7 +60,7 @@ sudo -u coachos -H env MIGRATION_DATABASE_URL="postgresql://coachos_admin:$ADMIN
 sudo -u coachos -H env MIGRATION_DATABASE_URL="postgresql://coachos_admin:$ADMINPW@127.0.0.1:5432/coachos" node scripts/migrate.mjs
 ```
 
-Le premier appel liste ce qui serait appliqué (20 migrations sur une base vierge) sans rien écrire. PostgreSQL 18 est signalée « non testée » par le lanceur mais la CI rejoue les migrations dessus. Le mot de passe temporaire apparaît quelques secondes dans la liste des processus : acceptable sur ce serveur, car le rôle est verrouillé à l'étape 7.
+Le premier appel liste ce qui serait appliqué (24 migrations sur une base vierge) sans rien écrire. PostgreSQL 18 est signalée « non testée » par le lanceur mais la CI rejoue les migrations dessus. Le mot de passe temporaire apparaît quelques secondes dans la liste des processus : acceptable sur ce serveur, car le rôle est verrouillé à l'étape 7.
 
 ## 6. Secrets et environnement
 
