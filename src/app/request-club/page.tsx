@@ -34,7 +34,7 @@ export default function RequestClubPage() {
               </option>
             ))}
           </SelectField>
-          <TextAreaField label="Un mot sur votre club (facultatif)" name="note" maxLength={500} hint="Ville, discipline, nombre d'adhérents…" />
+          <TextAreaField label="Un mot sur votre club (facultatif)" name="note" maxLength={500} hint="Ville, discipline, nombre d'adhérents… N'indiquez aucune information sur la santé ni sur une autre personne." />
           {/* Piège à robots : un humain ne voit jamais ce champ. */}
           <div className="hidden">
             <label>
