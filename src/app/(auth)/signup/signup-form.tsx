@@ -28,8 +28,11 @@ export function SignupForm({ next, askCode }: { next: string | null; askCode: bo
           <li>
             Adresse saisie : <strong className="break-all">{sent.email}</strong>
           </li>
+          <li>
+            <strong>Pensez à vérifier votre dossier spam (courriers indésirables)</strong> : l&apos;e-mail d&apos;activation s&apos;y trouve parfois.
+          </li>
           <li>Ouvrez le lien « Confirmer mon adresse » de l&apos;e-mail, puis connectez-vous.</li>
-          <li>Rien reçu après quelques minutes ? Regardez dans les courriers indésirables (spam).</li>
+          <li>Rien reçu après quelques minutes ? Corrigez votre adresse ci-dessous et recommencez.</li>
         </ul>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className={buttonClasses({ variant: "primary" })}>
