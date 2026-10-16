@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import Link from "next/link";
 import { Alert, BackLink, Card, LinkButton, PageHeader } from "@/components/ui/ui";
 import { StandaloneFrame } from "@/components/layout/standalone";
 import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { ConfirmAction } from "@/components/ui/confirm";
-import { deleteAccountAction, signOutAction, changePasswordAction, updateProfileAction } from "@/server/actions/auth";
-import { buttonClasses } from "@/components/ui/button-classes";
+import { deleteAccountAction, changePasswordAction, updateProfileAction } from "@/server/actions/auth";
+import { getAuth } from "@/server/auth/auth";
+import { listConnectedDevices } from "@/server/auth/devices";
 import { requireUser } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { ChildrenCard } from "@/components/guardian/children-card";
@@ -13,13 +15,17 @@ import { myChildrenWithSessions } from "@/server/repositories/guardian";
 import { InstallApp } from "@/components/ui/install-app";
 import { PushToggle } from "@/components/ui/push-toggle";
 import { vapidPublicKey } from "@/server/push";
+import { DevicesCard } from "./devices-card";
 
 export const metadata: Metadata = { title: "Mon compte" };
+
+const DEVICE_NOTICES: Record<string, string> = { device: "Appareil déconnecté.", devices: "Vos autres appareils ont été déconnectés." };
 
 export default async function AccountPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const params = await searchParams;
   const children = await withUser(user, (tx) => myChildrenWithSessions(tx));
+  const devices = (await listConnectedDevices(getAuth(), await headers())) ?? [];
   const pushKey = vapidPublicKey();
   return (
     <StandaloneFrame>
@@ -45,13 +51,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <PushToggle publicKey={pushKey} />
         </Card>
       )}
-      <Card title="Session">
-        <form action={signOutAction}>
-          <button type="submit" className={buttonClasses({ variant: "secondary" })}>
-            Se déconnecter
-          </button>
-        </form>
-      </Card>
+      <DevicesCard devices={devices} notice={DEVICE_NOTICES[params.updated ?? ""]} />
       <Card title="Mot de passe">
         {params.updated === "password" && <Alert tone="success">Mot de passe mis à jour. Vos autres appareils ont été déconnectés.</Alert>}
         <ActionForm action={changePasswordAction} className="space-y-4" resetOnSuccess>

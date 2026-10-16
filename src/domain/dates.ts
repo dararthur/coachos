@@ -117,3 +117,12 @@ export function localParts(instant: Date | string, timeZone: string): { date: st
 export function mondayOf(date: string): string {
   return addDays(date, 1 - isoWeekday(date));
 }
+
+/** Jour d'un instant par rapport à `now`, dans un fuseau : « aujourd'hui », « hier » ou « le 12 oct. 2026 ». */
+export function relativeDay(instant: Date, now: Date, timeZone: string): string {
+  const day = localDate(instant, timeZone);
+  const diff = daysBetween(day, localDate(now, timeZone));
+  if (diff <= 0) return "aujourd'hui";
+  if (diff === 1) return "hier";
+  return `le ${formatCalendarDate(day)}`;
+}

@@ -2,6 +2,7 @@ import { createHmac, randomBytes, randomUUID } from "node:crypto";
 import pg from "pg";
 import { getMigrations } from "better-auth/db/migration";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
+import { listConnectedDevices, revokeConnectedDevice, revokeOtherConnectedDevices } from "@/server/auth/devices";
 import { createAuth, DISABLED_PATHS, type CoachAuth, type Limiter } from "@/server/auth/factory";
 import type { MailMessage, Mailer } from "@/server/mail/types";
 import { forgeToken } from "../support/forge";
@@ -459,5 +460,87 @@ describe("Better Auth : journaux, erreurs et schéma", () => {
     expect((await adminSql()`select 1 from auth.sessions where user_id = ${id}`).length).toBe(1);
     const e = await failing(() => pool.query("select app_private.purge_expired_auth()"));
     expect(e.code).toBe("42501");
+  });
+});
+
+describe("Mes appareils connectés : liste et déconnexion à distance (src/server/auth/devices.ts)", () => {
+  const PHONE = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Mobile Safari/537.36";
+  const LAPTOP = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0";
+  async function signInAs(email: string, userAgent: string) {
+    const res = await auth.api.signInEmail({ body: { email, password: PASSWORD }, headers: new Headers({ "x-real-ip": ip(), origin: BASE, "user-agent": userAgent }), asResponse: true });
+    const cookie = res.headers.getSetCookie().find((c) => c.includes("session_token"))!.split(";")[0]!;
+    const session = (await sessionOf(cookie))!;
+    return { cookie, id: session.session.id, headers: new Headers({ cookie, "x-real-ip": ip(), origin: BASE }) };
+  }
+
+  it("liste les sessions actives du seul utilisateur : appareil courant en tête, libellé grossier, ni jeton ni IP", async () => {
+    const a = await register("dev-list");
+    const b = await register("dev-list-other");
+    const laptop = await signInAs(a.email, LAPTOP);
+    const phone = await signInAs(a.email, PHONE);
+    await signInAs(b.email, PHONE);
+    await adminSql()`insert into auth.sessions (expires_at, token, updated_at, user_id) values (now() - interval '1 day', ${randomBytes(8).toString("hex")}, now(), ${a.id})`;
+
+    const devices = (await listConnectedDevices(auth, phone.headers))!;
+    expect(devices.map((d) => [d.id, d.label, d.current])).toEqual([
+      [phone.id, "Chrome sur Android", true],
+      [laptop.id, "Firefox sur Windows", false],
+    ]);
+    for (const d of devices) expect(Object.keys(d).sort()).toEqual(["current", "id", "kind", "label", "lastActiveAt", "signedInAt"]);
+    expect(JSON.stringify(devices)).not.toMatch(/token|ip_?address/i);
+    expect(await listConnectedDevices(auth, new Headers({ origin: BASE }))).toBeNull();
+  });
+
+  it("propriété : l'identifiant d'une session d'un autre compte (ou inconnu) ne révoque rien", async () => {
+    const a = await register("dev-owner");
+    const b = await register("dev-victim");
+    const mine = await signInAs(a.email, LAPTOP);
+    const victim = await signInAs(b.email, PHONE);
+
+    expect(await revokeConnectedDevice(auth, mine.headers, victim.id)).toBe("not_found");
+    expect(await revokeConnectedDevice(auth, mine.headers, randomUUID())).toBe("not_found");
+    expect(await sessionOf(victim.cookie)).not.toBeNull();
+    expect(await sessionOf(mine.cookie)).not.toBeNull();
+    // Better Auth, appelé directement avec le jeton d'un autre compte, ne le révoque pas non plus (seconde barrière).
+    const [row] = await adminSql()<{ token: string }[]>`select token from auth.sessions where id = ${victim.id}`;
+    await auth.api.revokeSession({ body: { token: row!.token }, headers: mine.headers });
+    expect(await sessionOf(victim.cookie)).not.toBeNull();
+    expect(await revokeConnectedDevice(auth, new Headers({ origin: BASE }), victim.id)).toBeNull();
+  });
+
+  it("déconnecte un autre appareil ; refuse l'appareil courant ; fonctionne sur une session ouverte depuis des mois", async () => {
+    const { email, id } = await register("dev-revoke");
+    const lost = await signInAs(email, PHONE);
+    const here = await signInAs(email, LAPTOP);
+    // Session courante ancienne : `auth.api.listSessions` la refuserait (« fraîcheur » de 24 h), pas notre lecture.
+    await adminSql()`update auth.sessions set created_at = now() - interval '200 days' where user_id = ${id}`;
+    expect(await statusOf(() => auth.api.listSessions({ headers: here.headers }))).toBe(403);
+
+    expect(await revokeConnectedDevice(auth, here.headers, here.id)).toBe("current");
+    expect(await sessionOf(here.cookie)).not.toBeNull();
+    expect((await listConnectedDevices(auth, here.headers))!.map((d) => d.id)).toContain(lost.id);
+
+    expect(await revokeConnectedDevice(auth, here.headers, lost.id)).toBe("revoked");
+    expect(await sessionOf(lost.cookie)).toBeNull();
+    expect(await sessionOf(here.cookie)).not.toBeNull();
+    expect((await listConnectedDevices(auth, here.headers))!.map((d) => d.id)).toEqual([here.id]);
+    expect(await revokeConnectedDevice(auth, here.headers, lost.id)).toBe("not_found"); // déjà déconnecté
+  });
+
+  it("« Déconnecter tous les autres appareils » : seule la session courante reste ; les autres comptes ne sont pas touchés", async () => {
+    const a = await register("dev-others");
+    const b = await register("dev-others-b");
+    const s1 = await signInAs(a.email, PHONE);
+    const s2 = await signInAs(a.email, LAPTOP);
+    const here = await signInAs(a.email, LAPTOP);
+    const other = await signInAs(b.email, PHONE);
+
+    expect(await revokeOtherConnectedDevices(auth, here.headers)).toBe(true);
+    expect(await sessionOf(s1.cookie)).toBeNull();
+    expect(await sessionOf(s2.cookie)).toBeNull();
+    expect(await sessionOf(here.cookie)).not.toBeNull();
+    expect(await sessionOf(other.cookie)).not.toBeNull();
+    expect(await adminSql()`select 1 from auth.sessions where user_id = ${a.id}`).toHaveLength(1);
+    expect(await revokeOtherConnectedDevices(auth, new Headers({ origin: BASE }))).toBe(false);
   });
 });
