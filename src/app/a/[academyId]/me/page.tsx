@@ -119,7 +119,7 @@ export default async function MePage({ params, searchParams }: { params: Promise
           >
             <ul className="divide-y divide-line">
               {others.slice(0, UPCOMING_SHOWN).map((s) => (
-                <li key={s.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
+                <li key={s.id} className="grid grid-cols-1 items-center gap-x-3 gap-y-2 px-4 py-3 min-[22rem]:grid-cols-[minmax(0,1fr)_auto] sm:gap-x-4 sm:px-5">
                   <div className="min-w-0 flex-1">
                     <p className={s.status === "cancelled" ? "text-ink-soft line-through" : "font-semibold"}>
                       {formatDateTime(s.startsAt, tz)} · {s.classTypeName}
@@ -127,7 +127,7 @@ export default async function MePage({ params, searchParams }: { params: Promise
                     {s.status === "scheduled" && <p className="text-sm text-ink-soft">{occupancyLabel(s, s.capacity)}</p>}
                     {s.myStatus === "waitlisted" && !attended.has(s.id) && <p className="mt-1 text-sm text-warning-ink">{WAITLIST_HINT}</p>}
                   </div>
-                  <div className="flex w-full items-center justify-end gap-2 sm:w-auto">
+                  <div className="flex items-center justify-end gap-2">
                     {s.status === "cancelled" ? (
                       <Badge tone="danger">Annulée</Badge>
                     ) : attended.has(s.id) ? (

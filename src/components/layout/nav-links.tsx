@@ -52,7 +52,7 @@ export function NavLinks({ items }: { items: NavItem[] }) {
   );
 }
 
-const TAB_BASE = "relative flex min-h-14 w-full flex-col items-center justify-center gap-1 px-0.5 pt-1 text-xs font-semibold no-underline";
+const TAB_BASE = "relative flex min-h-14 w-full flex-col items-center justify-center gap-1 px-0.5 pt-1 text-[11px] font-semibold no-underline min-[22rem]:text-xs";
 
 /**
  * Barre d'onglets fixe en bas (< md) : la barrette noire, onglet actif marqué d'une bande blanche ; cibles ≥ 44 px, marge de sécurité.

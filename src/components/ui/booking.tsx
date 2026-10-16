@@ -42,7 +42,8 @@ export function BookingControls({
   const full = isFull(booking, capacity);
   const cancel = cancelBookingAction.bind(null, academyId, sessionId);
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
+    // Étiquette au-dessus du bouton sur téléphone : la colonne d'action reste étroite et le nom du cours garde la place.
+    <div className="flex flex-col items-end gap-1 min-[30rem]:flex-row min-[30rem]:flex-wrap min-[30rem]:items-center min-[30rem]:justify-end min-[30rem]:gap-2">
       {myStatus === "booked" && <Badge tone="success">Inscrit</Badge>}
       {myStatus === "waitlisted" && <Badge tone="warning">Liste d&apos;attente{myPosition ? ` · n°${myPosition}` : ""}</Badge>}
       {bookable && myStatus === null && (
