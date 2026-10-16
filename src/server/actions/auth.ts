@@ -17,6 +17,7 @@ import { env } from "@/server/env";
 import { logger } from "@/server/logger";
 import { clientIp, enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import * as requests from "@/server/repositories/club-requests";
+import { resumeKind } from "@/domain/resume";
 import { parseForm, safeNext } from "./helpers";
 
 type FormState = ActionResult<unknown> | null;
@@ -24,14 +25,21 @@ type FormState = ActionResult<unknown> | null;
 /** Les limites de débit (inscription, connexion, réinitialisation) sont appliquées dans Better Auth (hook), pour tout chemin. */
 const apiStatus = apiErrorInfo; // lecture par la forme de l'erreur : voir src/server/auth/api-error.ts
 
-/** Après confirmation de l'e-mail, la connexion reprend le parcours d'inscription à un club (lien /join/<code>). */
+/**
+ * Après confirmation de l'e-mail, la connexion reprend le parcours qui a mené à l'inscription : rejoindre un club, accepter une
+ * invitation ou suivre son enfant après l'accord du responsable légal (voir src/domain/resume.ts).
+ */
 function verifiedCallback(next: string): string {
-  return next.startsWith("/join/") ? `/login?verified=1&next=${encodeURIComponent(next)}` : "/login?verified=1";
+  return resumeKind(next) && resumeKind(next) !== "checkin" ? `/login?verified=1&next=${encodeURIComponent(next)}` : "/login?verified=1";
 }
 
-/** Réponse de l'inscription SANS code de club : identique que l'adresse soit autorisée ou non (aucune adresse n'est devinable, pas même celle de l'administrateur). */
+/**
+ * Réponse de l'inscription SANS code de club : identique que l'adresse soit autorisée ou non (aucune adresse n'est devinable, pas
+ * même celle de l'administrateur). La dernière phrase ne dit rien de l'adresse saisie : elle rappelle seulement la règle, pour qu'un
+ * adhérent qui a oublié le code ne guette pas un e-mail qui ne viendra pas.
+ */
 const SIGNUP_NO_CODE_MESSAGE =
-  "Si cette adresse est autorisée à créer un compte (invitation de votre club ou demande de club approuvée), un e-mail de confirmation vient de vous être envoyé. Consultez votre boîte mail, puis connectez-vous.";
+  "Si cette adresse peut créer un compte (invitation de votre club, responsable légal d'un enfant inscrit, ou club approuvé), un e-mail de confirmation vient de vous être envoyé. Sans code de club ni invitation, aucun e-mail ne part : demandez le code à votre club.";
 
 
 /** Dépense un temps comparable à celui du hachage d'un mot de passe, pour qu'un refus ne soit pas plus rapide qu'une inscription acceptée. */
@@ -44,7 +52,8 @@ async function spendHashingTime(): Promise<void> {
 /**
  * Un compte ne se crée qu'avec un « ticket » :
  *   - un CODE de club (saisi, ou repris du lien /join/<code>) : évalué seul ; un code erroné est signalé (limite de débit par IP) ;
- *   - sans code : une invitation en attente ou une demande de club approuvée pour cette adresse, ou l'adresse de l'administrateur de la plateforme.
+ *   - sans code : une invitation en attente, l'adresse d'un responsable légal enregistrée par un club ou une demande de club approuvée
+ *     pour cette adresse, ou l'adresse de l'administrateur de la plateforme.
  * Sans ticket valide, la réponse est la même que pour une inscription acceptée et aucun compte n'est créé ni aucun e-mail envoyé.
  */
 export async function signUpAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -64,7 +73,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     }
     try {
       await getAuth().api.signUpEmail({
-        body: { name: input.displayName ?? "", email: input.email, password: input.password, callbackURL: verifiedCallback(code ? `/join/${code}` : "") },
+        body: { name: input.displayName ?? "", email: input.email, password: input.password, callbackURL: verifiedCallback(code ? `/join/${code}` : next) },
         headers: await headers(),
       });
     } catch (error) {
@@ -79,7 +88,7 @@ export async function signUpAction(_prev: FormState, formData: FormData): Promis
     return {
       ok: true,
       data: { confirmEmail: true },
-      message: code ? "Compte créé. Consultez votre boîte mail pour confirmer votre adresse, puis connectez-vous." : SIGNUP_NO_CODE_MESSAGE,
+      message: code ? "Compte créé : un e-mail de confirmation vient de vous être envoyé." : SIGNUP_NO_CODE_MESSAGE,
     };
   });
 }

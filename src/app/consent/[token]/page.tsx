@@ -45,20 +45,35 @@ export default async function ConsentPage({ params }: { params: Promise<{ token:
             <p className="mb-4 text-sm text-ink-soft">
               En confirmant, vous déclarez être le responsable légal de cet enfant. Voir la <Link href="/privacy">notice de confidentialité</Link>.
             </p>
-            <ActionForm action={confirmGuardianConsentAction.bind(null, token)} className="space-y-4">
-              <SubmitButton pendingLabel="Enregistrement…" className="w-full">
-                {preview.state === "already" ? (user ? "Rattacher à mon compte" : "Accord déjà enregistré") : "Je confirme mon accord"}
-              </SubmitButton>
-            </ActionForm>
+            {preview.state === "already" && !user ? (
+              // Accord déjà donné et personne de connecté : plus rien à confirmer, seulement la suite (aucun bouton sans effet).
+              <Alert tone="success" title="Merci : votre accord est enregistré.">
+                Le club peut maintenant enregistrer les présences de {preview.childFirstName}.
+              </Alert>
+            ) : (
+              <ActionForm action={confirmGuardianConsentAction.bind(null, token)} className="space-y-4">
+                <SubmitButton pendingLabel="Enregistrement…" className="w-full">
+                  {preview.state === "already" ? `Suivre ${preview.childFirstName} avec mon compte` : "Je confirme mon accord"}
+                </SubmitButton>
+              </ActionForm>
+            )}
             <div className="mt-4 flex flex-col gap-2 text-sm">
               {user ? (
-                <LinkButton href="/account" variant="secondary">
-                  Suivre mon enfant depuis Mon compte
+                <LinkButton href="/" variant="secondary">
+                  Voir les cours de {preview.childFirstName}
                 </LinkButton>
               ) : (
-                <LinkButton href={`/login?next=${encodeURIComponent(`/consent/${token}`)}`} variant="secondary">
-                  Me connecter pour suivre mon enfant (facultatif)
-                </LinkButton>
+                <>
+                  <p className="text-ink-soft">
+                    Facultatif : avec un compte, vous voyez les cours de {preview.childFirstName} et vous les réservez ou les annulez vous-même.
+                  </p>
+                  <LinkButton href={`/signup?next=${encodeURIComponent(`/consent/${token}`)}`} variant="secondary">
+                    Créer mon compte
+                  </LinkButton>
+                  <LinkButton href={`/login?next=${encodeURIComponent(`/consent/${token}`)}`} variant="ghost">
+                    J&apos;ai déjà un compte : me connecter
+                  </LinkButton>
+                </>
               )}
             </div>
           </>

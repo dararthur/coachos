@@ -16,6 +16,7 @@ export const metadata: Metadata = { title: "Mes clubs" };
 export default async function AcademiesPage() {
   const user = await requireUser();
   const { academies, children } = await withUser(user, async (tx) => ({ academies: await listAcademiesForUser(tx, user.id), children: await myChildrenWithSessions(tx) }));
+  const parentOnly = academies.length === 0 && children.length > 0;
   return (
     <StandaloneFrame
       aside={
@@ -31,20 +32,24 @@ export default async function AcademiesPage() {
         </div>
       }
     >
+      {/* Un responsable légal sans club propre arrive ici : la page est d'abord celle de ses enfants, pas un sélecteur de clubs. */}
       <PageHeader
-        title="Mes clubs"
+        title={parentOnly ? "Espace parent" : "Mes clubs"}
+        description={parentOnly ? "Les cours de vos enfants et leurs inscriptions." : undefined}
         actions={
-          <LinkButton href="/onboarding" variant="secondary" icon="plus">
-            Créer un club
-          </LinkButton>
+          parentOnly ? undefined : (
+            <LinkButton href="/onboarding" variant="secondary" icon="plus">
+              Rejoindre un club
+            </LinkButton>
+          )
         }
       />
       <div className="mb-6">
         <ChildrenCard childrenRows={children} />
       </div>
-      {academies.length === 0 && children.length > 0 ? null : academies.length === 0 ? (
-        <EmptyState framed title="Aucun club pour le moment" action={<LinkButton href="/onboarding">Créer mon club</LinkButton>}>
-          Créez votre club, ou demandez une invitation au propriétaire de votre club.
+      {parentOnly ? null : academies.length === 0 ? (
+        <EmptyState framed title="Aucun club pour le moment" action={<LinkButton href="/onboarding">Rejoindre mon club</LinkButton>}>
+          Saisissez le code donné par votre club, ou ouvrez le lien d&apos;invitation reçu par e-mail.
         </EmptyState>
       ) : (
         <ul className="divide-y divide-line rounded-sm border border-line bg-surface">

@@ -1,51 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ActionForm, SubmitButton, TextField } from "@/components/ui/form";
 import { Alert } from "@/components/ui/ui";
-import { signUpAction } from "@/server/actions/auth";
+import { resumeKind, withResume } from "@/domain/resume";
 import { safeNext } from "@/server/actions/helpers";
+import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = { title: "Créer un compte" };
 
+const CONTEXT = {
+  join: "Vous allez rejoindre un club. Créez votre compte, confirmez votre e-mail, puis connectez-vous : votre inscription au club se termine alors en un clic.",
+  invite: "Vous avez été invité par un club. Créez votre compte avec l'adresse e-mail qui a reçu l'invitation : après la confirmation de cette adresse, vous revenez directement à l'invitation.",
+  consent: "Vous êtes le responsable légal d'un enfant inscrit dans un club. Créez votre compte avec l'adresse e-mail qui a reçu le lien d'accord : vous pourrez ensuite suivre ses cours et les réserver.",
+} as const;
+
 export default async function SignupPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const next = safeNext((await searchParams).next, "");
-  const joining = next.startsWith("/join/") ? next : null;
+  const kind = resumeKind(next);
+  const resume = kind && kind !== "checkin" ? next : null;
   return (
     <>
       <h1 className="mb-1 text-title font-bold font-stretch-[80%]">Créer un compte</h1>
-      {joining ? (
-        <Alert tone="info">Vous allez rejoindre un club. Créez votre compte, confirmez votre e-mail, puis connectez-vous : votre inscription au club se termine alors en un clic.</Alert>
+      {kind && kind !== "checkin" ? (
+        <Alert tone="info">{CONTEXT[kind]}</Alert>
       ) : (
         <p className="mb-5 text-sm text-ink-soft">Le code de votre club vous est donné par votre coach. Vous avez été invité par e-mail ? Utilisez la même adresse ici.</p>
       )}
-      <ActionForm action={signUpAction} className="space-y-4">
-        {joining && <input type="hidden" name="next" value={joining} />}
-        {!joining && (
-          <TextField
-            label="Code du club"
-            name="clubCode"
-            maxLength={12}
-            autoComplete="off"
-            autoCapitalize="characters"
-            spellCheck={false}
-            placeholder="ABCD-EFGH"
-            hint="8 caractères, lettres et chiffres. Inutile si vous avez reçu une invitation."
-          />
-        )}
-        <TextField label="Nom affiché" name="displayName" autoComplete="name" hint="Visible par l'équipe de votre club." />
-        <TextField label="Adresse e-mail" name="email" type="email" autoComplete="email" required />
-        <TextField label="Mot de passe" name="password" type="password" autoComplete="new-password" required minLength={12} hint="12 caractères minimum." />
-        <p className="text-xs text-ink-soft">
-          En créant un compte, vous reconnaissez avoir pris connaissance de la <Link href="/privacy">notice de confidentialité</Link>.
-        </p>
-        <SubmitButton pendingLabel="Création…" className="w-full">
-          Créer mon compte
-        </SubmitButton>
-      </ActionForm>
+      <SignupForm next={resume} askCode={!resume} />
       <p className="mt-5 text-sm">
-        Déjà inscrit ? <Link href={joining ? `/login?next=${encodeURIComponent(joining)}` : "/login"}>Se connecter</Link>
+        Déjà un compte ? <Link href={withResume("/login", next)}>Se connecter</Link>
       </p>
-      {!joining && (
+      {!resume && (
         <p className="mt-2 text-xs text-ink-soft">
           Vous dirigez un club ? <Link href="/request-club">Demander la création de votre club</Link>.
         </p>

@@ -19,11 +19,11 @@ test.describe("inscription autonome d'un membre par code ou lien de club", () =>
     await page.getByRole("link", { name: "Créer mon compte" }).click();
     await expect(page.getByText("Vous allez rejoindre un club.")).toBeVisible();
     const email = uniqueEmail("lea-join");
-    await page.getByLabel("Nom affiché").fill("Léa Martin");
+    await page.getByLabel("Prénom et nom").fill("Léa Martin");
     await page.getByLabel("Adresse e-mail").fill(email);
     await page.getByLabel("Mot de passe").fill(PASSWORD);
     await page.getByRole("button", { name: "Créer mon compte" }).click();
-    await expect(page.getByText("Compte créé.")).toBeVisible();
+    await expect(page.getByText("Compte créé", { exact: false })).toBeVisible();
     await page.goto((await waitForMail(email, "verification")).link);
     await expect(page).toHaveURL(/\/login\?verified=1&next=%2Fjoin%2F/);
     await page.getByLabel("Adresse e-mail").fill(email);

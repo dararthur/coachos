@@ -5,7 +5,7 @@ import postgres from "postgres";
 import type { Browser, Page } from "@playwright/test";
 import { ADMIN_EMAIL, approveClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, waitForMail } from "./support/helpers";
 
-const NO_CODE_MESSAGE = /Si cette adresse est autorisée à créer un compte/;
+const NO_CODE_MESSAGE = /Si cette adresse peut créer un compte/;
 
 async function visitor(browser: Browser): Promise<Page> {
   const ctx = await browser.newContext({ locale: "fr-FR", extraHTTPHeaders: { "x-real-ip": randomIp() } });
@@ -15,7 +15,7 @@ async function visitor(browser: Browser): Promise<Page> {
 async function fillSignup(page: Page, email: string, code?: string) {
   await page.goto("/signup");
   if (code !== undefined) await page.getByLabel("Code du club").fill(code);
-  await page.getByLabel("Nom affiché").fill("Test Gating");
+  await page.getByLabel("Prénom et nom").fill("Test Gating");
   await page.getByLabel("Adresse e-mail").fill(email);
   await page.getByLabel("Mot de passe").fill(PASSWORD);
   await page.getByRole("button", { name: "Créer mon compte" }).click();

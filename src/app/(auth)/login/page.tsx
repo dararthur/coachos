@@ -7,6 +7,7 @@ import { signInAction } from "@/server/actions/auth";
 import { safeNext } from "@/server/actions/helpers";
 import { getSessionUser } from "@/server/auth/session";
 import { normalizeJoinCode } from "@/domain/join-code";
+import { withResume } from "@/domain/resume";
 import { withApp } from "@/server/db/client";
 import { clientIp, hitRateLimit, LIMITS } from "@/server/rate-limit";
 import { previewJoinCodePublic } from "@/server/repositories/join";
@@ -24,7 +25,8 @@ async function joiningClubName(next: string): Promise<string | true | null> {
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const params = await searchParams;
   if (await getSessionUser()) redirect(safeNext(params.next, "/"));
-  const joiningClub = await joiningClubName(safeNext(params.next));
+  const next = safeNext(params.next, "");
+  const joiningClub = await joiningClubName(next);
   return (
     <>
       <h1 className="mb-1 text-title font-bold font-stretch-[80%]">Connexion</h1>
@@ -37,6 +39,16 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <span className="mt-1.5 block">
             Sur iPhone, l&apos;appareil photo ouvre Safari, qui est séparé de l&apos;application Matnexa installée : connectez-vous une fois ici, les scans suivants iront droit à la confirmation.
           </span>
+        </Alert>
+      )}
+      {next.startsWith("/invite/") && (
+        <Alert tone="info" title="Vous avez été invité dans un club">
+          Connectez-vous pour accepter l&apos;invitation. Pas encore de compte ? <Link href={withResume("/signup", next)}>Créez-le</Link> avec l&apos;adresse e-mail qui a reçu l&apos;invitation.
+        </Alert>
+      )}
+      {next.startsWith("/consent/") && (
+        <Alert tone="info" title="Suivre votre enfant">
+          Connectez-vous pour retrouver les cours de votre enfant. Pas encore de compte ? <Link href={withResume("/signup", next)}>Créez-le</Link> avec l&apos;adresse e-mail qui a reçu le lien d&apos;accord.
         </Alert>
       )}
       {params.verified && !params.error && <Alert tone="success">Adresse e-mail confirmée. Vous pouvez vous connecter.</Alert>}
@@ -53,7 +65,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       </ActionForm>
       <div className="mt-5 flex flex-wrap justify-between gap-2 text-sm">
         <Link href="/forgot-password">Mot de passe oublié ?</Link>
-        <Link href="/signup">Créer un compte</Link>
+        <Link href={withResume("/signup", next)}>Créer un compte</Link>
       </div>
     </>
   );

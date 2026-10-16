@@ -9,7 +9,7 @@ const SESSION_COOKIE = /better-auth\.session_token/;
 async function register(page: Page, email: string) {
   await approveClub(email);
   await page.goto("/signup");
-  await page.getByLabel("Nom affiché").fill("Flux Auth");
+  await page.getByLabel("Prénom et nom").fill("Flux Auth");
   await page.getByLabel("Adresse e-mail").fill(email);
   await page.getByLabel("Mot de passe").fill(PASSWORD);
   await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -292,7 +292,7 @@ test.describe("authentification : abus et surface HTTP", () => {
     const email = uniqueEmail("valid");
     await approveClub(email);
     await page.goto("/signup");
-    await page.getByLabel("Nom affiché").fill("<img src=x onerror=alert(1)>");
+    await page.getByLabel("Prénom et nom").fill("<img src=x onerror=alert(1)>");
     await page.getByLabel("Adresse e-mail").fill(email);
     await page.getByLabel("Mot de passe").fill(PASSWORD);
     await page.getByRole("button", { name: "Créer mon compte" }).click();
@@ -306,7 +306,7 @@ test.describe("authentification : abus et surface HTTP", () => {
     });
     expect(direct.status()).toBe(404);
     // 3. Les Server Actions restent opérationnelles et appliquent la validation : un nom valide passe.
-    await page.getByLabel("Nom affiché").fill("Nom Valide");
+    await page.getByLabel("Prénom et nom").fill("Nom Valide");
     await page.getByLabel("Mot de passe").fill(PASSWORD); // jamais re-rempli après une erreur
     await page.getByRole("button", { name: "Créer mon compte" }).click();
     await expect(page.getByText(/Consultez votre boîte mail/)).toBeVisible();

@@ -53,6 +53,17 @@ describe("adhérents mineurs", () => {
     expect(row?.adult_attested_at).not.toBeNull();
   });
 
+  it("l'adresse du responsable légal ouvre l'inscription (sans code de club) tant que l'accord n'est pas retiré", async () => {
+    const { id, token } = await createMinor(w.carl);
+    const guardian = `parent-${token.slice(0, 6)}@example.invalid`;
+    const allowed = async (e: string) => (await appSql()<{ ok: boolean }[]>`select app_private.signup_email_allowed(${e}) as ok`)[0]!.ok;
+    expect(await allowed(guardian)).toBe(true);
+    expect(await allowed(` ${guardian.toUpperCase()} `)).toBe(true);
+    expect(await allowed(`autre-${token.slice(0, 6)}@example.invalid`)).toBe(false);
+    await adminSql()`update public.guardianships set consent_withdrawn_at = now() where child_id = ${id}`;
+    expect(await allowed(guardian)).toBe(false);
+  });
+
   it("le lien confirme l'accord une fois, expire et se rattache à un compte sans l'écraser", async () => {
     const { id, token } = await createMinor(w.carl);
     const parent = await createUser("parent-a");

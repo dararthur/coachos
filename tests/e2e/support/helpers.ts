@@ -59,7 +59,7 @@ export async function approveClub(email: string, name = "Club e2e") {
 export async function signUp(page: Page, email: string, displayName: string) {
   await approveClub(email);
   await page.goto("/signup");
-  await page.getByLabel("Nom affiché").fill(displayName);
+  await page.getByLabel("Prénom et nom").fill(displayName);
   await page.getByLabel("Adresse e-mail").fill(email);
   await page.getByLabel("Mot de passe").fill(PASSWORD);
   await page.getByRole("button", { name: "Créer mon compte" }).click();

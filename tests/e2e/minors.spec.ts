@@ -1,4 +1,4 @@
-import { createClub, expect, mailsTo, parisToday, signUp, test, uniqueEmail, waitForMail } from "./support/helpers";
+import { createClub, expect, mailsTo, parisToday, PASSWORD, randomIp, signUp, test, uniqueEmail, waitForMail } from "./support/helpers";
 
 test("mineur : fiche avec responsable légal, accord par lien, ceinture enfant, retrait de l'accord", async ({ page, browser }) => {
   await signUp(page, uniqueEmail("minors"), "Coach Mineurs");
@@ -100,13 +100,30 @@ test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte 
   await expect(page.getByRole("heading", { name: "Inès Durand" })).toBeVisible();
   const mail = await waitForMail(parentEmail, "guardian_consent");
 
-  const ctx = await browser.newContext();
+  // Parcours réel du parent, SANS fixture : accord donné sans compte, puis création du compte depuis la page de l'accord
+  // (l'adresse du responsable suffit, sans code de club), confirmation de l'e-mail, retour à l'accord, rattachement.
+  const ctx = await browser.newContext({ locale: "fr-FR", extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const parent = await ctx.newPage();
-  await signUp(parent, parentEmail, "Paul Durand");
   await parent.goto(mail.link);
   await parent.getByRole("button", { name: "Je confirme mon accord" }).click();
   await expect(parent.getByText("Merci : votre accord est enregistré.")).toBeVisible();
-  await parent.goto("/academies");
+  await parent.getByRole("link", { name: "Créer mon compte" }).click();
+  await expect(parent.getByText("Vous êtes le responsable légal")).toBeVisible();
+  await parent.getByLabel("Prénom et nom").fill("Paul Durand");
+  await parent.getByLabel("Adresse e-mail").fill(parentEmail);
+  await parent.getByLabel("Mot de passe").fill(PASSWORD);
+  await parent.getByRole("button", { name: "Créer mon compte" }).click();
+  await expect(parent.getByText(/Consultez votre boîte mail/)).toBeVisible();
+  await parent.goto((await waitForMail(parentEmail, "verification")).link);
+  await expect(parent).toHaveURL(/\/login\?verified=1&next=%2Fconsent%2F/);
+  await parent.getByLabel("Adresse e-mail").fill(parentEmail);
+  await parent.getByLabel("Mot de passe").fill(PASSWORD);
+  await parent.getByRole("button", { name: "Se connecter" }).click();
+  await expect(parent).toHaveURL(/\/consent\//);
+  await parent.getByRole("button", { name: "Suivre Inès avec mon compte" }).click();
+  await parent.getByRole("link", { name: "Voir les cours de Inès" }).click();
+  await expect(parent).toHaveURL(/\/academies/);
+  await expect(parent.getByRole("heading", { name: "Espace parent" })).toBeVisible();
   await expect(parent.getByRole("heading", { name: "Mes enfants" })).toBeVisible();
   await expect(parent.getByText("Inès Durand")).toBeVisible();
   // 16 ans : compte propre possible
@@ -116,10 +133,12 @@ test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte 
 
   // Le parent réserve puis annule le cours de son enfant.
   await parent.waitForLoadState("networkidle");
-  await parent.getByText("Prochains cours de Inès").click();
+  await expect(parent.getByText("Inès n'est inscrit(e) à aucun cours")).toBeVisible();
+  await parent.getByText("Réserver un cours pour Inès").click();
   await parent.getByRole("button", { name: /Réserver pour Inès/ }).click();
+  // Le cours réservé remonte dans la liste toujours visible des cours de l'enfant.
   await expect(parent.getByText("Inscrit", { exact: true })).toBeVisible();
   await parent.getByRole("button", { name: /Annuler pour Inès/ }).click();
-  await expect(parent.getByRole("button", { name: /Réserver pour Inès/ })).toBeVisible();
+  await expect(parent.getByText("Inès n'est inscrit(e) à aucun cours")).toBeVisible();
   await ctx.close();
 });

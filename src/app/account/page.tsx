@@ -33,7 +33,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       <div className="space-y-6">
       <Card title="Profil" description={`Connecté en tant que ${user.email ?? ""}`}>
         <ActionForm action={updateProfileAction} className="space-y-4">
-          <TextField label="Nom affiché" name="displayName" defaultValue={user.displayName} maxLength={100} hint="Visible par l'équipe des clubs dont vous faites partie." />
+          <TextField label="Prénom et nom" name="displayName" defaultValue={user.displayName} maxLength={100} hint="Visible par l'équipe des clubs dont vous faites partie." />
           <SubmitButton>Enregistrer</SubmitButton>
         </ActionForm>
       </Card>
