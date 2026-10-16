@@ -196,7 +196,12 @@ export default async function AdminPage() {
             return (
               <tr key={c.id} data-testid="platform-club">
                 <th scope="row" className="px-4 py-3 text-left font-bold">
-                  <Link href={`/admin/clubs/${c.id}`}>{c.name}</Link>
+                  <Link href={`/admin/clubs/${c.id}`}>{c.name}</Link>{c.suspendedAt && (
+                    <>
+                      {" "}
+                      <Badge tone="danger">Suspendu</Badge>
+                    </>
+                  )}
                 </th>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {c.planName ? (

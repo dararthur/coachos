@@ -6,6 +6,7 @@ import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { isFeature, type Feature } from "@/domain/features";
 import { can, isRole, type Permission, type Role } from "@/domain/roles";
 import { withUser, type Tx } from "@/server/db/client";
+import { mySuspendedClubs } from "@/server/repositories/suspension";
 import { logger } from "@/server/logger";
 import { enforceRateLimit, LIMITS } from "@/server/rate-limit";
 import { getSessionUser, type SessionUser } from "./session";
@@ -55,6 +56,12 @@ export async function resolveAcademy(user: SessionUser, academyId: string): Prom
   };
 }
 
+/** Le club est-il suspendu, et le compte y est-il membre ? (La base ferme alors tout accès : le club n'apparaît plus qu'ici.) */
+async function isSuspendedFor(user: SessionUser, academyId: string): Promise<boolean> {
+  if (!uuid.safeParse(academyId).success) return false;
+  return (await withUser({ id: user.id }, (tx) => mySuspendedClubs(tx))).some((c) => c.id === academyId);
+}
+
 /**
  * Pages : académie accessible et permission requise. Non-membre => 404 ; membre sans droit => page « accès refusé » ;
  * module coupé pour le club (`feature`) => page « non incluse dans votre formule ».
@@ -62,7 +69,10 @@ export async function resolveAcademy(user: SessionUser, academyId: string): Prom
 export async function requireAcademy(academyId: string, permission?: Permission, feature?: Feature): Promise<AcademyContext> {
   const user = await requireUser();
   const ctx = await resolveAcademy(user, academyId);
-  if (!ctx) notFound();
+  if (!ctx) {
+    if (await isSuspendedFor(user, academyId)) redirect("/suspended");
+    notFound();
+  }
   if (permission && !can(ctx.role, permission)) redirect(`/a/${ctx.academy.id}/forbidden`);
   if (feature && ctx.disabledFeatures.includes(feature)) redirect(`/a/${ctx.academy.id}/unavailable?feature=${feature}`);
   return ctx;
@@ -74,7 +84,7 @@ export async function authorizeAcademy(academyId: string, permission?: Permissio
   if (!user) throw new AppError("not_authenticated");
   await enforceRateLimit("write", user.id, LIMITS.writes.max, LIMITS.writes.window);
   const ctx = await resolveAcademy(user, academyId);
-  if (!ctx) throw new AppError("not_found");
+  if (!ctx) throw new AppError((await isSuspendedFor(user, academyId)) ? "club_suspended" : "not_found");
   if (permission && !can(ctx.role, permission)) throw new AppError("forbidden");
   if (feature && ctx.disabledFeatures.includes(feature)) throw new AppError("feature_disabled");
   return ctx;

@@ -206,6 +206,25 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await expect(news).toContainText("Activé");
     await founder.goto(`${clubHome}/news`);
     await expect(founder.getByRole("heading", { name: "Actualités", exact: true })).toBeVisible();
+
+    // 9. Suspension : le club est fermé à ses membres (message clair, rien de supprimé), puis rouvert.
+    await admin.goto(`/admin/clubs/${clubId}`);
+    await admin.locator('input[name="reason"]').fill("Impayé de test");
+    await admin.getByRole("button", { name: "Suspendre l'accès" }).click();
+    await expect(admin.getByText("Club suspendu", { exact: true }).first()).toBeVisible();
+    await founder.goto(`${clubHome}/dashboard`);
+    await expect(founder).toHaveURL(/\/suspended/);
+    await expect(founder.getByRole("heading", { name: "Votre club est suspendu" })).toBeVisible();
+    await expect(founder.getByText("Impayé de test")).toHaveCount(0); // le motif reste interne
+    await founder.goto("/academies");
+    await expect(founder.getByText("est momentanément fermé")).toBeVisible();
+    await admin.goto("/admin");
+    await expect(admin.getByTestId("platform-club").filter({ hasText: "Gracie Test Club" })).toContainText("Suspendu");
+    await admin.goto(`/admin/clubs/${clubId}`);
+    await admin.getByRole("button", { name: "Réactiver le club" }).click();
+    await expect(admin.getByRole("button", { name: "Suspendre l'accès" })).toBeVisible();
+    await founder.goto(`${clubHome}/dashboard`);
+    await expect(founder).toHaveURL(/\/dashboard/);
   });
 
   test("compte sans club : par défaut on rejoint ; créer un club est discret et mène à la demande", async ({ browser }) => {

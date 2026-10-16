@@ -79,6 +79,16 @@ Sur la page d'un club (`/admin/clubs/<id>`), carte **Formule et facturation** (m
 - La vue d'ensemble affiche le **revenu mensuel indicatif** : somme des prix des clubs *Actifs* uniquement (hors essais, retards et résiliations) et la liste des formules à suivre.
 - Le prix saisi en euros (« 49 » ou « 29,90 ») est conservé en centimes.
 
+### Suspendre un club
+
+Sur la page d'un club, carte **Suspension** (migration 20261016001500, table `club_suspensions`) : un motif interne (jamais montré au club) et « Suspendre l'accès ».
+
+- **Effet immédiat, dans la base** : `member_role` et `is_member` — les deux briques de toute la RLS — répondent « non » pour un club suspendu. Plus personne n'y voit ni n'y écrit rien, y compris par les fonctions métier, les liens de pointage QR et les exports. Aucune donnée n'est supprimée : la réactivation (« Réactiver le club ») rend tout tel quel.
+- **Message clair** : ses membres sont redirigés vers `/suspended` (« Votre club est suspendu », contact `contact@matnexa.fr`), et « Mes clubs » affiche un bandeau. Une action tentée renvoie « Ce club est suspendu ».
+- **Rappels** : les rappels de séance par notification ne partent plus pour ce club. La clôture automatique des feuilles d'appel continue (hygiène des données).
+- La liste des clubs affiche « Suspendu » et ne génère plus d'alerte d'usage pour ce club.
+- **Limites à connaître** : un club suspendu bloque aussi l'export de ses données par ses propres administrateurs (le droit d'accès s'exerce alors auprès de `contact@matnexa.fr`, qui peut le satisfaire depuis la base) ; le code d'adhésion d'un club suspendu reste valable, mais les personnes qui l'utilisent n'ont aucun accès tant que le club est suspendu.
+
 ### Double authentification par e-mail
 
 L'administration exige, après le mot de passe, un **code à 6 chiffres envoyé à l'adresse du compte** (`PLATFORM_ADMIN_EMAIL`). Sans lui, toute page `/admin/*` renvoie vers `/admin/security`, et toute action d'administration est refusée (le contrôle est dans `isPlatformAdminUser`, utilisé par les pages et les actions).

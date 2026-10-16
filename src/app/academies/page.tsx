@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { can, ROLE_LABELS } from "@/domain/roles";
-import { EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { Alert, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
 import { StandaloneFrame } from "@/components/layout/standalone";
 import { signOutAction } from "@/server/actions/auth";
 import { requireUser } from "@/server/auth/guards";
@@ -9,13 +9,14 @@ import { withUser } from "@/server/db/client";
 import { listAcademiesForUser } from "@/server/repositories/academies";
 import { ChildrenCard } from "@/components/guardian/children-card";
 import { myChildrenWithSessions } from "@/server/repositories/guardian";
+import { mySuspendedClubs } from "@/server/repositories/suspension";
 import { buttonClasses } from "@/components/ui/button-classes";
 
 export const metadata: Metadata = { title: "Mes clubs" };
 
 export default async function AcademiesPage() {
   const user = await requireUser();
-  const { academies, children } = await withUser(user, async (tx) => ({ academies: await listAcademiesForUser(tx, user.id), children: await myChildrenWithSessions(tx) }));
+  const { academies, children, suspended } = await withUser(user, async (tx) => ({ academies: await listAcademiesForUser(tx, user.id), children: await myChildrenWithSessions(tx), suspended: await mySuspendedClubs(tx) }));
   const parentOnly = academies.length === 0 && children.length > 0;
   return (
     <StandaloneFrame
@@ -44,6 +45,13 @@ export default async function AcademiesPage() {
           )
         }
       />
+      {suspended.length > 0 && (
+        <div className="mb-6">
+          <Alert tone="warning" title={suspended.length > 1 ? "Clubs suspendus" : "Club suspendu"}>
+            L&apos;accès à {suspended.map((c) => `« ${c.name} »`).join(", ")} est momentanément fermé ; vos données sont conservées. Écrivez à <a href="mailto:contact@matnexa.fr">contact@matnexa.fr</a> pour le rouvrir.
+          </Alert>
+        </div>
+      )}
       <div className="mb-6">
         <ChildrenCard childrenRows={children} />
       </div>

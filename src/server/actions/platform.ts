@@ -11,6 +11,7 @@ import { isPlatformAdminUser } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import * as features from "@/server/repositories/features";
 import * as subscriptions from "@/server/repositories/subscriptions";
+import * as suspension from "@/server/repositories/suspension";
 import { parseForm } from "./helpers";
 import type { SubscriptionStatus } from "@/domain/billing";
 
@@ -54,5 +55,23 @@ export async function setClubSubscriptionAction(academyId: string, _prev: FormSt
     revalidatePath(`/admin/clubs/${id.data}`);
     revalidatePath("/admin");
     return { ok: true, data: null, message: "Formule enregistrée." };
+  });
+}
+
+/**
+ * Suspend ou réactive l'accès d'un club. Réservé à l'administrateur de la plateforme. La base ferme alors le club à tous ses membres
+ * (rien n'est supprimé) ; le motif est interne et n'est jamais montré au club.
+ */
+export async function setClubSuspensionAction(academyId: string, suspended: boolean, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("setClubSuspension", async () => {
+    const user = await authorizeUser();
+    if (!(await isPlatformAdminUser(user))) notFound();
+    const id = uuidField.safeParse(academyId);
+    if (!id.success) throw new AppError("validation");
+    const reason = String(formData.get("reason") ?? "").trim().slice(0, 200);
+    await withUser(user, (tx) => suspension.setClubSuspension(tx, id.data, suspended, suspended && reason ? reason : null));
+    revalidatePath(`/admin/clubs/${id.data}`);
+    revalidatePath("/admin");
+    return { ok: true, data: null, message: suspended ? "Club suspendu : ses membres n'y ont plus accès." : "Club réactivé." };
   });
 }

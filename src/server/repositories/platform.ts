@@ -36,6 +36,7 @@ export interface PlatformClub {
   /** « AAAA-MM-JJ » */
   renewsOn: string | null;
   priceCents: number | null;
+  suspendedAt: Date | null;
 }
 
 /** Chiffres globaux de la plateforme. Réservé à l'administrateur de la plateforme (la fonction refuse tout autre compte). */
@@ -54,7 +55,8 @@ export async function platformClubs(tx: Tx): Promise<PlatformClub[]> {
     select id, name, timezone, created_at as "createdAt", owner_email as "ownerEmail", members, staff,
            sessions_30d as "sessions30d", events_7d as "events7d", events_30d as "events30d", last_event_at as "lastEventAt", disabled_features as "disabledFeatures",
            events_prev_30d as "eventsPrev30d",
-           plan_name as "planName", subscription_status as "subscriptionStatus", renews_on::text as "renewsOn", price_cents as "priceCents"
+           plan_name as "planName", subscription_status as "subscriptionStatus", renews_on::text as "renewsOn", price_cents as "priceCents",
+           suspended_at as "suspendedAt"
     from public.admin_list_clubs()`;
 }
 

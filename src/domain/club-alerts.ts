@@ -64,10 +64,11 @@ export type AnyAlert = ClubAlert | BillingAlert;
 
 /** Tout ce qui demande l'attention de l'administrateur pour un club : usage d'abord, puis facturation. */
 export function allClubAlerts(
-  c: ClubActivity & { planName: string | null; subscriptionStatus: string | null; renewsOn: string | null; priceCents: number | null },
+  c: ClubActivity & { planName: string | null; subscriptionStatus: string | null; renewsOn: string | null; priceCents: number | null; suspendedAt?: Date | null },
   now: Date,
   today: string,
 ): AnyAlert[] {
+  if (c.suspendedAt) return []; // suspendu : plus d'usage par construction, rien à surveiller
   const billing: ClubBilling = {
     planName: c.planName,
     subscriptionStatus: isSubscriptionStatus(c.subscriptionStatus) ? c.subscriptionStatus : null,

@@ -8,11 +8,12 @@ import { SUBSCRIPTION_STATUS_IDS, SUBSCRIPTION_STATUSES } from "@/domain/billing
 import { ActionForm, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
 import { formatDateTime, localDate } from "@/domain/dates";
 import { FEATURE_IDS, FEATURES } from "@/domain/features";
-import { setClubFeatureAction, setClubSubscriptionAction } from "@/server/actions/platform";
+import { setClubFeatureAction, setClubSubscriptionAction, setClubSuspensionAction } from "@/server/actions/platform";
 import { requirePlatformAdmin } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { clubFeatures } from "@/server/repositories/features";
 import { clubSubscription } from "@/server/repositories/subscriptions";
+import { clubSuspension } from "@/server/repositories/suspension";
 import { platformClubs, usageSeries } from "@/server/repositories/platform";
 import { UsageChart } from "../../usage-chart";
 import { z } from "zod";
@@ -24,7 +25,8 @@ export default async function AdminClubPage({ params }: { params: Promise<{ acad
   const { academyId } = await params;
   if (!z.uuid().safeParse(academyId).success) notFound();
   const user = await requirePlatformAdmin(`/admin/clubs/${academyId}`);
-  const { club, states, series, subscription } = await withUser(user, async (tx) => ({
+  const { club, states, series, subscription, suspension } = await withUser(user, async (tx) => ({
+    suspension: await clubSuspension(tx, academyId),
     series: await usageSeries(tx, academyId),
     subscription: await clubSubscription(tx, academyId),
     club: (await platformClubs(tx)).find((c) => c.id === academyId) ?? null,
@@ -42,6 +44,11 @@ export default async function AdminClubPage({ params }: { params: Promise<{ acad
         description={`Créé le ${formatDateTime(club.createdAt, "Europe/Paris").split(" ")[0]} · contact ${club.ownerEmail ?? "inconnu"}`}
       />
 
+      {suspension && (
+        <Alert tone="danger" title="Club suspendu">
+          Depuis le {formatDateTime(suspension.suspendedAt, "Europe/Paris").split(" ")[0]}. Ses membres n&apos;ont plus accès à rien ; leurs données sont conservées.
+        </Alert>
+      )}
       {alerts.map((a) => (
         <Alert key={a.kind} tone={a.level === "danger" ? "danger" : "warning"} title="À surveiller">
           {a.text}
@@ -77,6 +84,20 @@ export default async function AdminClubPage({ params }: { params: Promise<{ acad
             <SubmitButton pendingLabel="Enregistrement…">Enregistrer la formule</SubmitButton>
           </div>
         </ActionForm>
+      </Card>
+
+      <Card className="mb-6" title="Suspension" description="Ferme l'accès du club à tous ses membres, par exemple pour un impayé. Rien n'est supprimé : la réactivation rend tout tel quel. Le motif reste interne.">
+        {suspension ? (
+          <div className="space-y-3">
+            <p className="text-sm text-ink-soft">{suspension.reason ? `Motif : ${suspension.reason}` : "Aucun motif noté."}</p>
+            <InlineAction action={setClubSuspensionAction.bind(null, academyId, false)} label="Réactiver le club" pendingLabel="Réactivation…" variant="primary" />
+          </div>
+        ) : (
+          <ActionForm action={setClubSuspensionAction.bind(null, academyId, true)} className="flex flex-wrap items-end gap-3">
+            <TextField label="Motif (interne)" name="reason" maxLength={200} className="min-w-64 flex-1" />
+            <SubmitButton variant="danger" pendingLabel="Suspension…">Suspendre l&apos;accès</SubmitButton>
+          </ActionForm>
+        )}
       </Card>
 
       <Card title="Fonctionnalités" description="Un module coupé disparaît de la navigation du club et est refusé par le serveur et par la base. Les données déjà saisies sont conservées. Le club voit la modification dans son journal d'activité.">
