@@ -2,6 +2,8 @@
  * Clubs à surveiller, calculés à partir des compteurs d'usage (aucune donnée de membre).
  * Un club de moins de 14 jours est « en démarrage » : on ne l'alerte pas encore.
  */
+import { billingAlerts, isSubscriptionStatus, type BillingAlert, type ClubBilling } from "./billing";
+
 export interface ClubActivity {
   createdAt: Date;
   events30d: number;
@@ -57,3 +59,32 @@ export function lastThirteenMonths(rows: { month: string; n: number }[], now: Da
   }
   return out;
 }
+
+export type AnyAlert = ClubAlert | BillingAlert;
+
+/** Tout ce qui demande l'attention de l'administrateur pour un club : usage d'abord, puis facturation. */
+export function allClubAlerts(
+  c: ClubActivity & { planName: string | null; subscriptionStatus: string | null; renewsOn: string | null; priceCents: number | null },
+  now: Date,
+  today: string,
+): AnyAlert[] {
+  const billing: ClubBilling = {
+    planName: c.planName,
+    subscriptionStatus: isSubscriptionStatus(c.subscriptionStatus) ? c.subscriptionStatus : null,
+    renewsOn: c.renewsOn,
+    priceCents: c.priceCents,
+  };
+  const ageDays = Math.floor((now.getTime() - c.createdAt.getTime()) / DAY);
+  return [...clubAlerts(c, now), ...billingAlerts(billing, today, ageDays)];
+}
+
+/** Libellé court de l'étiquette d'une alerte. */
+export const ALERT_BADGES: Record<AnyAlert["kind"], string> = {
+  never: "Inactif",
+  silent: "Inactif",
+  drop: "En baisse",
+  overdue: "Paiement",
+  expired: "Échéance",
+  renewal_soon: "Échéance",
+  no_plan: "Formule",
+};

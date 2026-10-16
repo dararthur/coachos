@@ -4,7 +4,7 @@ import path from "node:path";
 import postgres from "postgres";
 import type { Browser, Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { ADMIN_EMAIL, approveClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, unlockAdmin, waitForMail } from "./support/helpers";
+import { ADMIN_EMAIL, approveClub, expect, logIn, mailsTo, parisToday, PASSWORD, randomIp, test, uniqueEmail, unlockAdmin, waitForMail } from "./support/helpers";
 
 const NO_CODE_MESSAGE = /Si cette adresse peut créer un compte/;
 
@@ -151,6 +151,25 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await row.getByRole("link", { name: "Gracie Test Club" }).click();
     await expect(admin.getByRole("heading", { name: "Gracie Test Club" })).toBeVisible();
     await expect(admin.getByRole("heading", { name: "Usage par mois" })).toBeVisible();
+    // Formule et facturation : enregistrée à la main, une échéance dépassée remonte dans les clubs à surveiller.
+    await admin.locator('input[name="planName"]').fill("Club");
+    await admin.locator('select[name="status"]').selectOption("active");
+    await admin.locator('input[name="renewsOn"]').fill(parisToday(-3));
+    await admin.locator('input[name="price"]').fill("49");
+    await admin.locator('textarea[name="note"]').fill("Facture envoyée");
+    await admin.getByRole("button", { name: "Enregistrer la formule" }).click();
+    await expect(admin.getByText("Formule enregistrée.")).toBeVisible();
+    await admin.reload();
+    await expect(admin.locator('input[name="price"]')).toHaveValue("49");
+    await expect(admin.getByText("Échéance dépassée depuis 3 jours")).toBeVisible();
+    await admin.locator('input[name="price"]').fill("abc");
+    await admin.getByRole("button", { name: "Enregistrer la formule" }).click();
+    await expect(admin.getByText("Montant invalide.")).toBeVisible();
+    await admin.goto("/admin");
+    const watched = admin.getByTestId("watch-item").filter({ hasText: "Gracie Test Club" });
+    await expect(watched).toContainText("Échéance dépassée depuis 3 jours");
+    await expect(admin.getByTestId("platform-club").filter({ hasText: "Gracie Test Club" })).toContainText("Club");
+    await admin.getByRole("link", { name: "Gracie Test Club" }).first().click();
     const news = admin.getByTestId("feature-news");
     await expect(news).toContainText("Activé");
     const clubHome = new URL(founder.url()).pathname.replace(/\/dashboard.*$/, "");

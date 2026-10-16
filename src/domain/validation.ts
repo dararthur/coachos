@@ -1,3 +1,4 @@
+import { SUBSCRIPTION_STATUS_IDS, parseEuros } from "./billing";
 import { z } from "zod";
 import { addDays, daysBetween, isValidTimeZone, parseCalendarDate } from "./dates";
 import { isMinorBirthDate, todayIso } from "./minors";
@@ -337,3 +338,22 @@ export const clubRequestSchema = academySchema.extend({
 
 /** Création effective du club une fois la demande approuvée : le demandeur peut corriger le nom, le fuseau et la devise. */
 export const claimClubSchema = academySchema.extend({ requestId: uuidField });
+
+// --- Formule et facturation d'un club (console de l'administrateur de la plateforme) -------------
+export const subscriptionSchema = z
+  .object({
+    planName: z.string({ error: "Nom de la formule requis." }).trim().min(1, "Nom de la formule requis.").max(60, "60 caractères maximum.").refine((v) => !CONTROL_CHARS.test(v), "Caractères non autorisés."),
+    status: z.enum(SUBSCRIPTION_STATUS_IDS as [string, ...string[]], { error: "État inconnu." }),
+    startsOn: optional(dateField),
+    renewsOn: optional(dateField),
+    price: z.string().max(12, "Montant trop long.").transform((v, ctx) => {
+      const cents = parseEuros(v);
+      if (cents === undefined) {
+        ctx.addIssue({ code: "custom", message: "Montant invalide. Exemple : 49 ou 29,90." });
+        return z.NEVER;
+      }
+      return cents;
+    }),
+    note: optional(z.string().max(500, "500 caractères maximum.").refine((v) => !CONTROL_CHARS.test(v.replace(/[\n\r\t]/g, " ")), "Caractères non autorisés.")),
+  })
+  .refine((v) => !v.startsOn || !v.renewsOn || v.renewsOn >= v.startsOn, { path: ["renewsOn"], message: "L'échéance doit suivre le début." });

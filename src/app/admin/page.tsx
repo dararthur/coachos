@@ -3,8 +3,9 @@ import Link from "next/link";
 import { AdminFrame } from "@/components/layout/admin-frame";
 import { Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { UsageChart } from "./usage-chart";
-import { formatDateTime } from "@/domain/dates";
-import { clubAlerts, lastThirteenMonths } from "@/domain/club-alerts";
+import { formatDateTime, localDate } from "@/domain/dates";
+import { ALERT_BADGES, allClubAlerts, lastThirteenMonths } from "@/domain/club-alerts";
+import { euros, isSubscriptionStatus, monthlyRevenueCents, SUBSCRIPTION_STATUSES } from "@/domain/billing";
 import { FEATURES, isFeature } from "@/domain/features";
 import { JOBS, JOB_IDS, METRIC_LABELS, jobHealth, sinceLabel, type JobState, type Metric } from "@/domain/monitoring";
 import { requirePlatformAdmin } from "@/server/auth/platform-admin";
@@ -51,10 +52,12 @@ export default async function AdminPage() {
     series: await usageSeries(tx),
   }));
   const now = Date.now();
+  const today = localDate(new Date(now), "Europe/Paris");
   const watch = clubs
-    .map((c) => ({ club: c, alerts: clubAlerts(c, new Date(now)) }))
+    .map((c) => ({ club: c, alerts: allClubAlerts(c, new Date(now), today) }))
     .filter((x) => x.alerts.length > 0)
-    .sort((a, b) => Number(b.alerts[0]!.level === "danger") - Number(a.alerts[0]!.level === "danger"));
+    .sort((a, b) => Number(b.alerts.some((x) => x.level === "danger")) - Number(a.alerts.some((x) => x.level === "danger")));
+  const revenue = monthlyRevenueCents(clubs.map((c) => ({ subscriptionStatus: isSubscriptionStatus(c.subscriptionStatus) ? c.subscriptionStatus : null, priceCents: c.priceCents })));
   return (
     <AdminFrame current="overview">
       <PageHeader title="Administration de la plateforme" description="Vue d'ensemble des clubs et de l'usage. Aucune donnée de membre n'est affichée ici : seulement des compteurs." />
@@ -66,7 +69,12 @@ export default async function AdminPage() {
         <Stat label="Demandes en attente" value={overview.pendingRequests} href="/admin/club-requests" />
       </StatGrid>
 
-      <Card className="mb-6" title="Clubs à surveiller" description="Aucun usage depuis 14 jours, ou usage en baisse de plus de moitié sur 30 jours. Un club de moins de 14 jours est en démarrage.">
+      <StatGrid cols={2} className="mb-6">
+        <Stat label="Revenu mensuel indicatif" value={euros(revenue)} hint="Somme des formules actives" />
+        <Stat label="Formules à suivre" value={clubs.filter((c) => c.subscriptionStatus === "overdue" || c.subscriptionStatus === "trial").length} hint="Essais et retards de paiement" />
+      </StatGrid>
+
+      <Card className="mb-6" title="Clubs à surveiller" description="Aucun usage depuis 14 jours, usage en baisse de plus de moitié sur 30 jours, paiement en retard ou échéance de formule proche ou dépassée. Un club de moins de 14 jours est en démarrage.">
         {watch.length === 0 ? (
           <p className="text-sm text-ink-soft" data-testid="watch-empty">Aucun club à surveiller.</p>
         ) : (
@@ -75,9 +83,15 @@ export default async function AdminPage() {
               <li key={club.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2" data-testid="watch-item">
                 <div className="min-w-0">
                   <Link href={`/admin/clubs/${club.id}`} className="font-semibold">{club.name}</Link>
-                  <p className="text-xs text-ink-soft">{alerts[0]!.text}</p>
+                  {alerts.map((a) => (
+                    <p key={a.kind} className="text-xs text-ink-soft">{a.text}</p>
+                  ))}
                 </div>
-                <Badge tone={alerts[0]!.level}>{alerts[0]!.level === "danger" ? "Inactif" : "En baisse"}</Badge>
+                <span className="flex flex-wrap gap-1">
+                  {alerts.map((a) => (
+                    <Badge key={a.kind} tone={a.level}>{ALERT_BADGES[a.kind]}</Badge>
+                  ))}
+                </span>
               </li>
             ))}
           </ul>
@@ -175,7 +189,7 @@ export default async function AdminPage() {
           Les clubs apparaissent ici dès qu&apos;une demande approuvée a été réclamée.
         </EmptyState>
       ) : (
-        <DataTable caption="Liste des clubs" headers={["Club", "Activité", "Membres", "Équipe", "Séances (30 j)", "Usage (7 j)", "Dernier usage", "Modules coupés", "Contact", "Créé le"]} numeric={[2, 3, 4, 5]}>
+        <DataTable caption="Liste des clubs" headers={["Club", "Formule", "Activité", "Membres", "Équipe", "Séances (30 j)", "Usage (7 j)", "Dernier usage", "Modules coupés", "Contact", "Créé le"]} numeric={[3, 4, 5, 6]}>
           {clubs.map((c) => {
             const a = activity(c.events7d, c.events30d);
             const idle = c.lastEventAt ? Math.floor((now - c.lastEventAt.getTime()) / DAY) : null;
@@ -184,6 +198,16 @@ export default async function AdminPage() {
                 <th scope="row" className="px-4 py-3 text-left font-bold">
                   <Link href={`/admin/clubs/${c.id}`}>{c.name}</Link>
                 </th>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {c.planName ? (
+                    <>
+                      {c.planName}{" "}
+                      {isSubscriptionStatus(c.subscriptionStatus) && <Badge tone={c.subscriptionStatus === "active" ? "success" : c.subscriptionStatus === "overdue" ? "danger" : "neutral"}>{SUBSCRIPTION_STATUSES[c.subscriptionStatus]}</Badge>}
+                    </>
+                  ) : (
+                    <span className="text-ink-soft">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">
                   <Badge tone={a.tone}>{a.label}</Badge>
                 </td>

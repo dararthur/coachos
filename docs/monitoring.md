@@ -69,6 +69,16 @@ Migration 20261016001300 (lecture seule, aucune donnée de plus). Sur la vue d'e
 
 Un club de moins de 14 jours est « en démarrage » et n'est jamais signalé. Règles dans `src/domain/club-alerts.ts` (testées). La courbe **Usage par mois** (13 mois, tous clubs, puis club par club sur sa page) additionne les pointages QR, les réservations et les feuilles d'appel ; elle s'arrête à 13 mois, comme la rétention de `usage_events`.
 
+### Formule et facturation
+
+Sur la page d'un club (`/admin/clubs/<id>`), carte **Formule et facturation** (migration 20261016001400, table `club_subscriptions`) : nom de la formule (libre), état (*Essai*, *Actif*, *En retard de paiement*, *Résilié*), début, échéance, prix mensuel indicatif et note interne.
+
+- **Le paiement reste hors application** (virement, facture) : on note ici où en est chaque club. Aucune facture n'est émise par l'application.
+- **Interne à la plateforme** : le club ne voit rien de ceci, aucun compte ne lit la table, et l'enregistrement n'est pas tracé dans le journal du club (contrairement aux modules).
+- Alertes (`src/domain/billing.ts`, testées) : paiement en retard ; échéance dépassée ; échéance dans 14 jours ou moins ; absence de formule après les 14 premiers jours. Un club résilié n'alerte plus. Elles s'ajoutent à celles d'usage dans **Clubs à surveiller**.
+- La vue d'ensemble affiche le **revenu mensuel indicatif** : somme des prix des clubs *Actifs* uniquement (hors essais, retards et résiliations) et la liste des formules à suivre.
+- Le prix saisi en euros (« 49 » ou « 29,90 ») est conservé en centimes.
+
 ### Double authentification par e-mail
 
 L'administration exige, après le mot de passe, un **code à 6 chiffres envoyé à l'adresse du compte** (`PLATFORM_ADMIN_EMAIL`). Sans lui, toute page `/admin/*` renvoie vers `/admin/security`, et toute action d'administration est refusée (le contrôle est dans `isPlatformAdminUser`, utilisé par les pages et les actions).

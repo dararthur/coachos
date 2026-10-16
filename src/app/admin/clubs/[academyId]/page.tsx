@@ -3,13 +3,16 @@ import { notFound } from "next/navigation";
 import { AdminFrame } from "@/components/layout/admin-frame";
 import { InlineAction } from "@/components/ui/confirm";
 import { Alert, BackLink, Badge, Card, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
-import { clubAlerts, lastThirteenMonths } from "@/domain/club-alerts";
-import { formatDateTime } from "@/domain/dates";
+import { allClubAlerts, lastThirteenMonths } from "@/domain/club-alerts";
+import { SUBSCRIPTION_STATUS_IDS, SUBSCRIPTION_STATUSES } from "@/domain/billing";
+import { ActionForm, SelectField, SubmitButton, TextAreaField, TextField } from "@/components/ui/form";
+import { formatDateTime, localDate } from "@/domain/dates";
 import { FEATURE_IDS, FEATURES } from "@/domain/features";
-import { setClubFeatureAction } from "@/server/actions/platform";
+import { setClubFeatureAction, setClubSubscriptionAction } from "@/server/actions/platform";
 import { requirePlatformAdmin } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { clubFeatures } from "@/server/repositories/features";
+import { clubSubscription } from "@/server/repositories/subscriptions";
 import { platformClubs, usageSeries } from "@/server/repositories/platform";
 import { UsageChart } from "../../usage-chart";
 import { z } from "zod";
@@ -21,15 +24,16 @@ export default async function AdminClubPage({ params }: { params: Promise<{ acad
   const { academyId } = await params;
   if (!z.uuid().safeParse(academyId).success) notFound();
   const user = await requirePlatformAdmin(`/admin/clubs/${academyId}`);
-  const { club, states, series } = await withUser(user, async (tx) => ({
+  const { club, states, series, subscription } = await withUser(user, async (tx) => ({
     series: await usageSeries(tx, academyId),
+    subscription: await clubSubscription(tx, academyId),
     club: (await platformClubs(tx)).find((c) => c.id === academyId) ?? null,
     states: await clubFeatures(tx, academyId),
   }));
   if (!club) notFound();
   const enabled = new Map(states.map((s) => [s.feature, s.enabled]));
   const now = new Date();
-  const alerts = clubAlerts(club, now);
+  const alerts = allClubAlerts(club, now, localDate(now, "Europe/Paris"));
   return (
     <AdminFrame current="overview">
       <PageHeader
@@ -53,6 +57,26 @@ export default async function AdminClubPage({ params }: { params: Promise<{ acad
 
       <Card className="mb-6" title="Usage par mois" description="13 derniers mois : pointages par QR, réservations et feuilles d'appel. Le mois en cours est incomplet.">
         <UsageChart points={lastThirteenMonths(series, now)} />
+      </Card>
+
+      <Card className="mb-6" title="Formule et facturation" description="Interne à la plateforme : le club ne voit rien de ceci. Le paiement se fait hors application ; on note ici où en est chaque club.">
+        <ActionForm action={setClubSubscriptionAction.bind(null, academyId)} className="grid gap-4 sm:grid-cols-2">
+          <TextField label="Formule" name="planName" required maxLength={60} defaultValue={subscription?.planName ?? ""} hint="Libre : Pilote, Club, Pro…" />
+          <SelectField label="État" name="status" required defaultValue={subscription?.status ?? "trial"}>
+            {SUBSCRIPTION_STATUS_IDS.map((s) => (
+              <option key={s} value={s}>
+                {SUBSCRIPTION_STATUSES[s]}
+              </option>
+            ))}
+          </SelectField>
+          <TextField label="Début" name="startsOn" type="date" defaultValue={subscription?.startsOn ?? ""} />
+          <TextField label="Échéance" name="renewsOn" type="date" defaultValue={subscription?.renewsOn ?? ""} hint="Prochain renouvellement ou fin d'essai." />
+          <TextField label="Prix mensuel (€)" name="price" inputMode="decimal" defaultValue={subscription?.priceCents == null ? "" : String(subscription.priceCents / 100).replace(".", ",")} hint="Indicatif, hors taxes. Vide si gratuit ou inconnu." />
+          <TextAreaField label="Note interne" name="note" rows={3} maxLength={500} defaultValue={subscription?.note ?? ""} className="sm:col-span-2" />
+          <div className="sm:col-span-2">
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer la formule</SubmitButton>
+          </div>
+        </ActionForm>
       </Card>
 
       <Card title="Fonctionnalités" description="Un module coupé disparaît de la navigation du club et est refusé par le serveur et par la base. Les données déjà saisies sont conservées. Le club voit la modification dans son journal d'activité.">
