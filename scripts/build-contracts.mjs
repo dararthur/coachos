@@ -1,6 +1,7 @@
 // Génère les modèles de contrats Matnexa au format Word (.docx) dans docs/contrats/ :
 //   - contrat-prestation-matnexa.docx        contrat d'abonnement entre l'éditeur et un club
 //   - accord-traitement-donnees-matnexa.docx accord de sous-traitance des données (article 28 du RGPD), annexe du contrat
+//   - contrat-site-web.docx                  création et maintenance d'un site web pour un client (l'éditeur agit alors comme prestataire)
 //
 // Utilisation : on ouvre le modèle dans Word, on remplit les zones JAUNES entre crochets (une fois par club), on enregistre sous un
 // autre nom, on envoie. Les modèles eux-mêmes ne sont jamais modifiés par club.
@@ -124,12 +125,12 @@ const partieEditeur = () =>
     ["Courriel de contact", EDITEUR.email],
     ["Service", "Matnexa — application app.matnexa.fr et site www.matnexa.fr"],
   ]);
-const signatures = () =>
+const signatures = (gauche = "Pour le Club", droite = "Pour l'Éditeur") =>
   new Table({
     width: { size: WIDTH, type: WidthType.DXA },
     columnWidths: [WIDTH / 2, WIDTH / 2].map(Math.round),
     rows: [
-      new TableRow({ children: ["Pour le Club", "Pour l'Éditeur"].map((t) => cell(t, Math.round(WIDTH / 2), { bold: true, shade: "ECEEF0" })) }),
+      new TableRow({ children: [gauche, droite].map((t) => cell(t, Math.round(WIDTH / 2), { bold: true, shade: "ECEEF0" })) }),
       new TableRow({
         cantSplit: true,
         height: { value: 1700, rule: "atLeast" },
@@ -366,8 +367,152 @@ function accordTraitement() {
   ]);
 }
 
+// =====================================================================================================================================
+// 3. CONTRAT DE CRÉATION ET DE MAINTENANCE D'UN SITE WEB (l'éditeur agit comme prestataire pour un client)
+// =====================================================================================================================================
+const partieClient = () =>
+  grid([30, 70], null, [
+    ["Dénomination", "{{Nom de l'association ou de la société}}"],
+    ["Forme juridique", "{{Association loi 1901 / SAS / SARL / entreprise individuelle / autre}}"],
+    ["Adresse du siège", "{{Adresse complète}}"],
+    ["Identifiant", "{{N° RNA ou W… pour une association — SIREN pour une société}}"],
+    ["Représenté(e) par", "{{Prénom NOM}}, agissant en qualité de {{Président(e) / Gérant(e) / autre}}"],
+    ["Courriel de contact", "{{adresse e-mail}}"],
+    ["Interlocuteur pour le projet", "{{Prénom NOM, téléphone, e-mail}}"],
+  ]);
+const partiePrestataire = () =>
+  grid([30, 70], null, [
+    ["Nom", `**${EDITEUR.nom}**, ${EDITEUR.statut}`],
+    ["Adresse", EDITEUR.adresse || "{{Adresse postale du prestataire}}"],
+    ["Immatriculation", EDITEUR.siret || "{{SIRET, si applicable — sinon supprimer cette ligne}}"],
+    ["Courriel de contact", EDITEUR.email],
+  ]);
+
+function contratSiteWeb() {
+  return doc("Création et maintenance d'un site web", [
+    ...titre("Contrat de création et de maintenance de site web", "Développement, mise en ligne et entretien"),
+    guide([
+      "1. Remplir toutes les zones **jaunes** entre crochets, puis retirer la surbrillance (Accueil › Couleur de surbrillance › Aucune couleur).",
+      "2. Choisir, pour chaque option « / », celle qui s'applique et supprimer les autres. Supprimer le Titre 2 (maintenance) ou le Titre 1 (création) si le contrat ne couvre que l'un des deux.",
+      "3. Remplir **l'annexe 1 (cahier des charges)** avec soin : c'est elle qui fixe ce qui est dû et évite les litiges. Remplir l'annexe 2 (planning et prix).",
+      "4. Supprimer ce cadre, enregistrer sous un nouveau nom (ex. « Site – Nom du client ») et ne jamais enregistrer par-dessus le modèle.",
+      "5. Si le prestataire héberge le site ou accède à des données de visiteurs ou d'adhérents du client, faire aussi signer l'**accord de traitement des données** (modèle distinct).",
+      "6. Texte rédigé sans relecture juridique : à faire relire par un juriste avant la première signature, surtout les articles 9 (propriété intellectuelle), 14 (responsabilité) et 15 (résiliation).",
+    ]),
+    space(),
+    h2("Entre les soussignés"),
+    p("**Le Client**", { after: 60, keepNext: true }),
+    partieClient(),
+    p("ci-après « le **Client** »,", { before: 100, after: 120, align: AlignmentType.LEFT }),
+    p("**Le Prestataire**", { after: 60, keepNext: true }),
+    partiePrestataire(),
+    p("ci-après « le **Prestataire** ».", { before: 100, after: 120, align: AlignmentType.LEFT }),
+    p("Le Client et le Prestataire sont ensemble « les Parties »."),
+
+    art(1, "Objet"),
+    p("Le Client confie au Prestataire, qui l'accepte, {{la conception et le développement de son site web / la maintenance de son site web existant / la conception, le développement puis la maintenance de son site web}} à l'adresse {{www.exemple.fr}} (« le Site »), selon le cahier des charges de l'annexe 1."),
+
+    art(2, "Documents contractuels"),
+    p("Le contrat est formé du présent document et de ses annexes : annexe 1 (cahier des charges) et annexe 2 (planning et prix). En cas de contradiction, le présent document prévaut sur les annexes, sauf précision expresse de l'annexe 1 sur le périmètre fonctionnel."),
+
+    h2("Titre 1 — Création du Site"),
+    art(3, "Déroulement de la prestation"),
+    p("Le Prestataire réalise le Site en {{trois}} étapes : (1) cadrage et maquettes ; (2) développement et intégration des contenus ; (3) recette et mise en ligne. Le planning figure à l'annexe 2. Le Prestataire s'organise librement pour exécuter la prestation et reste indépendant : il n'existe aucun lien de subordination entre les Parties."),
+    p("Les délais sont indicatifs et courent à compter de la réception de l'acompte et des éléments nécessaires fournis par le Client. Ils sont prolongés, sans pénalité, de la durée de tout retard du Client à fournir les contenus, accès ou validations demandés."),
+
+    art(4, "Collaboration du Client"),
+    p("Le Client s'engage à : désigner un interlocuteur unique habilité à valider ; fournir à temps les textes, images, logos, documents et accès nécessaires, dont il garantit qu'il détient les droits ; répondre aux demandes de validation sous {{5}} jours ouvrés ; respecter les formats demandés. Le Client est seul responsable du contenu qu'il fournit ou publie (droit d'auteur, droit à l'image, mentions légales, loyauté des informations)."),
+
+    art(5, "Recette"),
+    p("À la fin du développement, le Prestataire met le Site à disposition du Client sur un environnement de test. Le Client dispose de {{10}} jours pour le tester et notifier par écrit les anomalies par rapport au cahier des charges. Le Prestataire les corrige dans un délai raisonnable. Le Site est réputé accepté à l'expiration de ce délai sans réserve, ou à sa mise en ligne par le Client. Les demandes qui excèdent le cahier des charges sont traitées comme des évolutions (article 7)."),
+
+    art(6, "Garantie"),
+    p("Pendant {{3}} mois après la mise en ligne, le Prestataire corrige gratuitement les anomalies qui rendent le Site non conforme au cahier des charges, à condition qu'elles lui soient signalées par écrit et que le Site n'ait pas été modifié par un tiers. La garantie ne couvre ni les évolutions, ni les pannes dues à l'hébergeur, à un fournisseur tiers, à une mise à jour imposée par un service externe ou à un usage non conforme."),
+
+    art(7, "Modifications du périmètre"),
+    p("Toute demande hors cahier des charges (fonction, page, refonte graphique, changement de contenu après validation) fait l'objet d'un devis écrit du Prestataire, accepté avant exécution. Le tarif des travaux supplémentaires est de {{montant}} € hors taxes par {{heure / journée}}, sauf devis contraire."),
+
+    h2("Titre 2 — Maintenance du Site"),
+    art(8, "Contenu de la maintenance"),
+    p("À compter de la mise en ligne, et sauf renonciation du Client à la maintenance à l'annexe 2, le Prestataire assure :"),
+    bullet("la **maintenance corrective** : correction des anomalies de fonctionnement du Site ;"),
+    bullet("la **maintenance de sécurité** : application des mises à jour de sécurité des composants du Site, surveillance de sa disponibilité, sauvegardes {{quotidiennes / hebdomadaires}} conservées {{7 / 30}} jours ;"),
+    bullet("l'**assistance** par courriel à {{contact@…}}, les jours ouvrés, avec une réponse sous {{2}} jours ouvrés ;"),
+    bullet("jusqu'à {{2}} heures par mois de **petites évolutions** (modification de textes, ajout d'une page ou d'une image), non reportables d'un mois sur l'autre."),
+    p("Les anomalies bloquantes (Site inaccessible) sont traitées en priorité, dans un délai visé de {{1}} jour ouvré après signalement. Ces délais sont des objectifs et non des garanties. Sont exclus : les évolutions importantes (devis, article 7), la refonte, la formation, la rédaction de contenu, la rémunération des services tiers (nom de domaine, hébergement, outils payants) et les interventions rendues nécessaires par une faute du Client ou d'un tiers."),
+    p("Le Prestataire est tenu d'une obligation de moyens. Il ne garantit pas une disponibilité continue du Site, qui dépend en partie de services tiers."),
+
+    art(9, "Propriété intellectuelle"),
+    p("Sous réserve du paiement intégral du prix de création, le Prestataire cède au Client, à titre non exclusif {{ou exclusif}}, pour la durée de protection des droits et pour le monde entier, les droits d'exploitation sur les éléments spécifiquement créés pour le Site (maquettes, textes rédigés par lui, code propre au Site) : droit de les reproduire, représenter, modifier et adapter pour les besoins du Site. Jusqu'au paiement intégral, le Client ne dispose que d'un droit d'usage du Site."),
+    p("Restent la propriété du Prestataire ou de leurs titulaires, et ne sont pas cédés : les outils, bibliothèques, frameworks et composants préexistants du Prestataire, ainsi que les composants libres ou sous licence tiers, utilisés selon leurs licences (le Prestataire en fournit la liste sur demande). Le Client reçoit sur ces éléments un droit d'usage pour le Site. Le Prestataire peut réutiliser son savoir-faire général et ses composants génériques pour d'autres projets, sans reprendre les contenus ni les éléments distinctifs du Client."),
+    p("Sauf opposition écrite du Client, le Prestataire peut citer le Client et présenter le Site comme référence (nom, capture d'écran, lien)."),
+
+    art(10, "Hébergement, nom de domaine et accès"),
+    p("{{Option A : Le Site est hébergé par le Prestataire chez OVHcloud (France). Le coût d'hébergement est inclus dans le forfait de maintenance. / Option B : Le Client souscrit lui-même son hébergement et son nom de domaine, et en donne l'accès au Prestataire pour la durée de sa mission.}} Le nom de domaine est enregistré au nom du Client, qui en reste le titulaire et responsable du renouvellement. Les accès confiés au Prestataire sont utilisés pour les seuls besoins de la mission et restitués à son terme."),
+
+    art(11, "Données personnelles"),
+    p("Le Client est responsable des données personnelles collectées par le Site (formulaires, comptes, statistiques) : il lui appartient de rédiger les mentions légales et la politique de confidentialité, de gérer l'information des visiteurs et, le cas échéant, leur consentement aux cookies. Le Prestataire prévoit dans le Site les dispositifs techniques convenus à l'annexe 1 pour l'y aider. Lorsque le Prestataire héberge le Site ou accède aux données collectées, il agit en sous-traitant du Client et les Parties signent l'**accord de traitement des données** (article 28 du RGPD) joint en annexe {{3 / sans objet}}."),
+
+    h2("Dispositions communes"),
+    art(12, "Prix et paiement"),
+    p("Les prix, échéances et modalités de paiement sont fixés à l'annexe 2. Les factures sont payables à {{30}} jours à compter de leur date, par {{virement / autre}}. En cas de retard, des pénalités égales à trois fois le taux d'intérêt légal sont exigibles, ainsi qu'une indemnité forfaitaire de recouvrement de 40 € lorsque le Client agit en qualité de professionnel. Les sommes versées ne sont pas remboursables, sauf manquement du Prestataire non corrigé après mise en demeure. {{TVA au taux de 20 % en sus / TVA non applicable, art. 293 B du CGI.}}"),
+    p("Le Prestataire peut suspendre sa prestation, y compris la maintenance, {{15}} jours après une mise en demeure de payer restée sans effet."),
+
+    art(13, "Confidentialité"),
+    p("Chaque Partie garde confidentielles les informations non publiques de l'autre dont elle a connaissance du fait du contrat et ne les utilise que pour l'exécuter, pendant sa durée et {{2}} ans après son terme."),
+
+    art(14, "Responsabilité"),
+    p("Chaque Partie répond des dommages directs causés par sa faute. La responsabilité totale du Prestataire, tous préjudices confondus, est limitée au montant des sommes effectivement perçues au titre du contrat au cours des douze mois précédant le fait générateur. Il ne répond pas des dommages indirects (perte de chiffre d'affaires, de clientèle, de référencement, d'image), ni des contenus fournis par le Client, ni des défaillances de services tiers. Ces limites ne s'appliquent pas en cas de faute lourde ou dolosive, de dommage corporel, ou lorsque la loi l'interdit. Aucune Partie n'est responsable d'un manquement dû à un cas de force majeure (article 1218 du Code civil)."),
+
+    art(15, "Durée et résiliation"),
+    p("**Création** : le contrat prend effet à sa signature et prend fin à l'acceptation du Site et au paiement du solde. **Maintenance** : elle débute à la mise en ligne pour {{12 mois}}, puis se renouvelle par tacite reconduction pour des périodes de {{12 mois}}, sauf résiliation par l'une des Parties notifiée par courriel avec accusé de réception au moins {{30}} jours avant l'échéance."),
+    p("Chaque Partie peut résilier le contrat de plein droit en cas de manquement grave de l'autre non réparé {{30}} jours après mise en demeure. En cas de résiliation avant la fin de la création, le Client paie les travaux effectués jusqu'à la date de résiliation, sur la base de l'avancement constaté, l'acompte restant acquis au Prestataire dans cette limite."),
+    p("À la fin du contrat, le Prestataire remet au Client, sur demande et sous {{15}} jours, les fichiers sources du Site cédés à l'article 9, les contenus et une copie de la base de données, puis supprime les données du Client qu'il héberge, sauf obligation légale de les conserver. Les accès confiés sont restitués."),
+
+    art(16, "Dispositions générales"),
+    p("Toute modification du contrat fait l'objet d'un avenant écrit. Aucune Partie ne peut céder le contrat sans l'accord écrit de l'autre. L'invalidité d'une clause n'affecte pas les autres. Le contrat est soumis au droit français. Les Parties s'efforcent de résoudre à l'amiable tout différend ; à défaut d'accord sous {{30}} jours, le litige est porté devant les juridictions compétentes de {{ville du ressort}}, sous réserve des règles impératives de compétence."),
+    p("Fait à {{lieu}}, le {{jj/mm/aaaa}}, en deux exemplaires originaux (ou par signature électronique).", { before: 200 }),
+    space(),
+    signatures("Pour le Client", "Pour le Prestataire"),
+
+    new Paragraph({ children: [], pageBreakBefore: true }),
+    ...titre("Annexe 1", "Cahier des charges"),
+    grid([28, 72], null, [
+      ["Objectif du site", "{{À quoi sert le site, pour qui}}"],
+      ["Type de site", "{{Vitrine / blog / réservation / boutique / application web / autre}}"],
+      ["Pages et rubriques", "{{Liste : accueil, présentation, tarifs, contact…}}"],
+      ["Fonctionnalités", "{{Formulaire de contact, inscription, paiement, agenda, multilingue, espace membre…}}"],
+      ["Charte graphique", "{{Fournie par le Client (logo, couleurs, polices) / à créer par le Prestataire}}"],
+      ["Contenus", "{{Fournis par le Client / rédigés par le Prestataire — préciser}}"],
+      ["Référencement (SEO)", "{{Balises, plan du site, vitesse, inclus / non inclus}}"],
+      ["Mentions légales et RGPD", "{{Mentions légales, politique de confidentialité, bandeau de cookies — qui les fournit}}"],
+      ["Compatibilité", "{{Navigateurs récents, mobile et ordinateur}}"],
+      ["Accessibilité", "{{Niveau visé, ex. bonnes pratiques RGAA / non demandé}}"],
+      ["Services tiers", "{{Messagerie, cartographie, paiement, statistiques…}}"],
+      ["Hors périmètre", "{{Ce qui n'est pas inclus : rédaction, photos, traduction, campagnes publicitaires…}}"],
+    ]),
+
+    new Paragraph({ children: [], pageBreakBefore: true }),
+    ...titre("Annexe 2", "Planning et prix"),
+    h2("Création"),
+    grid([40, 30, 30], ["Étape", "Échéance", "Prix HT"], [
+      ["Acompte à la signature ({{30}} %)", "{{jj/mm/aaaa}}", "{{montant}} €"],
+      ["Maquettes validées", "{{jj/mm/aaaa}}", "{{montant}} €"],
+      ["Mise en ligne et recette", "{{jj/mm/aaaa}}", "{{montant}} €"],
+      ["**Total création**", "", "{{montant}} €"],
+    ]),
+    h2("Maintenance"),
+    grid([40, 30, 30], ["Prestation", "Périodicité", "Prix HT"], [
+      ["Forfait de maintenance (article 8)", "{{Mensuelle / annuelle}}", "{{montant}} €"],
+      ["Hébergement et nom de domaine", "{{Inclus / refacturé à l'identique / à la charge du Client}}", "{{montant}} €"],
+      ["Heures supplémentaires au-delà du forfait", "À l'heure", "{{montant}} €"],
+    ]),
+    p("Le Client {{souhaite / ne souhaite pas}} souscrire la maintenance.", { before: 120 }),
+  ]);
+}
+
 mkdirSync(OUT_DIR, { recursive: true });
-for (const [file, build] of [["contrat-prestation-matnexa.docx", contratPrestation], ["accord-traitement-donnees-matnexa.docx", accordTraitement]]) {
+for (const [file, build] of [["contrat-prestation-matnexa.docx", contratPrestation], ["accord-traitement-donnees-matnexa.docx", accordTraitement], ["contrat-site-web.docx", contratSiteWeb]]) {
   writeFileSync(path.join(OUT_DIR, file), await Packer.toBuffer(build()));
   console.log("écrit :", path.join("docs", "contrats", file));
 }
