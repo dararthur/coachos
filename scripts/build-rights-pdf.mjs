@@ -142,7 +142,6 @@ const faq = [
 ];
 
 // --- Gabarit -----------------------------------------------------------------------------------------------------------------------
-const esc = (s) => s;
 const roleHead = `<tr><th class="lead" scope="col"></th><th scope="col">Propriétaire</th><th scope="col">Admin.</th><th scope="col">Coach</th><th scope="col">Membre</th></tr>`;
 const row = (cells) => `<tr><th scope="row">${cells[0]}</th>${cells.slice(1).map((c) => `<td>${c}</td>`).join("")}</tr>`;
 
