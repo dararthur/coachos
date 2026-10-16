@@ -39,13 +39,17 @@ test("parcours complet : de l'inscription à l'export des présences", async ({ 
     await page.goto(`/a/${academyId}/members/new`);
     await page.getByLabel("Prénom").fill("Alice");
     await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Manuelle");
+    // Avant le choix majeur/mineur, aucune des deux parties n'est affichée (plus de formulaire « majeur » et « mineur » à la fois).
+    await expect(page.getByText("Je confirme que ce membre est majeur.")).toBeHidden();
+    await expect(page.getByLabel("Date de naissance")).toBeHidden();
     await page.getByRole("button", { name: "Créer le membre" }).click();
-    await expect(page.getByText("Je confirme que ce membre est majeur.")).toBeVisible();
     // validation native du navigateur : le formulaire n'est pas soumis tant que majeur/mineur n'est pas choisi
     expect(await page.getByLabel("Type de membre").evaluate((el) => (el as HTMLSelectElement).validity.valid)).toBe(false);
     await expect(page).toHaveURL(/members\/new/);
     await expect(page.getByLabel("Prénom")).toHaveValue("Alice");
     await page.getByLabel("Type de membre").selectOption("adult");
+    await expect(page.getByText("Je confirme que ce membre est majeur.")).toBeVisible();
+    await expect(page.getByLabel("Date de naissance")).toBeHidden();
     await page.getByRole("button", { name: "Créer le membre" }).click();
     await expect(page.getByText("Vous devez attester que ce membre est majeur.")).toBeVisible();
     await page.getByLabel("Je confirme que ce membre est majeur.").check();

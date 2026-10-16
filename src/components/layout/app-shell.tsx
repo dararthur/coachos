@@ -10,6 +10,7 @@ import { InstallApp } from "@/components/ui/install-app";
 import { PushPrompt } from "@/components/ui/push-prompt";
 import { vapidPublicKey } from "@/server/push";
 import { Icon } from "@/components/ui/icons";
+import { buttonClasses } from "@/components/ui/button-classes";
 import { MobileTabBar, NavLinks, type NavItem } from "./nav-links";
 
 export function AppShell({ academy, role, viewAsMember = false, userLabel, children }: { academy: { id: string; name: string; logoVersion: number | null }; role: Role; viewAsMember?: boolean; userLabel: string; children: ReactNode }) {
@@ -40,6 +41,7 @@ export function AppShell({ academy, role, viewAsMember = false, userLabel, child
       <MobileTopBar academy={academy} role={role} viewAsMember={viewAsMember} />
       <div className="min-w-0">
         <main id="contenu" className="mx-auto w-full max-w-6xl px-4 pb-32 pt-5 sm:px-6 md:px-8 md:pb-12 md:pt-8 print:max-w-none print:p-0" tabIndex={-1}>
+          {viewAsMember && <MemberModeBanner academyId={academy.id} role={role} />}
           {pushKey && <PushPrompt publicKey={pushKey} />}
           {children}
           {/* Après le contenu : sur téléphone, le bandeau ne repousse plus la première information sous la barre d'onglets. */}
@@ -52,14 +54,35 @@ export function AppShell({ academy, role, viewAsMember = false, userLabel, child
 }
 type Shell = { academy: { id: string; name: string; logoVersion: number | null }; role: Role; viewAsMember: boolean };
 
+/**
+ * Bandeau permanent du mode membre : l'équipe sait toujours dans quelle interface elle se trouve, et comment en sortir.
+ * Seul le mode membre a un bandeau : la gestion est l'état normal de l'équipe, signalé par le rôle sous le nom du club.
+ */
+function MemberModeBanner({ academyId, role }: { academyId: string; role: Role }) {
+  return (
+    <aside aria-label="Mode membre" className="mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-sm border-2 border-accent bg-accent-soft px-4 py-3 text-sm text-accent-ink print:hidden">
+      <Icon name="swap" size={22} className="shrink-0 text-accent" />
+      <p className="min-w-0 flex-1 basis-56">
+        <strong className="block text-base text-ink">Mode membre</strong>
+        Vous voyez le club comme un adhérent : réserver, pointer, classement. Vos droits de {ROLE_LABELS[role].toLowerCase()} restent actifs.
+      </p>
+      <form action={switchViewAction.bind(null, academyId, "staff")}>
+        <button type="submit" className={buttonClasses({ variant: "secondary" })}>
+          Quitter le mode membre
+        </button>
+      </form>
+    </aside>
+  );
+}
+
 /** Bascule de l'équipe entre son espace de travail et l'espace d'un adhérent (réserver d'autres cours, pointer, classement). */
 function ViewSwitch({ academyId, viewAsMember, compact = false }: { academyId: string; viewAsMember: boolean; compact?: boolean }) {
-  const label = viewAsMember ? "Mode coach" : "Mode membre";
+  const label = viewAsMember ? "Mode gestion" : "Mode membre";
   return (
     <form action={switchViewAction.bind(null, academyId, viewAsMember ? "staff" : "member")}>
       <button
         type="submit"
-        title={viewAsMember ? "Revenir à l'espace de l'équipe" : "Voir et réserver les cours comme un adhérent"}
+        title={viewAsMember ? "Revenir à la gestion du club" : "Voir et réserver les cours comme un adhérent"}
         className={compact ? TOP_ACTION : "-mx-2 inline-flex min-h-11 w-[calc(100%+1rem)] items-center gap-2.5 rounded-sm px-2 font-semibold text-white hover:bg-bar-raised"}
       >
         {/* « Bascule » et non « personnes » : l'icône des personnes est déjà celle de l'onglet Membres. */}

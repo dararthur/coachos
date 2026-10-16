@@ -285,6 +285,8 @@ export async function updateMyProfileAction(academyId: string, _prev: FormState,
       throw e;
     }
     revalidatePath(`/a/${academyId}`, "layout");
+    // Première validation : l'adhérent arrive enfin sur « Mon espace » (ses cours), au lieu de rester sur le formulaire.
+    if (formData.get("first") === "1") redirect(`/a/${academyId}/me?welcome=1`);
     return { ok: true, data: null, message: "Profil enregistré." };
   });
 }

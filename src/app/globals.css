@@ -180,6 +180,17 @@
   .field[aria-invalid="true"] {
     border-color: var(--color-danger);
   }
+  /*
+   * Formulaire à branches (ex. membre majeur / mineur) : seule la partie qui correspond au choix est affichée. En CSS (:has),
+   * pour fonctionner avant l'hydratation et après un renvoi du formulaire avec erreur, sans état côté client.
+   */
+  .branching [data-branch] {
+    display: none;
+  }
+  .branching:has(select[data-branch-source] option[value="adult"]:checked) [data-branch="adult"],
+  .branching:has(select[data-branch-source] option[value="minor"]:checked) [data-branch="minor"] {
+    display: block;
+  }
   /* Mobile : date et heure ont une largeur intrinsèque qui dépasse la cellule de la grille. */
   .field {
     min-width: 0;

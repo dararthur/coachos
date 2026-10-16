@@ -33,7 +33,7 @@ export function SignupForm({ next, askCode }: { next: string | null; askCode: bo
         </ul>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className={buttonClasses({ variant: "primary" })}>
-            Aller à la connexion
+            J&apos;ai confirmé : me connecter
           </Link>
           <button type="button" className={buttonClasses({ variant: "secondary" })} onClick={() => setSent(null)}>
             Corriger mon adresse

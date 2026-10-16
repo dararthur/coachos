@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, Fragment, useActionState, useContext, useEffect, useId, useRef, type ReactNode } from "react";
+import { createContext, Fragment, useActionState, useContext, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { ERROR_MESSAGES, type ActionResult } from "@/domain/errors";
 import { buttonClasses, type ButtonVariant } from "./button-classes";
@@ -173,19 +173,40 @@ export function TextField({
   const id = useId();
   const { error, retained } = useFieldState(name);
   const secret = type === "password";
+  const [revealed, setRevealed] = useState(false);
+  const input = (
+    <input
+      id={id}
+      name={name}
+      type={secret && revealed ? "text" : type}
+      required={required}
+      defaultValue={secret ? undefined : (retained ?? defaultValue ?? "")}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={describedBy(id, hint, error)}
+      className={secret ? `${inputClasses} pr-24` : inputClasses}
+      {...rest}
+    />
+  );
   return (
     <FieldShell {...{ label, name, hint, required, id, error, className }}>
-      <input
-        id={id}
-        name={name}
-        type={type}
-        required={required}
-        defaultValue={secret ? undefined : (retained ?? defaultValue ?? "")}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(id, hint, error)}
-        className={inputClasses}
-        {...rest}
-      />
+      {secret ? (
+        // Mot de passe : « Afficher » évite la saisie à l'aveugle de 12 caractères sur un clavier de téléphone.
+        <div className="relative">
+          {input}
+          <button
+            type="button"
+            aria-controls={id}
+            aria-pressed={revealed}
+            onClick={() => setRevealed((v) => !v)}
+            className="absolute inset-y-0 right-0 inline-flex min-h-11 min-w-20 items-center justify-center rounded-r-sm px-3 text-sm font-semibold text-ink-soft hover:text-ink"
+          >
+            {revealed ? "Masquer" : "Afficher"}
+            <span className="sr-only"> le mot de passe</span>
+          </button>
+        </div>
+      ) : (
+        input
+      )}
     </FieldShell>
   );
 }

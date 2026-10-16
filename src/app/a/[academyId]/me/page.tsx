@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { addDays, formatDateTime, formatDay, formatTime, localDate } from "@/domain/dates";
 import { SCAN_PATH } from "@/domain/checkin";
 import type { AttendanceStatus } from "@/domain/validation";
-import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
+import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui/ui";
 import { BookingControls, occupancyLabel, WAITLIST_HINT } from "@/components/ui/booking";
 import { Assiduity, Tally, weeksAttended } from "@/components/ui/assiduity";
 import { Avatar } from "@/components/ui/avatar";
@@ -36,8 +36,9 @@ const sessionLabel = (s: BookableSession, tz: string) => `${s.classTypeName}, ${
  * de pointage d'un cours, sinon « Réserver » le prochain cours. Le reste du planning est en secondaire ; l'historique est
  * replié par mois.
  */
-export default async function MePage({ params }: { params: Promise<{ academyId: string }> }) {
+export default async function MePage({ params, searchParams }: { params: Promise<{ academyId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { academyId } = await params;
+  const welcome = (await searchParams).welcome === "1";
   const ctx = await requireAcademy(academyId);
   const tz = ctx.academy.timezone;
   const now = new Date();
@@ -75,6 +76,11 @@ export default async function MePage({ params }: { params: Promise<{ academyId: 
         description={`Bienvenue dans « ${ctx.academy.name} ».`}
         actions={profile ? <LinkButton href={`/a/${academyId}/profile`} variant="secondary" icon="user">Mon profil</LinkButton> : undefined}
       />
+      {welcome && (
+        <Alert tone="success" title="Profil enregistré.">
+          Bienvenue au club ! Réservez un cours ci-dessous : votre place est gardée et vous pourrez pointer votre présence en arrivant.
+        </Alert>
+      )}
       <div className="space-y-6">
         <ChildrenCard childrenRows={children} showClub={false} />
         {focus ? (

@@ -37,7 +37,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
       />
       {!me.completed && (
         <Alert tone="info" title="Bienvenue !">
-          Vérifiez vos informations et indiquez votre grade. Votre fiche a été créée automatiquement : le coach n&apos;a rien à faire.
+          Vérifiez votre nom, indiquez votre ceinture si vous le souhaitez, puis validez : vous verrez ensuite les cours du club et pourrez réserver.
         </Alert>
       )}
       <Card className="max-w-xl">
@@ -91,7 +91,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
               </option>
             ))}
           </SelectField>
-          {!me.adultAttested && <CheckboxField label="Je confirme avoir 18 ans ou plus." name="adultConfirmed" required hint="Matnexa est réservé aux adultes." />}
+          {!me.adultAttested && (
+            <CheckboxField label="Je confirme avoir 18 ans ou plus." name="adultConfirmed" required hint="Pour un enfant, c'est le club qui l'inscrit, avec l'accord de son responsable légal." />
+          )}
+          {!me.completed && <input type="hidden" name="first" value="1" />}
           <SubmitButton>{me.completed ? "Enregistrer" : "Valider mon profil"}</SubmitButton>
         </ActionForm>
       </Card>

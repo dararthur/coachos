@@ -31,15 +31,18 @@ test.describe("équipe : coach inscrit d'office et mode membre", () => {
     // Mode membre : la fiche d'adhérent est créée, à valider une fois ; le planning propose la réservation.
     await page.getByRole("button", { name: "Mode membre" }).click();
     await completeProfile(page, club);
-    await expect(page.getByRole("button", { name: "Mode coach" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mode gestion" })).toBeVisible();
+    // Bandeau permanent : l'équipe sait qu'elle voit le club comme un adhérent, et comment en sortir.
+    await expect(page.getByRole("complementary", { name: "Mode membre" })).toBeVisible();
     await page.goto(`/a/${club}/schedule?week=${day}`);
     await expect(page.getByRole("link", { name: "Nouvelle séance" })).toHaveCount(0); // plus de commandes de gestion en mode membre
     await page.getByRole("button", { name: "Réserver" }).click();
     await expect(page.getByText("Inscrit", { exact: true }).first()).toBeVisible();
 
-    // Retour au mode coach : tableau de bord, commandes de gestion de retour.
-    await page.getByRole("button", { name: "Mode coach" }).click();
+    // Retour au mode gestion (depuis le bandeau) : tableau de bord, commandes de gestion de retour, plus de bandeau.
+    await page.getByRole("button", { name: "Quitter le mode membre" }).click();
     await expect(page).toHaveURL(new RegExp(`/a/${club}/dashboard`));
+    await expect(page.getByRole("complementary", { name: "Mode membre" })).toHaveCount(0);
     await page.goto(`/a/${club}/schedule?week=${day}`);
     await expect(page.getByRole("link", { name: "Nouvelle séance" }).first()).toBeVisible();
 
