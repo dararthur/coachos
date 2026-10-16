@@ -57,6 +57,9 @@ test("navigation au clavier : lien d'évitement, formulaire de connexion et ferm
   await expect(page.getByLabel("Adresse e-mail")).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByLabel("Mot de passe")).toBeFocused();
+  // Le bouton « Afficher » du mot de passe est atteignable au clavier, juste après le champ.
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Afficher le mot de passe" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("button", { name: "Se connecter" })).toBeFocused();
 

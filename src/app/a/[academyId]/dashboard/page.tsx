@@ -50,16 +50,20 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
 
       {isEmpty && (
         <Alert tone="info" title="Bienvenue !">
-          <ol className="mt-1 list-decimal space-y-1 pl-5">
-            <li>
-              <Link href={`${base}/schedule/new`}>Créez vos séances</Link> (une récurrence hebdomadaire suffit).
-            </li>
-            <li>
-              Envoyez à vos adhérents le <Link href={`${base}/settings#inscription`}>lien d&apos;inscription du club</Link> : chacun crée son compte et sa fiche.
-            </li>
-            <li>
-              Vous avez déjà une liste ? <Link href={`${base}/members/import`}>Importez un CSV</Link> ou <Link href={`${base}/members/new`}>ajoutez un membre</Link>.
-            </li>
+          {/* Trois premiers pas : chaque étape est une vraie cible tactile (et non un lien dans une phrase). */}
+          <ol className="mt-1 space-y-0.5">
+            {[
+              { href: `${base}/schedule/new`, label: "1. Créer vos séances", hint: "une récurrence hebdomadaire suffit" },
+              { href: `${base}/settings#inscription`, label: "2. Envoyer le lien d'inscription du club", hint: "chaque adhérent crée son compte et sa fiche" },
+              { href: `${base}/members/import`, label: "3. Importer votre liste (CSV)", hint: "si vous en avez une ; sinon, ajoutez les membres un par un" },
+            ].map((step) => (
+              <li key={step.href}>
+                <Link href={step.href} className="inline-flex min-h-11 flex-wrap items-center gap-x-1.5 font-semibold">
+                  {step.label}
+                  <span className="font-normal text-ink-soft">: {step.hint}</span>
+                </Link>
+              </li>
+            ))}
           </ol>
           <p className="mt-1">Les indicateurs ci-dessous se rempliront avec vos données réelles.</p>
         </Alert>
