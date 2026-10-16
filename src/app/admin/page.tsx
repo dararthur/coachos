@@ -30,6 +30,9 @@ const JOB_STATE: Record<JobState, { label: string; tone: "success" | "warning" |
   never: { label: "Jamais exécutée", tone: "neutral" },
 };
 
+/** Page rendue à la demande pour un seul administrateur : l'heure du rendu est voulue (la règle de pureté de React ne vise que les composants mis en cache). */
+const currentTime = () => Date.now();
+
 function size(bytes: number): string {
   return bytes < 1024 ** 3 ? `${(bytes / 1024 ** 2).toFixed(0)} Mo` : `${(bytes / 1024 ** 3).toFixed(1)} Go`;
 }
@@ -51,7 +54,7 @@ export default async function AdminPage() {
     counters: await platformCounters(tx),
     series: await usageSeries(tx),
   }));
-  const now = Date.now();
+  const now = currentTime();
   const today = localDate(new Date(now), "Europe/Paris");
   const watch = clubs
     .map((c) => ({ club: c, alerts: allClubAlerts(c, new Date(now), today) }))
