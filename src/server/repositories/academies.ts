@@ -20,11 +20,11 @@ export async function listAcademiesForUser(tx: Tx, userId: string): Promise<Acad
 export async function updateAcademy(
   tx: Tx,
   academyId: string,
-  input: { name: string; timezone: string; currency: string; retentionMonths: number },
+  input: { name: string; timezone: string; currency: string; retentionMonths: number; adultClassMinAge: number },
 ): Promise<boolean> {
   const res = await tx`
     update public.academies
-    set name = ${input.name}, timezone = ${input.timezone}, currency = ${input.currency}, retention_months = ${input.retentionMonths}
+    set name = ${input.name}, timezone = ${input.timezone}, currency = ${input.currency}, retention_months = ${input.retentionMonths}, adult_class_min_age = ${input.adultClassMinAge}
     where id = ${academyId}`;
   return res.count === 1;
 }
@@ -46,8 +46,11 @@ export interface ClassType {
   name: string;
   durationMinutes: number;
   capacity: number | null;
+  audience: ClassAudience;
   archivedAt: Date | null;
 }
+
+export type ClassAudience = "all" | "adults" | "kids";
 
 export async function listDisciplines(tx: Tx, academyId: string): Promise<Discipline[]> {
   return tx<Discipline[]>`
@@ -58,7 +61,7 @@ export async function listDisciplines(tx: Tx, academyId: string): Promise<Discip
 export async function listClassTypes(tx: Tx, academyId: string, opts: { includeArchived?: boolean } = {}): Promise<ClassType[]> {
   return tx<ClassType[]>`
     select ct.id, ct.discipline_id as "disciplineId", d.name as "disciplineName", ct.name,
-           ct.default_duration_minutes as "durationMinutes", ct.default_capacity as capacity, ct.archived_at as "archivedAt"
+           ct.default_duration_minutes as "durationMinutes", ct.default_capacity as capacity, ct.audience, ct.archived_at as "archivedAt"
     from public.class_types ct
     join public.disciplines d on d.id = ct.discipline_id and d.academy_id = ct.academy_id
     where ct.academy_id = ${academyId} ${opts.includeArchived ? tx`` : tx`and ct.archived_at is null and d.archived_at is null`}
@@ -82,11 +85,16 @@ export async function setDisciplineArchived(tx: Tx, academyId: string, id: strin
 export async function createClassType(
   tx: Tx,
   academyId: string,
-  input: { disciplineId: string; name: string; durationMinutes: number; capacity: number | null },
+  input: { disciplineId: string; name: string; durationMinutes: number; capacity: number | null; audience?: ClassAudience },
 ): Promise<void> {
   await tx`
-    insert into public.class_types (academy_id, discipline_id, name, default_duration_minutes, default_capacity)
-    values (${academyId}, ${input.disciplineId}, ${input.name}, ${input.durationMinutes}, ${input.capacity})`;
+    insert into public.class_types (academy_id, discipline_id, name, default_duration_minutes, default_capacity, audience)
+    values (${academyId}, ${input.disciplineId}, ${input.name}, ${input.durationMinutes}, ${input.capacity}, ${input.audience ?? "all"})`;
+}
+
+export async function setClassTypeAudience(tx: Tx, academyId: string, id: string, audience: ClassAudience): Promise<boolean> {
+  const r = await tx`update public.class_types set audience = ${audience} where id = ${id} and academy_id = ${academyId}`;
+  return r.count === 1;
 }
 
 /** Suppression définitive : refusée par la base (`catalog_in_use`) dès qu'une séance utilise l'élément. */

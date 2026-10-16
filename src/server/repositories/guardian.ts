@@ -31,6 +31,7 @@ export interface ChildSession {
   waitlisted: number;
   childStatus: "booked" | "waitlisted" | null;
   childPosition: number | null;
+  deniedAudience: "adults" | "kids" | null;
 }
 
 export interface ChildRow {
@@ -67,7 +68,7 @@ export async function myChildrenWithSessions(tx: Tx): Promise<ChildRow[]> {
       c.sessions = [
         ...(await tx<ChildSession[]>`
           select session_id as "sessionId", class_name as "className", starts_at as "startsAt", ends_at as "endsAt", capacity, timezone,
-                 booked, waitlisted, child_status as "childStatus", child_position as "childPosition"
+                 booked, waitlisted, child_status as "childStatus", child_position as "childPosition", denied_audience as "deniedAudience"
           from public.child_sessions(${c.childId})`),
       ];
     }

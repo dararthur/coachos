@@ -10,6 +10,9 @@ export function occupancyLabel(b: Pick<BookingInfo, "booked" | "waitlisted">, ca
   return b.waitlisted > 0 ? `${base} · ${b.waitlisted} en attente` : base;
 }
 
+/** Pourquoi la réservation est fermée à cette personne (public du cours). */
+export const audienceNotice = (a: "adults" | "kids") => (a === "kids" ? "Cours réservé aux enfants" : "Cours réservé aux adultes");
+
 /** Séance complète : une nouvelle réservation part en liste d'attente. */
 export const isFull = (b: Pick<BookingInfo, "booked">, capacity: number | null) => capacity !== null && b.booked >= capacity;
 
@@ -38,7 +41,7 @@ export function BookingControls({
   bookable: boolean;
   emphasis?: Extract<ButtonVariant, "primary" | "secondary">;
 }) {
-  const { myStatus, myPosition, waitlisted } = booking;
+  const { myStatus, myPosition, waitlisted, deniedAudience } = booking;
   const full = isFull(booking, capacity);
   const cancel = cancelBookingAction.bind(null, academyId, sessionId);
   return (
@@ -46,7 +49,8 @@ export function BookingControls({
     <div className="flex flex-col items-end gap-1 min-[30rem]:flex-row min-[30rem]:flex-wrap min-[30rem]:items-center min-[30rem]:justify-end min-[30rem]:gap-2">
       {myStatus === "booked" && <Badge tone="success">Inscrit</Badge>}
       {myStatus === "waitlisted" && <Badge tone="warning">Liste d&apos;attente{myPosition ? ` · n°${myPosition}` : ""}</Badge>}
-      {bookable && myStatus === null && (
+      {bookable && myStatus === null && deniedAudience && <span className="text-sm text-ink-soft">{audienceNotice(deniedAudience)}</span>}
+      {bookable && myStatus === null && !deniedAudience && (
         <InlineAction
           action={bookSessionAction.bind(null, academyId, sessionId)}
           label={

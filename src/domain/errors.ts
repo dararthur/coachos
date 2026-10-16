@@ -37,6 +37,7 @@ export const ERROR_MESSAGES = {
   mail_failed: "Le message n'a pas pu être envoyé. Réessayez dans quelques minutes.",
   booking_no_profile: "Votre fiche n'est pas active dans ce club : contactez le coach.",
   booking_closed: "Cette séance est terminée : la réservation n'est plus possible.",
+  audience_not_allowed: "Ce cours n'est pas ouvert à cette personne (public ou âge minimum du cours).",
   booking_attended: "Votre présence est déjà enregistrée : la réservation ne peut plus être annulée.",
   checkin_no_booking: "Vous n'avez pas réservé cette séance.",
   checkin_waitlisted: "Vous êtes sur liste d'attente : le coach peut vous accorder une place.",

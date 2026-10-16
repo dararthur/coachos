@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { academySettingsSchema, classTypeSchema, disciplineSchema, uuidField } from "@/domain/validation";
+import { academySettingsSchema, classTypeAudienceSchema, classTypeSchema, disciplineSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import * as academies from "@/server/repositories/academies";
 import { parseForm } from "./helpers";
@@ -77,6 +77,7 @@ export async function createClassTypeAction(academyId: string, _prev: FormState,
           name: input.name,
           durationMinutes: input.durationMinutes,
           capacity: input.capacity ?? null,
+          audience: input.audience,
         }),
       );
     } catch (e) {
@@ -85,6 +86,18 @@ export async function createClassTypeAction(academyId: string, _prev: FormState,
     }
     revalidatePath(`/a/${academyId}/settings`);
     return { ok: true, data: null, message: "Type de cours ajouté." };
+  });
+}
+
+export async function setClassTypeAudienceAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("setClassTypeAudience", async () => {
+    const ctx = await authorizeAcademy(academyId, "catalog.manage");
+    const input = parseForm(classTypeAudienceSchema, formData);
+    const ok = await inAcademy(ctx, (tx) => academies.setClassTypeAudience(tx, academyId, input.id, input.audience));
+    if (!ok) throw new AppError("not_found");
+    revalidatePath(`/a/${academyId}/settings`);
+    revalidatePath(`/a/${academyId}/schedule`);
+    return { ok: true, data: null, message: "Enregistré." };
   });
 }
 

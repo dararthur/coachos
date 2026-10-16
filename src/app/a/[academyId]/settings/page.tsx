@@ -26,6 +26,7 @@ import { CopyShare } from "@/components/ui/copy-share";
 import { Icon } from "@/components/ui/icons";
 import { AcademyLogo } from "@/components/ui/academy-logo";
 import { ImageField } from "@/components/ui/image-field";
+import { setClassTypeAudienceAction } from "@/server/actions/academy";
 import { removeAcademyLogoAction, setAcademyLogoAction } from "@/server/actions/photos";
 
 export const metadata: Metadata = { title: "Paramètres" };
@@ -42,6 +43,31 @@ function DeleteClassType({ academyId, id, name }: { academyId: string; id: strin
     >
       <input type="hidden" name="id" value={id} />
     </ConfirmAction>
+  );
+}
+
+function AudienceOptions() {
+  return (
+    <>
+      <option value="all">Tous</option>
+      <option value="adults">Adultes</option>
+      <option value="kids">Enfants</option>
+    </>
+  );
+}
+
+/** Public d'un type de cours : enregistré à la validation du petit formulaire (les réservations déjà prises ne bougent pas). */
+function AudienceForm({ academyId, id, name, audience }: { academyId: string; id: string; name: string; audience: "all" | "adults" | "kids" }) {
+  return (
+    <ActionForm action={setClassTypeAudienceAction.bind(null, academyId)} className="flex items-center gap-2">
+      <input type="hidden" name="id" value={id} />
+      <select name="audience" defaultValue={audience} aria-label={`Public du cours ${name}`} className="min-h-11 rounded-sm border border-line bg-surface px-2 text-sm">
+        <AudienceOptions />
+      </select>
+      <SubmitButton variant="quiet">
+        OK<span className="sr-only"> : public du cours {name}</span>
+      </SubmitButton>
+    </ActionForm>
   );
 }
 
@@ -271,6 +297,20 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
               hint="Passé ce délai, la fiche d'un membre archivé est automatiquement anonymisée."
               className="sm:col-span-2"
             />
+            <SelectField
+              label="Âge minimum pour les cours « Adultes »"
+              name="adultClassMinAge"
+              defaultValue={String(ctx.academy.adultClassMinAge)}
+              required
+              hint="Un mineur ne peut réserver un cours « Adultes » qu'à partir de cet âge. 18 = adultes seulement. Les réservations déjà prises sont conservées."
+              className="sm:col-span-2"
+            >
+              {Array.from({ length: 9 }, (_, i) => 10 + i).map((age) => (
+                <option key={age} value={age}>
+                  {age === 18 ? "18 ans (adultes seulement)" : `${age} ans`}
+                </option>
+              ))}
+            </SelectField>
             <div className="sm:col-span-2">
               <SubmitButton>Enregistrer</SubmitButton>
             </div>
@@ -363,16 +403,19 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
             </div>
           )}
         </Card>
-        <Card id="cours" title="Types de cours" description="Un type de cours = un format de séance (durée et capacité par défaut).">
+        <Card id="cours" title="Types de cours" description="Un type de cours = un format de séance (durée et capacité par défaut). Le public (Tous, Adultes, Enfants) filtre les réservations ; changer le public ne retire aucune réservation déjà prise.">
           <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
             <div className="hidden sm:block">
-            <DataTable bare caption="Types de cours" headers={["Cours", "Discipline", "Durée", "Capacité", ""]}>
+            <DataTable bare caption="Types de cours" headers={["Cours", "Discipline", "Durée", "Capacité", "Public", ""]}>
               {data.classTypes.map((t) => (
                 <tr key={t.id}>
                   <th scope="row" className={`px-4 py-2.5 font-medium ${t.archivedAt ? "text-ink-soft line-through" : ""}`}>{t.name}</th>
                   <td className="px-4 py-2.5">{t.disciplineName}</td>
                   <td className="px-4 py-2.5">{t.durationMinutes} min</td>
                   <td className="px-4 py-2.5">{t.capacity ?? "—"}</td>
+                  <td className="px-4 py-2.5">
+                    <AudienceForm academyId={academyId} id={t.id} name={t.name} audience={t.audience} />
+                  </td>
                   <td className="px-4 py-2.5 text-right">
                     <div className="flex flex-wrap items-center justify-end gap-2">
                       <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
@@ -391,6 +434,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
                     <p className="text-sm text-ink-soft">
                       {t.disciplineName} · {t.durationMinutes} min{t.capacity ? ` · ${t.capacity} places` : ""}
                     </p>
+                    <AudienceForm academyId={academyId} id={t.id} name={t.name} audience={t.audience} />
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
                     <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
@@ -409,6 +453,9 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
             <TextField label="Nom du cours" name="name" required minLength={2} maxLength={80} className="sm:col-span-2" />
             <TextField label="Durée (min)" name="durationMinutes" type="number" min={15} max={360} defaultValue={60} required />
             <TextField label="Capacité" name="capacity" type="number" min={1} max={500} hint="Facultatif." />
+            <SelectField label="Public" name="audience" defaultValue="all">
+              <AudienceOptions />
+            </SelectField>
             <div className="flex items-end">
               <SubmitButton>Ajouter</SubmitButton>
             </div>

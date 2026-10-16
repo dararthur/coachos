@@ -4,6 +4,7 @@ import { formatDateTime } from "@/domain/dates";
 import { ActionForm, SubmitButton } from "@/components/ui/form";
 import { Badge, Card } from "@/components/ui/ui";
 import { MinorAccountForm } from "@/app/account/minor-account-form";
+import { audienceNotice } from "@/components/ui/booking";
 import { bookForChildAction, cancelChildBookingAction, setChildRankingAction, withdrawChildConsentAction } from "@/server/actions/guardian";
 import type { ChildRow } from "@/server/repositories/guardian";
 import { Icon } from "@/components/ui/icons";
@@ -59,7 +60,9 @@ function SessionRow({ child: c, s }: { child: ChildRow; s: ChildSession }) {
       <span className="flex shrink-0 flex-col items-end gap-1 min-[30rem]:flex-row min-[30rem]:items-center min-[30rem]:gap-2">
         {s.childStatus === "booked" && <Badge tone="success">Inscrit</Badge>}
         {s.childStatus === "waitlisted" && <Badge tone="warning">Liste d&apos;attente{s.childPosition ? ` · n°${s.childPosition}` : ""}</Badge>}
-        {s.childStatus === null ? (
+        {s.childStatus === null && s.deniedAudience ? (
+          <span className="text-ink-soft">{audienceNotice(s.deniedAudience)}</span>
+        ) : s.childStatus === null ? (
           <InlineAction
             action={bookForChildAction.bind(null, c.childId, s.sessionId)}
             label={<>{full ? "Liste d'attente" : "Réserver"}<span className="sr-only"> pour {c.firstName} : {label}</span></>}

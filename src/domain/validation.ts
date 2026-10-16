@@ -134,6 +134,7 @@ export const checkinSettingsSchema = z.object({
 
 export const academySettingsSchema = academySchema.extend({
   retentionMonths: intField("Durée", 6, 120),
+  adultClassMinAge: intField("Âge minimum", 10, 18),
 });
 
 // --- Membres ------------------------------------------------------------------------------------
@@ -216,6 +217,12 @@ export const classTypeSchema = z.object({
   name: z.string({ error: "Nom requis." }).trim().min(2, "2 caractères minimum.").max(80, "80 caractères maximum.").refine((v) => !/[<>\u0000-\u001f]/.test(v), "Caractères non autorisés."),
   durationMinutes: intField("Durée", 15, 360),
   capacity: optional(intField("Capacité", 1, 500)),
+  audience: z.enum(["all", "adults", "kids"], { error: "Public inconnu." }).default("all"),
+});
+
+export const classTypeAudienceSchema = z.object({
+  id: uuidField,
+  audience: z.enum(["all", "adults", "kids"], { error: "Public inconnu." }),
 });
 
 // --- Séances ------------------------------------------------------------------------------------
