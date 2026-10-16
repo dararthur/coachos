@@ -158,6 +158,8 @@ describe("envoi : rien pour une place qui n'est plus d'actualité", () => {
     const sessionCancelled = await fullClass("nt5b");
     await cancel(sessionCancelled.first.user, sessionCancelled.session);
     await adminSql()`update public.sessions set status = 'cancelled' where id = ${sessionCancelled.session}`;
+    // Annuler la séance prévient aussi ses inscrits (type 'cancelled', couvert par session-cancel-notifications.test.ts) : ici on ne juge que les places promues.
+    await adminSql()`delete from public.booking_notifications where kind = 'cancelled'`;
 
     const started = await fullClass("nt5c", 1, inHours(0.5));
     await cancel(started.first.user, started.session);

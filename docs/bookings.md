@@ -68,3 +68,12 @@ La ligne est supprimée sans envoi, au moment de l'envoi, si :
   d'actualité, échec et abandon, envois simultanés, deux clubs, file fermée aux rôles applicatifs.
 - `tests/unit/mail.test.ts` : contenu, fuseau du club, échappement HTML, objet sur une ligne.
 - `tests/e2e/bookings.spec.ts` : la place accordée par le coach écrit l'e-mail dans la boîte d'envoi de test.
+
+## Séance annulée et place confirmée : e-mail et notification push (P1.4)
+
+La file `booking_notifications` (migration `20261016000400`) porte un **type** : `promoted` (place attribuée depuis la liste d'attente) ou `cancelled` (la séance réservée est annulée). Annuler une séance met en file, dans la même transaction, une ligne par réservation **confirmée** d'un adhérent avec compte (ni la liste d'attente, ni le coach affecté, ni une fiche archivée ou anonymisée). Rien ne part si la séance est déjà commencée, réactivée avant l'envoi, ou si la réservation a été annulée.
+
+- **E-mail** (comme avant pour la promotion) puis **push** au mieux sur les appareils de l'adhérent (lus à l'envoi). Un échec push ne rejoue jamais l'e-mail ; un appareil disparu (404/410) est supprimé.
+- **Texte neutre sur l'écran verrouillé** : « *Club* : séance annulée » / « *Club* : place confirmée », corps générique, sans nom de cours, horaire, nom d'adhérent ni autre inscrit ; un toucher ouvre le planning ou « Mon espace ». Le détail (cours, jour, heure) est dans l'e-mail et l'application.
+- Envoi après la réponse de l'annulation (`after()`), filet de sécurité par la purge quotidienne (bail de 10 minutes, 5 tentatives).
+- Mesure du pilote : réservations non honorées (absences après réservation) avant et après l'activation, à lire dans `attendance` (`absent` avec réservation).

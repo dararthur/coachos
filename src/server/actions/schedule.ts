@@ -79,6 +79,8 @@ async function changeSessionState(academyId: string, sessionId: string, op: "can
         : schedule.setSessionStatus(tx, academyId, id.data, op === "cancel" ? "cancelled" : "scheduled"),
     );
     if (!ok) throw new AppError("not_found");
+    // Une séance annulée prévient ses inscrits (e-mail et notification).
+    if (op === "cancel") deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/schedule`);
     revalidatePath(`/a/${academyId}/attendance`);
     if (op === "delete") redirect(`/a/${academyId}/schedule?deleted=1`);

@@ -99,6 +99,20 @@ export interface BookingPromotion {
  * Place attribuée depuis la liste d'attente, qu'elle se soit libérée ou que le coach l'ait accordée : la formulation couvre
  * les deux cas. Ni le nom de l'adhérent, ni les autres inscrits, ni rang ou capacité.
  */
+/** Séance annulée : même contenu minimal que la place confirmée (aucun nom, aucun autre inscrit). */
+export function sessionCancelledEmail(to: string, p: BookingPromotion): MailMessage {
+  const className = oneLine(p.className);
+  const when = `${formatDay(p.startsAt, p.timeZone)} à ${formatTime(p.startsAt, p.timeZone)}`;
+  const body = layout(
+    "Séance annulée",
+    `Le cours « ${className} » du ${when}, au club « ${oneLine(p.academyName)} », est annulé. Votre réservation ne compte plus : vous n'avez rien à faire.`,
+    "Voir le planning",
+    p.link,
+    "Vous pouvez réserver une autre séance depuis votre espace.",
+  );
+  return { to, kind: "session_cancelled", subject: `Séance annulée : ${className}, ${when} — Matnexa`, link: p.link, ...body };
+}
+
 export function bookingPromotedEmail(to: string, p: BookingPromotion): MailMessage {
   const className = oneLine(p.className);
   const when = `${formatDay(p.startsAt, p.timeZone)} à ${formatTime(p.startsAt, p.timeZone)}`;
