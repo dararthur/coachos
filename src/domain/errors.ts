@@ -1,6 +1,6 @@
 /** Codes d'erreur métier stables, partagés par la base (messages `coachos:<code>`), le serveur et l'UI. */
 export const ERROR_MESSAGES = {
-  not_authenticated: "Vous devez être connecté pour continuer.",
+  not_authenticated: "Vous n'êtes plus connecté (session expirée ou déconnexion) : reconnectez-vous pour continuer.",
   forbidden: "Vous n'avez pas les droits nécessaires pour cette action.",
   not_found: "Élément introuvable.",
   validation: "Certaines informations sont invalides.",
@@ -46,6 +46,7 @@ export const ERROR_MESSAGES = {
   roll_validated: "La feuille d'appel est validée : rouvrez-la pour modifier le pointage.",
   photo_invalid: "Cette image n'est pas utilisable. Choisissez une autre photo.",
   payload_too_large: "Le fichier est trop volumineux.",
+  network: "Pas de connexion : l'action n'a pas pu être confirmée. Vérifiez votre réseau (Wi-Fi ou données mobiles), puis réessayez.",
   internal: "Une erreur inattendue est survenue. Réessayez ; si le problème persiste, contactez le support.",
 } as const;
 

@@ -2,7 +2,7 @@
 
 import { createContext, Fragment, useActionState, useContext, useEffect, useId, useRef, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
-import type { ActionResult } from "@/domain/errors";
+import { ERROR_MESSAGES, type ActionResult } from "@/domain/errors";
 import { buttonClasses, type ButtonVariant } from "./button-classes";
 
 type State = ActionResult<unknown> | null;
@@ -50,7 +50,15 @@ export function ActionForm<S extends State>({
           (lists[key] ??= []).push(value);
         }
       }
-      const result = await action(null as S, formData);
+      let result: S;
+      try {
+        result = await action(null as S, formData);
+      } catch (error) {
+        // Réseau coupé (salle de sport, métro) : l'appel n'a pas abouti ou sa réponse s'est perdue. On le dit, sans rien supposer
+        // enregistré, et la saisie reste dans le formulaire. Toute autre erreur (redirection, bogue) suit son cours habituel.
+        if (!isNetworkFailure(error)) throw error;
+        result = { ok: false, code: "network", error: ERROR_MESSAGES.network } as S;
+      }
       return { result, values, lists, attempt: (prev?.attempt ?? 0) + 1 };
     },
     null,
@@ -80,6 +88,21 @@ export function ActionForm<S extends State>({
   );
 }
 
+/** Échec d'acheminement de la requête (et non erreur renvoyée par le serveur) : hors ligne, ou fetch rejeté par le navigateur. */
+export function isNetworkFailure(error: unknown): boolean {
+  return (typeof navigator !== "undefined" && navigator.onLine === false) || error instanceof TypeError;
+}
+
+/** Session expirée ou déconnectée ailleurs : un lien pour se reconnecter et revenir exactement ici. */
+function SignInAgain() {
+  const here = typeof window === "undefined" ? "/" : `${window.location.pathname}${window.location.search}`;
+  return (
+    <a href={`/login?next=${encodeURIComponent(here)}`} className="ml-1 font-semibold text-danger-ink">
+      Se reconnecter
+    </a>
+  );
+}
+
 export function FormMessage({ result }: { result: State }) {
   // Région vivante toujours présente : les lecteurs d'écran annoncent le contenu quand il change.
   const failed = result && !result.ok;
@@ -89,6 +112,7 @@ export function FormMessage({ result }: { result: State }) {
       {failed && (
         <p className="mb-4 rounded-sm border border-danger/30 bg-danger-soft px-3 py-2.5 text-sm font-medium text-danger-ink">
           {hasFieldErrors && result.code === "validation" ? "Certaines informations sont invalides : corrigez les champs signalés." : result.error}
+          {result.code === "not_authenticated" && result.error === ERROR_MESSAGES.not_authenticated && <SignInAgain />}
         </p>
       )}
       {result?.ok && result.message && (
