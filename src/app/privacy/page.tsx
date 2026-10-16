@@ -41,6 +41,9 @@ export default function PrivacyPage() {
             <strong>Présences et réservations</strong> (cours, date, statut présent / en retard / absent, inscrit ou en liste d&apos;attente) : organiser les cours et suivre l&apos;assiduité. Le pointage par QR code n&apos;utilise ni géolocalisation ni image : la caméra lit le code dans votre navigateur, sans envoi.
           </li>
           <li>
+            <strong>Pauses</strong> (facultatif) : vous pouvez déclarer une pause avec une raison choisie dans une liste (blessure, maladie, horaires, vacances ou déplacement, raison personnelle, autre, ou « ne souhaite pas s&apos;exprimer ») et une date de reprise, sans aucun détail médical. Blessure et maladie sont des <strong>données de santé</strong> : elles ne sont notées qu&apos;avec votre consentement explicite (que vous déclariez vous-même ou que l&apos;équipe du club les note avec votre accord), ne sont visibles que de l&apos;équipe du club et de vous, jamais des autres membres, et sont effacées 30 jours après votre reprise, à l&apos;archivage de votre fiche ou à son anonymisation. Vous pouvez lever votre pause à tout moment depuis « Mon profil ». Pour un mineur, ces deux raisons ne sont jamais enregistrées.
+          </li>
+          <li>
             <strong>Classement des venues</strong> : vous y voyez toujours votre rang. Les autres membres ne voient votre nom, votre photo, votre ceinture et vos venues que si vous l&apos;acceptez ; vous pouvez retirer cet accord à tout moment depuis « Mon profil ». Base légale : votre consentement.
           </li>
           <li>

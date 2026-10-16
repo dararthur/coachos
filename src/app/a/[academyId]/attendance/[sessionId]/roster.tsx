@@ -5,6 +5,7 @@ import {
   closeCheckinAction, getRollSnapshotAction, issueCheckinTokenAction, openCheckinAction, validateRollAction,
   type IssuedToken, type RollSnapshot,
 } from "@/server/actions/checkin";
+import { PauseBadge } from "@/components/ui/pause-badge";
 import { promoteBookingAction } from "@/server/actions/bookings";
 import { markRemainingPresentAction, setAttendanceAction } from "@/server/actions/schedule";
 import { CHECKIN_REFRESH_SECONDS, CHECKIN_TOKEN_TTL_SECONDS, ROLL_POLL_INTERVAL_MS, remainingSeconds } from "@/domain/checkin";
@@ -256,6 +257,11 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                   <p className="break-words font-semibold leading-tight">
                     <span className="uppercase">{e.lastName}</span> {e.firstName}
                     {e.archived && <span className="ml-2 text-xs font-normal text-ink-soft">(archivé)</span>}
+                    {e.pauseReason && (
+                      <span className="ml-2 font-normal">
+                        <PauseBadge reason={e.pauseReason} until={e.pausedUntil} />
+                      </span>
+                    )}
                   </p>
                   {(e.booking === "booked" || e.source === "qr" || e.belt) && (
                     <p className="mt-1 flex flex-wrap items-center gap-1.5">

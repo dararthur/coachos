@@ -17,6 +17,9 @@ export interface RosterEntry {
   hasPhoto: boolean;
   belt: Belt | null;
   beltStripes: number;
+  /** Pause déclarée (donnée de santé possible) : la feuille d'appel n'est lue que par le staff. */
+  pausedUntil: string | null;
+  pauseReason: string | null;
 }
 
 /**
@@ -27,7 +30,7 @@ export async function getRoster(tx: Tx, academyId: string, sessionId: string): P
     select p.id as "personId", p.first_name as "firstName", p.last_name as "lastName", a.status, a.source,
            (p.archived_at is not null) as archived, b.status as booking,
            p.avatar_style as "avatarStyle", exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
-           p.belt, p.belt_stripes as "beltStripes"
+           p.belt, p.belt_stripes as "beltStripes", p.paused_until::text as "pausedUntil", p.pause_reason as "pauseReason"
     from public.people p
     left join public.attendance a on a.person_id = p.id and a.academy_id = p.academy_id and a.session_id = ${sessionId}
     left join public.session_bookings b on b.person_id = p.id and b.academy_id = p.academy_id and b.session_id = ${sessionId}

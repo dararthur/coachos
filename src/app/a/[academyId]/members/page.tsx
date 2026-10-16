@@ -4,6 +4,7 @@ import { formatCalendarDate, formatDateTime } from "@/domain/dates";
 import { can } from "@/domain/roles";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Icon } from "@/components/ui/icons";
+import { PauseBadge } from "@/components/ui/pause-badge";
 import { Badge, DataTable, EmptyState, LinkButton, Notice, PageHeader, Pagination, TabNav } from "@/components/ui/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { BeltIcon } from "@/components/ui/belt";
@@ -117,6 +118,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
                     <Link href={`/a/${academyId}/members/${p.id}`} className="flex min-h-11 items-center gap-3 no-underline hover:underline">
                       <Avatar academyId={academyId} personId={p.id} avatarStyle={p.avatarStyle} hasPhoto={p.hasPhoto} size="sm" />
                       {p.lastName.toUpperCase()} {p.firstName}
+                      <PauseBadge reason={p.pauseReason} until={p.pausedUntil} compact />
                     </Link>
                   </th>
                   <td className="px-4 py-1">{p.belt ? <BeltIcon belt={p.belt} stripes={p.beltStripes} /> : <span className="text-ink-faint">—</span>}</td>
@@ -139,6 +141,7 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-semibold">
                       {p.lastName.toUpperCase()} {p.firstName}
+                      <PauseBadge reason={p.pauseReason} until={p.pausedUntil} compact />
                     </span>
                     {p.belt && <BeltIcon belt={p.belt} stripes={p.beltStripes} size="sm" />}
                     <span className="block text-xs text-ink-soft">{p.lastAttendedAt ? `Dernière venue : ${formatDateTime(p.lastAttendedAt, tz)}` : "Jamais venu(e)"}</span>

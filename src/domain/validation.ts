@@ -2,6 +2,7 @@ import { z } from "zod";
 import { addDays, daysBetween, isValidTimeZone, parseCalendarDate } from "./dates";
 import { isMinorBirthDate, todayIso } from "./minors";
 import { normalizePhone } from "./phone";
+import { DEPARTURE_VALUES, PAUSE_VALUES } from "./lifecycle";
 import { AVATAR_STYLES, BELTS, MAX_STRIPES } from "./profile";
 
 export type ParseResult<T> = { ok: true; data: T } | { ok: false; fieldErrors: Record<string, string> };
@@ -218,6 +219,17 @@ export const classTypeSchema = z.object({
   durationMinutes: intField("Durée", 15, 360),
   capacity: optional(intField("Capacité", 1, 500)),
   audience: z.enum(["all", "adults", "kids"], { error: "Public inconnu." }).default("all"),
+});
+
+/** Pause : raison d'une liste fermée, date de reprise ; la case de consentement est exigée par la base pour blessure et maladie. */
+export const pauseSchema = z.object({
+  reason: z.enum(PAUSE_VALUES, { error: "Choisissez une raison." }),
+  until: dateField,
+  consent: optional(z.literal("on")),
+});
+
+export const archiveSchema = z.object({
+  departureReason: optional(z.enum(DEPARTURE_VALUES, { error: "Motif inconnu." })),
 });
 
 export const classTypeAudienceSchema = z.object({

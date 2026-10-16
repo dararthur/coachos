@@ -5,6 +5,7 @@ import { withApp } from "@/server/db/client";
 import { env } from "@/server/env";
 import { logger } from "@/server/logger";
 import { purgeClubRequests } from "@/server/repositories/club-requests";
+import { purgePauses } from "@/server/repositories/members";
 import { purgeUsageEvents } from "@/server/repositories/team";
 
 function authorized(request: NextRequest): boolean {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 });
   try {
     const rows = await withApp((tx) => tx<{ r: Record<string, number>; a: Record<string, number>; g: number }[]>`select app_private.purge_expired_data() as r, app_private.purge_expired_auth() as a, app_private.graduate_minors() as g`);
-    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}), minors_graduated: rows[0]?.g ?? 0, club_requests: await purgeClubRequests(), usage_events: await purgeUsageEvents() };
+    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}), minors_graduated: rows[0]?.g ?? 0, club_requests: await purgeClubRequests(), usage_events: await purgeUsageEvents(), pauses: await purgePauses() };
     logger.info("cron.purge", result);
     let mail: { sent: number; failed: number };
     try {

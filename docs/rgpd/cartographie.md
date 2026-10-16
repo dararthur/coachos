@@ -13,7 +13,7 @@
 | Demandeurs de club | Personne qui remplit `/request-club` | Peut ne jamais avoir de compte |
 | Administrateur de la plateforme | Désigné par `PLATFORM_ADMIN_EMAIL` (variable d'environnement) | Adresse jamais stockée en base |
 
-Aucune catégorie particulière (art. 9) n'est collectée par conception : ni santé, ni blessure, ni biométrie. Aucun champ libre sur un membre. Le seul champ libre est la note facultative d'une demande de club (500 caractères) ; il peut contenir n'importe quoi : **à mentionner sur le formulaire** (« n'indiquez pas de données sensibles »).
+Une seule catégorie particulière (art. 9) est possible, depuis le 16/10/2026 : la **raison d'une pause déclarée** (« blessure » ou « malade »), avec consentement explicite, sans détail libre, visible du staff et de la personne seulement, effacée 30 jours après la reprise (voir [pauses-sante.md](pauses-sante.md)). Ni autre donnée de santé, ni biométrie. Aucun champ libre sur un membre. Le seul champ libre est la note facultative d'une demande de club (500 caractères) ; il peut contenir n'importe quoi : **à mentionner sur le formulaire** (« n'indiquez pas de données sensibles »).
 
 ## Données par table
 

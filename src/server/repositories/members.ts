@@ -1,7 +1,8 @@
 import "server-only";
-import type { Tx } from "@/server/db/client";
+import { withApp, type Tx } from "@/server/db/client";
 import type { ExistingKeys, ImportRow } from "@/domain/csv-import";
 import { nameKey } from "@/domain/csv-import";
+import type { DepartureReason, PauseReason } from "@/domain/lifecycle";
 import type { AvatarStyle, Belt } from "@/domain/profile";
 
 export interface PersonRow {
@@ -22,6 +23,9 @@ export interface PersonRow {
   /** Date de naissance : renseignée pour un mineur seulement (effacée à la majorité). */
   birthDate: string | null;
   hasPhoto: boolean;
+  /** Pause déclarée (« blessure » et « malade » sont des données de santé : à n'afficher qu'au staff, voir docs/rgpd/pauses-sante.md). */
+  pausedUntil: string | null;
+  pauseReason: PauseReason | null;
   /** Présent seulement si listPeople reçoit `assiduityTimezone` (lundis AAAA-MM-JJ des semaines avec une venue). */
   attendedWeeks?: string[];
 }
@@ -72,6 +76,7 @@ export async function listPeople(
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
+           p.paused_until::text as "pausedUntil", p.pause_reason as "pauseReason",
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            (select max(s.starts_at) from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
              where a.person_id = p.id and a.academy_id = p.academy_id and a.status in ('present', 'late')) as "lastAttendedAt"
@@ -88,6 +93,7 @@ export async function getPerson(tx: Tx, academyId: string, personId: string): Pr
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
+           p.paused_until::text as "pausedUntil", p.pause_reason as "pauseReason",
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.id = ${personId} and p.academy_id = ${academyId}`;
@@ -167,9 +173,9 @@ export async function updatePerson(tx: Tx, academyId: string, personId: string, 
   return r.count === 1;
 }
 
-export async function setPersonArchived(tx: Tx, academyId: string, personId: string, archived: boolean): Promise<boolean> {
+export async function setPersonArchived(tx: Tx, academyId: string, personId: string, archived: boolean, departureReason: DepartureReason | null = null): Promise<boolean> {
   const r = await tx`
-    update public.people set archived_at = ${archived ? new Date() : null}
+    update public.people set archived_at = ${archived ? new Date() : null}, departure_reason = ${archived ? departureReason : null}
     where id = ${personId} and academy_id = ${academyId} and anonymized_at is null`;
   return r.count === 1;
 }
@@ -231,9 +237,25 @@ export async function listAllForExport(tx: Tx, academyId: string): Promise<Perso
     select p.id, p.first_name as "firstName", p.last_name as "lastName", p.email, p.phone, p.joined_on as "joinedOn",
            p.external_ref as "externalRef", p.archived_at as "archivedAt", p.anonymized_at as "anonymizedAt", p.created_at as "createdAt",
            p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
+           null::text as "pausedUntil", null::text as "pauseReason", -- l'export CSV n'emporte jamais de donnée de santé
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.academy_id = ${academyId} and p.anonymized_at is null
     order by lower(p.last_name), lower(p.first_name) limit 20000`;
   return [...rows];
+}
+
+/** Pause d'un adhérent posée par le staff (la base exige le consentement pour blessure et maladie). */
+export async function setMemberPause(tx: Tx, personId: string, until: string, reason: PauseReason, consent: boolean): Promise<void> {
+  await tx`select public.set_member_pause(${personId}, ${until}::date, ${reason}, ${consent})`;
+}
+
+export async function clearMemberPause(tx: Tx, personId: string): Promise<void> {
+  await tx`select public.clear_member_pause(${personId})`;
+}
+
+/** Une pause terminée depuis plus de 30 jours est effacée (appelée par la purge quotidienne). */
+export async function purgePauses(): Promise<number> {
+  const [row] = await withApp((tx) => tx<{ n: number }[]>`select app_private.purge_pauses() as n`);
+  return row?.n ?? 0;
 }

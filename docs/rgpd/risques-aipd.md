@@ -14,7 +14,7 @@ Lecture des neuf critères pour Matnexa dans son périmètre actuel (adultes et 
 | Évaluation / notation | Classement des venues : comptage, pas de profilage ni de décision ; opt-in | Discutable — **à apprécier** |
 | Décision automatisée avec effet juridique | Aucune (la liste d'attente suit l'ordre d'arrivée, sans effet juridique) | Non |
 | Surveillance systématique | Suivi des présences aux cours, au sein du club | Discutable — **à apprécier** |
-| Données sensibles / hautement personnelles | Aucune par conception | Non |
+| Données sensibles / hautement personnelles | **La raison d'une pause (« blessure », « malade »)** depuis le 16/10/2026 : catégorie seule, consentement explicite, sans détail libre, effacée 30 jours après la reprise (`pauses-sante.md`). Interdite pour les mineurs | **Oui, de façon limitée — à réévaluer** |
 | Grande échelle | Non au lancement ; à réévaluer avec le nombre de clubs | Non à ce jour |
 | Croisement de jeux de données | Non | Non |
 | Personnes vulnérables | **Mineurs admis** (avec responsable légal, sans compte propre, classement/photo désactivés, aucune donnée de santé) ; adultes sur attestation | **Discutable — à apprécier** (voir mineurs.md) |

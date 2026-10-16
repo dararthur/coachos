@@ -14,6 +14,12 @@ Coché = vérifié par une preuve (test exécuté, document signé, configuratio
 - [x] Sauvegarde chiffrée exécutée et **restauration testée**. 15/10/2026 : `coachos-20261015T084152Z.dump.age` (315 Ko), timer actif (03:30) ; `restore-verify.sh` : intégrité, déchiffrement, rôles, RLS, tables, migrations OK en 1,3 s. Destination : dossier local `/var/backups/coachos-archive`, emporté hors machine par la **sauvegarde quotidienne OVH du VPS** (choix de l'éditeur, pas de stockage objet séparé). Clé privée age hors serveur, chez l'éditeur. Prochain exercice : janvier 2027.
 - [x] Resend (activé, région Irlande). Vérifié le 15/10/2026 : le DPA est intégré aux conditions d'utilisation et en vigueur dès l'acceptation du compte (clauses contractuelles types 2021/914, modules 2 et 3 ; sous-traitants ultérieurs sur resend.com/legal/subprocessors, préavis de 14 jours) ; Resend figure sur la liste officielle du Data Privacy Framework (UE–États-Unis et extension britannique, données hors RH), statut « Active - Re-certification under Review ». 15/10/2026, d'après l'éditeur : DPA signé téléchargé et archivé ; suivi des ouvertures et des clics désactivé sur `matnexa.fr`.
 
+## Avant d'utiliser les pauses « blessure » et « malade » (donnée de santé)
+
+- [ ] Note [pauses-sante.md](pauses-sante.md) relue et décision d'**AIPD** documentée ([risques-aipd.md](risques-aipd.md)) : une donnée de santé existe désormais.
+- [ ] Les clubs pilotes sont informés et ont diffusé le texte d'information mis à jour ([modele-information-membres.md](modele-information-membres.md)).
+- [ ] Notice `/privacy` relue juridiquement (paragraphe « Pauses »).
+
 ## Avant de saisir des fiches d'enfants réelles
 
 - [ ] AIPD courte menée et documentée (ou décision motivée de ne pas en faire), voir [risques-aipd.md](risques-aipd.md) : les enfants sont des personnes vulnérables au sens des lignes directrices du CEPD.

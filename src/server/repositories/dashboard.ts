@@ -81,6 +81,7 @@ export async function listInactiveMembers(tx: Tx, academyId: string, timezone: s
         where a.person_id = p.id and a.status in ('present', 'late')) as "lastAttendedAt"
     from public.people p
     where p.academy_id = ${academyId} and p.archived_at is null and p.anonymized_at is null
+      and (p.paused_until is null or p.paused_until < (now() at time zone ${timezone})::date) -- pause déclarée : pas un décrochage
       and coalesce(p.joined_on::timestamp at time zone ${timezone}, p.created_at) < now() - interval '30 days'
       and not exists (select 1 from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id
                       where a.person_id = p.id and a.status in ('present', 'late') and s.starts_at >= now() - interval '30 days')

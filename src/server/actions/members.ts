@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_IMPORT_BYTES, analyzeImport, planImport, type ImportRow, type RowIssue } from "@/domain/csv-import";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { guardianUpdateSchema, myProfileSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
+import { archiveSchema, guardianUpdateSchema, myProfileSchema, pauseSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import { newConsentToken, sendGuardianConsent } from "@/server/guardian-consent";
@@ -126,18 +126,66 @@ export async function withdrawGuardianConsentAction(academyId: string, personId:
   });
 }
 
-export async function setMemberArchivedAction(academyId: string, personId: string, archive: boolean, _prev: FormState, _formData: FormData): Promise<FormState> {
+export async function setMemberArchivedAction(academyId: string, personId: string, archive: boolean, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("archiveMember", async () => {
     const ctx = await authorizeAcademy(academyId, "members.update");
     const id = uuidField.safeParse(personId);
     if (!id.success) throw new AppError("not_found");
-    const ok = await inAcademy(ctx, (tx) => members.setPersonArchived(tx, academyId, id.data, archive));
+    // Motif de départ (liste fermée, sans catégorie de santé) : seulement à l'archivage.
+    const reason = archive ? (parseForm(archiveSchema, formData).departureReason ?? null) : null;
+    const ok = await inAcademy(ctx, (tx) => members.setPersonArchived(tx, academyId, id.data, archive, reason));
     if (!ok) throw new AppError("not_found");
     // Les places réservées d'un membre archivé reviennent à la liste d'attente : les adhérents promus sont prévenus.
     if (archive) deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/members`);
     revalidatePath(`/a/${academyId}/members/${personId}`);
     return { ok: true, data: null, message: archive ? "Membre archivé." : "Membre restauré." };
+  });
+}
+
+/** Pause d'un adhérent posée par le staff (propriétaire, administrateur, coach). */
+export async function setMemberPauseAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("setMemberPause", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.pause");
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    const input = parseForm(pauseSchema, formData);
+    await inAcademy(ctx, (tx) => members.setMemberPause(tx, id.data, input.until, input.reason, input.consent === "on"));
+    revalidatePath(`/a/${academyId}/members`);
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    return { ok: true, data: null, message: "Pause enregistrée." };
+  });
+}
+
+export async function clearMemberPauseAction(academyId: string, personId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("clearMemberPause", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.pause");
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    await inAcademy(ctx, (tx) => members.clearMemberPause(tx, id.data));
+    revalidatePath(`/a/${academyId}/members`);
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    return { ok: true, data: null, message: "Pause levée." };
+  });
+}
+
+/** Ma pause : l'adhérent la déclare lui-même (« Mon profil »). */
+export async function setMyPauseAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("setMyPause", async () => {
+    const ctx = await authorizeAcademy(academyId);
+    const input = parseForm(pauseSchema, formData);
+    await inAcademy(ctx, (tx) => profile.setMyPause(tx, academyId, input.until, input.reason, input.consent === "on"));
+    revalidatePath(`/a/${academyId}`, "layout");
+    return { ok: true, data: null, message: "Pause enregistrée. À bientôt sur le tapis !" };
+  });
+}
+
+export async function clearMyPauseAction(academyId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("clearMyPause", async () => {
+    const ctx = await authorizeAcademy(academyId);
+    await inAcademy(ctx, (tx) => profile.clearMyPause(tx, academyId));
+    revalidatePath(`/a/${academyId}`, "layout");
+    return { ok: true, data: null, message: "Pause levée : content de vous revoir !" };
   });
 }
 

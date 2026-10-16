@@ -10,7 +10,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { BeltLabel, BeltOptions } from "@/components/ui/belt";
 import { MAX_STRIPES } from "@/domain/profile";
 import { ConfirmAction } from "@/components/ui/confirm";
-import { eraseMemberAction, resendGuardianConsentAction, setMemberArchivedAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
+import { PauseBadge } from "@/components/ui/pause-badge";
+import { PauseForm } from "@/components/ui/pause-forms";
+import { DEPARTURE_REASONS } from "@/domain/lifecycle";
+import { clearMemberPauseAction, eraseMemberAction, resendGuardianConsentAction, setMemberArchivedAction, setMemberPauseAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
 import { ageOn } from "@/domain/minors";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
@@ -25,6 +28,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
   const { academyId, personId } = await params;
   const sp = await searchParams;
   const ctx = await requireAcademy(academyId, "members.read");
+  const todayInZone = (zone: string) => new Intl.DateTimeFormat("fr-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   if (!z.uuid().safeParse(personId).success) notFound();
 
   const data = await inAcademy(ctx, async (tx) => {
@@ -49,6 +53,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
             {person.archivedAt ? <Badge>Archivé</Badge> : <Badge tone="success">Actif</Badge>}
             {person.anonymizedAt && <Badge tone="warning">Anonymisé</Badge>}
             {person.birthDate && <Badge tone="warning">Mineur · {ageOn(person.birthDate)} ans</Badge>}
+            <PauseBadge reason={person.pauseReason} until={person.pausedUntil} />
             {person.joinedOn && <span>Inscrit(e) le {formatCalendarDate(person.joinedOn)}</span>}
           </>
         }
@@ -188,6 +193,20 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
             </Card>
           )}
 
+          {can(ctx.role, "members.pause") && !person.anonymizedAt && !person.archivedAt && (
+            <Card title="Pause" description="Blessure, maladie, horaires, vacances… la personne n'est plus signalée comme absente jusqu'à sa reprise.">
+              <PauseForm
+                mode="staff"
+                minor={isMinor}
+                setAction={setMemberPauseAction.bind(null, academyId, personId)}
+                clearAction={clearMemberPauseAction.bind(null, academyId, personId)}
+                reason={person.pauseReason}
+                until={person.pausedUntil}
+                today={todayInZone(tz)}
+              />
+            </Card>
+          )}
+
           {can(ctx.role, "members.update") && !person.anonymizedAt && (
             <Card title="Gestion">
               <div className="flex flex-wrap items-start gap-2">
@@ -204,7 +223,18 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                   }
                   confirmLabel={person.archivedAt ? "Restaurer" : "Archiver"}
                   confirmVariant="primary"
-                />
+                >
+                  {!person.archivedAt && (
+                    <SelectField label="Motif du départ (facultatif)" name="departureReason" defaultValue="">
+                      <option value="">Non précisé</option>
+                      {DEPARTURE_REASONS.filter((r) => r.value !== "unknown").map((r) => (
+                        <option key={r.value} value={r.value}>
+                          {r.emoji} {r.label}
+                        </option>
+                      ))}
+                    </SelectField>
+                  )}
+                </ConfirmAction>
                 {can(ctx.role, "members.erase") && (
                   <LinkButton href={`/a/${academyId}/members/${personId}/export`} variant="secondary" download>
                     Exporter ses données

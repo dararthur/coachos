@@ -6,7 +6,8 @@ import { Alert, BackLink, Card, PageHeader } from "@/components/ui/ui";
 import { ActionForm, CheckboxField, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { Avatar } from "@/components/ui/avatar";
 import { BeltLabel, BeltOptions } from "@/components/ui/belt";
-import { updateMyProfileAction } from "@/server/actions/members";
+import { PauseForm } from "@/components/ui/pause-forms";
+import { clearMyPauseAction, setMyPauseAction, updateMyProfileAction } from "@/server/actions/members";
 import { removePhotoAction, setMyPhotoAction } from "@/server/actions/photos";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { getMyProfile } from "@/server/repositories/profile";
@@ -98,6 +99,18 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
           <SubmitButton>{me.completed ? "Enregistrer" : "Valider mon profil"}</SubmitButton>
         </ActionForm>
       </Card>
+      {me.completed && (
+        <Card className="mt-6 max-w-xl" title="Faire une pause" description="Blessé(e), malade, en vacances ou pris(e) par vos horaires ? Prévenez le club : vous ne serez plus signalé(e) comme absent(e) jusqu'à votre reprise.">
+          <PauseForm
+            mode="member"
+            setAction={setMyPauseAction.bind(null, academyId)}
+            clearAction={clearMyPauseAction.bind(null, academyId)}
+            reason={me.pauseReason}
+            until={me.pausedUntil}
+            today={new Intl.DateTimeFormat("fr-CA", { timeZone: ctx.academy.timezone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date())}
+          />
+        </Card>
+      )}
       {me.completed && rankingVisible !== null && <RankingVisibilityCard academyId={academyId} visible={rankingVisible} className="mt-6 max-w-xl" />}
     </>
   );
