@@ -9,8 +9,8 @@ unit="${1:-inconnue}"
 host="$(hostname -s 2>/dev/null || echo vps)"
 logger -t coachos-alert "unite en echec : ${unit}"
 if [ -n "${ALERT_URL:-}" ]; then
-  curl -fsS --max-time 20 -H "Title: Matnexa : echec ${unit}" -H "Priority: high" \
-    -d "L'unite ${unit} a echoue sur ${host}. Voir : journalctl -u ${unit} -n 50" "${ALERT_URL}" >/dev/null 2>&1 \
-    || logger -t coachos-alert "envoi de l'alerte impossible"
+  if ! err="$(curl -fsS --max-time 20 -H "Title: Matnexa : echec ${unit}" -H "Priority: high"     -d "L'unite ${unit} a echoue sur ${host}. Voir : journalctl -u ${unit} -n 50" "${ALERT_URL}" 2>&1 >/dev/null)"; then
+    logger -t coachos-alert "envoi de l'alerte impossible : ${err}"
+  fi
 fi
 exit 0
