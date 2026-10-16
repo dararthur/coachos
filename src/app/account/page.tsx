@@ -12,6 +12,8 @@ import { requireUser } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { ChildrenCard } from "@/components/guardian/children-card";
 import { myChildrenWithSessions } from "@/server/repositories/guardian";
+import { listAcademiesForUser } from "@/server/repositories/academies";
+import { getMyProfile } from "@/server/repositories/profile";
 import { InstallApp } from "@/components/ui/install-app";
 import { PushToggle } from "@/components/ui/push-toggle";
 import { vapidPublicKey } from "@/server/push";
@@ -24,7 +26,13 @@ const DEVICE_NOTICES: Record<string, string> = { device: "Appareil déconnecté.
 export default async function AccountPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const user = await requireUser();
   const params = await searchParams;
-  const children = await withUser(user, (tx) => myChildrenWithSessions(tx));
+  const { children, profileClubs } = await withUser(user, async (tx) => {
+    // Le profil de membre est propre à chaque club : on ne propose le lien que là où le compte a une fiche (un compte d'équipe jamais passé en mode membre n'en a pas).
+    const clubs = await listAcademiesForUser(tx, user.id);
+    const withProfile: { id: string; name: string }[] = [];
+    for (const c of clubs) if (await getMyProfile(tx, c.id)) withProfile.push({ id: c.id, name: c.name });
+    return { children: await myChildrenWithSessions(tx), profileClubs: withProfile };
+  });
   const devices = (await listConnectedDevices(getAuth(), await headers())) ?? [];
   const pushKey = vapidPublicKey();
   return (
@@ -36,6 +44,21 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           <TextField label="Prénom et nom" name="displayName" defaultValue={user.displayName} maxLength={100} hint="Visible par l'équipe des clubs dont vous faites partie." />
           <SubmitButton>Enregistrer</SubmitButton>
         </ActionForm>
+        {profileClubs.length > 0 && (
+          <div className="mt-5 space-y-3 border-t border-line pt-5">
+            <p className="text-sm text-ink-soft">
+              Votre téléphone, votre ceinture, votre photo, votre avatar et vos pauses se règlent dans votre profil de membre, propre à chaque club.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {profileClubs.map((c) => (
+                <LinkButton key={c.id} href={`/a/${c.id}/profile`} variant="secondary">
+                  Modifier mon profil{profileClubs.length > 1 ? ` · ${c.name}` : ""}
+                  {profileClubs.length === 1 && <span className="sr-only"> dans {c.name}</span>}
+                </LinkButton>
+              ))}
+            </div>
+          </div>
+        )}
       </Card>
       <ChildrenCard childrenRows={children} />
       <Card title="Mes clubs" description="Changer de club, en rejoindre un autre ou en créer un.">

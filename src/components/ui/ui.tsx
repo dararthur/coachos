@@ -185,9 +185,10 @@ export function Stat({ label, value, hint, href }: { label: string; value: React
  * Tableau accessible : en-têtes de colonnes, légende masquée, défilement horizontal si nécessaire.
  * `bare` : sans cadre, pour un tableau posé dans un panneau `flush`.
  */
+// `relative` : les textes sr-only (position absolue) d'une cellule restent dans la zone défilante au lieu d'élargir la page.
 export function DataTable({ caption, headers, children, bare = false, numeric = [] }: { caption: string; headers: string[]; children: ReactNode; bare?: boolean; numeric?: number[] }) {
   return (
-    <div className={`overflow-x-auto ${bare ? "" : "rounded-sm border border-line bg-surface"}`}>
+    <div className={`relative overflow-x-auto ${bare ? "" : "rounded-sm border border-line bg-surface"}`}>
       <table className="w-full text-left text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b border-line bg-sunken text-xs font-semibold text-ink-soft">

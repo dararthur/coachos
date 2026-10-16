@@ -60,6 +60,11 @@ test("grades : le coach enregistre un passage, voit l'éligibilité et la liste 
     await page.goto(`/a/${club}/profile`);
     await expect(page.getByRole("heading", { name: "Faire une pause" })).toBeVisible();
     await expect(page.getByText(/Grade et passages|Éligible|minimums IBJJF|Passages à évaluer/)).toHaveCount(0);
+    // « Mon compte » mène au profil de membre du club.
+    await page.goto("/account");
+    await page.getByRole("link", { name: /Modifier mon profil/ }).click();
+    await expect(page).toHaveURL(new RegExp(`/a/${club}/profile`));
+    await expect(page.getByRole("heading", { name: "Mon profil" })).toBeVisible();
     await page.goto(`/a/${club}/me`);
     await expect(page.getByText(/Éligible|minimums IBJJF|Passages à évaluer/)).toHaveCount(0);
   });
