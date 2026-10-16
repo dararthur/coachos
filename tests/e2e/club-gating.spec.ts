@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import postgres from "postgres";
 import type { Browser, Page } from "@playwright/test";
-import { ADMIN_EMAIL, approveClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, waitForMail } from "./support/helpers";
+import { ADMIN_EMAIL, approveClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, unlockAdmin, waitForMail } from "./support/helpers";
 
 const NO_CODE_MESSAGE = /Si cette adresse peut créer un compte/;
 
@@ -47,7 +47,32 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await expect(admin.getByText(NO_CODE_MESSAGE)).toBeVisible();
     await admin.goto((await waitForMail(ADMIN_EMAIL, "verification")).link);
     await logIn(admin, ADMIN_EMAIL, "/admin/club-requests");
+    // Mot de passe seul ne suffit pas : l'administration demande un code reçu par e-mail.
+    await expect(admin).toHaveURL(/\/admin\/security\?next=%2Fadmin%2Fclub-requests/);
+    await expect(admin.getByRole("heading", { name: "Demandes de création de club" })).toHaveCount(0);
+    await admin.getByRole("button", { name: "Envoyer le code par e-mail" }).click();
+    const first = await waitForMail(ADMIN_EMAIL, "admin_code");
+    expect(first.code).toMatch(/^\d{6}$/);
+    await admin.getByLabel("Code à 6 chiffres").fill(first.code === "000000" ? "111111" : "000000");
+    await admin.getByRole("button", { name: "Ouvrir l'administration" }).click();
+    await expect(admin.getByText("Code incorrect, expiré ou déjà utilisé.")).toBeVisible();
+    await admin.getByLabel("Code à 6 chiffres").fill(first.code!);
+    await admin.getByRole("button", { name: "Ouvrir l'administration" }).click();
     await expect(admin.getByRole("heading", { name: "Demandes de création de club" })).toBeVisible();
+    // Le code ne sert qu'une fois : un nouvel appareil (autre session) avec le même code est refusé, et doit demander le sien.
+    const other = await visitor(browser);
+    await logIn(other, ADMIN_EMAIL, "/admin");
+    await expect(other).toHaveURL(/\/admin\/security/);
+    await other.goto("/admin");
+    await expect(other).toHaveURL(/\/admin\/security/);
+    await unlockAdmin(other);
+    await expect(other.getByRole("heading", { name: "Administration de la plateforme" })).toBeVisible();
+    // Verrouiller efface la preuve de cet appareil.
+    await other.goto("/admin/security");
+    await other.getByRole("button", { name: "Verrouiller sur cet appareil" }).click();
+    await expect(other).toHaveURL(/\/account/);
+    await other.goto("/admin");
+    await expect(other).toHaveURL(/\/admin\/security/);
 
     // 2. Un futur propriétaire dépose une demande, sans compte.
     const founderEmail = uniqueEmail("fondateur");
@@ -80,6 +105,8 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await stranger.goto("/admin");
     await expect(stranger.getByRole("heading", { name: "Page introuvable" })).toBeVisible();
     await expect(stranger.getByRole("heading", { name: "Administration de la plateforme" })).toHaveCount(0);
+    await stranger.goto("/admin/security");
+    await expect(stranger.getByRole("heading", { name: "Page introuvable" })).toBeVisible();
     await stranger.goto("/account");
     await expect(stranger.getByRole("heading", { name: "Mon compte", exact: true })).toBeVisible();
     await expect(stranger.getByText("Administration de la plateforme")).toHaveCount(0);

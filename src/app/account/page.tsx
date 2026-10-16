@@ -9,7 +9,7 @@ import { deleteAccountAction, changePasswordAction, updateProfileAction } from "
 import { getAuth } from "@/server/auth/auth";
 import { listConnectedDevices } from "@/server/auth/devices";
 import { requireUser } from "@/server/auth/guards";
-import { isPlatformAdminUser } from "@/server/auth/platform-admin";
+import { isPlatformAdminAccount } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { ChildrenCard } from "@/components/guardian/children-card";
 import { myChildrenWithSessions } from "@/server/repositories/guardian";
@@ -34,7 +34,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     for (const c of clubs) if (await getMyProfile(tx, c.id)) withProfile.push({ id: c.id, name: c.name });
     return { children: await myChildrenWithSessions(tx), profileClubs: withProfile };
   });
-  const platformAdmin = await isPlatformAdminUser(user);
+  const platformAdmin = await isPlatformAdminAccount(user);
   const devices = (await listConnectedDevices(getAuth(), await headers())) ?? [];
   const pushKey = vapidPublicKey();
   return (

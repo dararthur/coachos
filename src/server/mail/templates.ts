@@ -73,6 +73,24 @@ export function clubRequestEmail(to: string, link: string, request: { clubName: 
   return { to, kind: "club_request", subject: "Demande de création de club — Matnexa", link, ...body };
 }
 
+/** À l'administrateur de la plateforme : code de seconde authentification (6 chiffres, 10 minutes, usage unique). */
+export function adminCodeEmail(to: string, code: string, link: string): MailMessage {
+  const text = `Code de vérification de l'administration Matnexa : ${code}
+
+Il est valable 10 minutes et ne sert qu'une fois. Saisissez-le sur ${link}
+
+Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe sans attendre.
+
+Matnexa`;
+  const html = `<!doctype html><html lang="fr"><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#16191d;background:#ffffff">
+<p style="font-size:16px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px">Matnexa</p>
+<h1 style="font-size:20px;margin:0 0 12px">Votre code de vérification</h1>
+<p>Pour ouvrir l'administration de la plateforme, saisissez ce code :</p>
+<p style="font-size:32px;font-weight:700;letter-spacing:0.25em;margin:8px 0 16px">${escapeHtml(code)}</p>
+<p style="font-size:13px;color:#585d64">Il est valable 10 minutes et ne sert qu'une fois. Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe sans attendre.</p></body></html>`;
+  return { to, kind: "admin_code", subject: "Votre code de vérification — Matnexa", link, code, text, html };
+}
+
 /** Au demandeur : sa demande est approuvée, il peut créer son compte (ou se connecter s'il en a déjà un). */
 export function clubApprovedEmail(to: string, link: string, clubName: string): MailMessage {
   const body = layout(

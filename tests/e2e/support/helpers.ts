@@ -31,7 +31,7 @@ export function parisToday(offsetDays = 0): string {
 
 // --- Boîte d'envoi de test (MAIL_PROVIDER=outbox) : l'application y écrit les e-mails au lieu de les envoyer. ---
 export const OUTBOX = path.join(os.tmpdir(), `coachos-e2e-outbox-${process.env.E2E_PORT ?? 3100}.jsonl`);
-export type Mail = { kind: "verification" | "password_reset" | "club_request" | "club_approved" | "booking_promoted" | "session_cancelled" | "guardian_consent"; to: string; subject: string; link: string };
+export type Mail = { kind: "verification" | "password_reset" | "club_request" | "club_approved" | "booking_promoted" | "session_cancelled" | "guardian_consent" | "admin_code"; to: string; subject: string; link: string; code?: string };
 export const mailsTo = (to: string, kind?: Mail["kind"]): Mail[] =>
   (existsSync(OUTBOX) ? readFileSync(OUTBOX, "utf8").split("\n").filter(Boolean) : []).map((l) => JSON.parse(l) as Mail).filter((m) => m.to === to && (!kind || m.kind === kind));
 export async function waitForMail(to: string, kind: Mail["kind"], count = 1): Promise<Mail> {
@@ -40,6 +40,16 @@ export async function waitForMail(to: string, kind: Mail["kind"], count = 1): Pr
 }
 
 export const ADMIN_EMAIL = "admin-e2e@example.invalid"; // PLATFORM_ADMIN_EMAIL de la pile de test (tests/e2e/support/run-stack.mjs)
+
+/** Seconde authentification de l'administrateur : demande le code par e-mail, le lit dans la boîte d'envoi de test, le saisit. */
+export async function unlockAdmin(page: Page) {
+  await expect(page).toHaveURL(/\/admin\/security/);
+  const before = mailsTo(ADMIN_EMAIL, "admin_code").length;
+  await page.getByRole("button", { name: "Envoyer le code par e-mail" }).click();
+  const mail = await waitForMail(ADMIN_EMAIL, "admin_code", before + 1);
+  await page.getByLabel("Code à 6 chiffres").fill(mail.code!);
+  await page.getByRole("button", { name: "Ouvrir l'administration" }).click();
+}
 
 /**
  * Fixture : une demande de club APPROUVÉE pour cette adresse (ce que ferait l'administrateur de la plateforme), directement en base.

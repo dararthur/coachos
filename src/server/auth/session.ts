@@ -5,6 +5,8 @@ import { getAuth } from "./auth";
 
 export interface SessionUser {
   id: string;
+  /** Identifiant de la session en cours : lie la preuve de seconde authentification de l'administrateur à cette session. */
+  sessionId: string;
   email: string | null;
   emailConfirmed: boolean;
   displayName: string;
@@ -19,6 +21,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (!session) return null;
   return {
     id: session.user.id,
+    sessionId: session.session.id,
     email: session.user.email ?? null,
     emailConfirmed: Boolean(session.user.emailVerified),
     displayName: session.user.name ?? "",

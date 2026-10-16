@@ -8,7 +8,7 @@ import type { Mailer, MailMessage } from "./types";
 export function outboxMailer(file: string): Mailer {
   return {
     async send(m: MailMessage) {
-      appendFileSync(file, JSON.stringify({ kind: m.kind, to: m.to, subject: m.subject, link: m.link }) + "\n");
+      appendFileSync(file, JSON.stringify({ kind: m.kind, to: m.to, subject: m.subject, link: m.link, code: m.code }) + "\n");
     },
   };
 }

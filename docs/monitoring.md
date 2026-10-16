@@ -51,6 +51,16 @@ Réservée au compte dont l'e-mail confirmé est `PLATFORM_ADMIN_EMAIL` : tout a
 - **Liste des clubs** : membres, équipe, séances des 30 derniers jours, usage 7 jours, dernier usage, e-mail du propriétaire, date de création. État : *Actif* (usage sur 7 jours), *Calme* (sur 30 jours), *Inactif*.
 - Aucune donnée de membre n'est affichée (ni nom, ni e-mail, ni présence individuelle) : uniquement des compteurs et le contact du propriétaire.
 
+### Double authentification par e-mail
+
+L'administration exige, après le mot de passe, un **code à 6 chiffres envoyé à l'adresse du compte** (`PLATFORM_ADMIN_EMAIL`). Sans lui, toute page `/admin/*` renvoie vers `/admin/security`, et toute action d'administration est refusée (le contrôle est dans `isPlatformAdminUser`, utilisé par les pages et les actions).
+
+- Le code est **lié à la session** qui l'a demandé, valable **10 minutes**, limité à **5 essais**, à **usage unique**, et un nouvel envoi invalide le précédent. La base ne garde qu'une empreinte HMAC (clé `APP_SECRET`).
+- L'envoi est une **action explicite** (bouton), jamais déclenchée par l'affichage de la page : 3 envois par quart d'heure ; 10 essais de saisie par quart d'heure et 30 par heure et par IP.
+- Une fois le code saisi, un cookie signé (HttpOnly, SameSite=Strict, préfixe `__Host-` en HTTPS) lié au compte **et à la session** vaut preuve pendant **8 heures**. Se déconnecter, changer ou réinitialiser le mot de passe, ou « déconnecter les autres appareils » l'invalide. « Verrouiller sur cet appareil » l'efface aussitôt.
+- **Limite à connaître** : le code arrive par e-mail ; si la même boîte permet aussi de réinitialiser le mot de passe, quelqu'un qui contrôle la boîte obtient les deux. Protégez cette boîte avec sa propre double authentification (application ou clé de sécurité), et gardez le mot de passe de l'application différent de celui de la boîte.
+- En cas d'e-mail qui n'arrive pas : le fournisseur (Resend) doit fonctionner, vérifiez `sudo journalctl -u coachos -n 50 --no-pager | grep admin_code`. Il n'y a volontairement aucun contournement dans l'application.
+
 ### Fonctionnalités par club (formule)
 
 Depuis la liste, un clic sur le nom d'un club ouvre `/admin/clubs/<id>` : trois interrupteurs, **Classement et assiduité**, **Actualités et notifications**, **Grades et rapports** (migration 20261016000900, table `club_features`, `src/domain/features.ts`).
