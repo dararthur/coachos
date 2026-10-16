@@ -9,6 +9,7 @@ import { deleteAccountAction, changePasswordAction, updateProfileAction } from "
 import { getAuth } from "@/server/auth/auth";
 import { listConnectedDevices } from "@/server/auth/devices";
 import { requireUser } from "@/server/auth/guards";
+import { isPlatformAdminUser } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { ChildrenCard } from "@/components/guardian/children-card";
 import { myChildrenWithSessions } from "@/server/repositories/guardian";
@@ -33,6 +34,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
     for (const c of clubs) if (await getMyProfile(tx, c.id)) withProfile.push({ id: c.id, name: c.name });
     return { children: await myChildrenWithSessions(tx), profileClubs: withProfile };
   });
+  const platformAdmin = await isPlatformAdminUser(user);
   const devices = (await listConnectedDevices(getAuth(), await headers())) ?? [];
   const pushKey = vapidPublicKey();
   return (
@@ -66,6 +68,13 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
           Voir mes clubs
         </LinkButton>
       </Card>
+      {platformAdmin && (
+        <Card title="Administration de la plateforme" description="Clubs, usage et demandes de création. Visible de vous seul.">
+          <LinkButton href="/admin" variant="secondary">
+            Ouvrir l&apos;administration
+          </LinkButton>
+        </Card>
+      )}
       <Card title="Application sur mon téléphone" description="Installez Matnexa sur l'écran d'accueil : elle s'ouvre en plein écran et vous restez connecté, sans ressaisir votre mot de passe.">
         <InstallApp />
       </Card>

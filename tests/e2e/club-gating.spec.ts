@@ -77,6 +77,12 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await logIn(stranger, strangerEmail, "/admin/club-requests");
     await expect(stranger.getByRole("heading", { name: "Page introuvable" })).toBeVisible();
     await expect(stranger.getByRole("heading", { name: "Demandes de création de club" })).toHaveCount(0);
+    await stranger.goto("/admin");
+    await expect(stranger.getByRole("heading", { name: "Page introuvable" })).toBeVisible();
+    await expect(stranger.getByRole("heading", { name: "Administration de la plateforme" })).toHaveCount(0);
+    await stranger.goto("/account");
+    await expect(stranger.getByRole("heading", { name: "Mon compte", exact: true })).toBeVisible();
+    await expect(stranger.getByText("Administration de la plateforme")).toHaveCount(0);
 
     // 5. Approbation : le demandeur reçoit un e-mail et peut créer son compte SANS code.
     await card.getByRole("button", { name: "Approuver" }).click();
@@ -93,6 +99,16 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await expect(founder.getByLabel("Nom du club")).toHaveValue("Gracie Test Club");
     await founder.getByRole("button", { name: "Créer le club" }).click();
     await expect(founder).toHaveURL(/\/a\/[0-9a-f-]{36}\/dashboard/);
+
+    // 7. L'administrateur retrouve ce club dans la console (par son lien dans « Mon compte »), avec des compteurs et le contact du propriétaire, sans donnée de membre.
+    await admin.goto("/account");
+    await admin.getByRole("link", { name: "Ouvrir l'administration" }).click();
+    await expect(admin).toHaveURL(/\/admin$/);
+    await expect(admin.getByRole("heading", { name: "Administration de la plateforme" })).toBeVisible();
+    const row = admin.getByTestId("platform-club").filter({ hasText: "Gracie Test Club" });
+    await expect(row).toBeVisible();
+    await expect(row).toContainText(founderEmail);
+    await expect(row).toContainText("Inactif");
   });
 
   test("compte sans club : par défaut on rejoint ; créer un club est discret et mène à la demande", async ({ browser }) => {

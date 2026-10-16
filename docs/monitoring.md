@@ -42,3 +42,11 @@ where academy_id = '<id du club>' and created_at > now() - interval '30 days' gr
 ```
 
 Part de pointage autonome = `checkin_qr` / (présences enregistrées) ; part de feuilles clôturées automatiquement = `roll_auto_closed` / (`roll_auto_closed` + `roll_validated`), seuil 30 % (voir `docs/qr-checkin.md`).
+
+## 5. Console d'administration (`/admin`)
+
+Réservée au compte dont l'e-mail confirmé est `PLATFORM_ADMIN_EMAIL` : tout autre compte, connecté ou non, reçoit un 404, et les fonctions de base (`admin_overview`, `admin_list_clubs`) refusent aussi tout autre compte (42501). On y accède depuis « Mon compte » → « Ouvrir l'administration ».
+
+- **Vue d'ensemble** : nombre de clubs, clubs avec de l'usage sur 30 jours, membres actifs, comptes, demandes en attente, usage 7 et 30 jours par type d'événement, taille et version de la base.
+- **Liste des clubs** : membres, équipe, séances des 30 derniers jours, usage 7 jours, dernier usage, e-mail du propriétaire, date de création. État : *Actif* (usage sur 7 jours), *Calme* (sur 30 jours), *Inactif*.
+- Aucune donnée de membre n'est affichée (ni nom, ni e-mail, ni présence individuelle) : uniquement des compteurs et le contact du propriétaire.

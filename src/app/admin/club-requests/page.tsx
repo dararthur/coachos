@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { notFound, redirect } from "next/navigation";
 import { InlineAction } from "@/components/ui/confirm";
-import { StandaloneFrame } from "@/components/layout/standalone";
+import { AdminFrame } from "@/components/layout/admin-frame";
 import { formatDateTime } from "@/domain/dates";
 import { decideClubRequestAction } from "@/server/actions/club-requests";
-import { isPlatformAdminUser } from "@/server/auth/platform-admin";
-import { getSessionUser } from "@/server/auth/session";
+import { requirePlatformAdmin } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { listClubRequests } from "@/server/repositories/club-requests";
 
@@ -15,12 +13,10 @@ const STATUS_LABELS = { pending: "En attente", approved: "Approuvée", rejected:
 
 /** Réservé à l'administrateur de la plateforme. Toute autre personne (connectée ou non) reçoit un 404 : la page n'existe pas pour elle. */
 export default async function ClubRequestsPage() {
-  const user = await getSessionUser();
-  if (!user) redirect(`/login?next=${encodeURIComponent("/admin/club-requests")}`);
-  if (!(await isPlatformAdminUser(user))) notFound();
+  const user = await requirePlatformAdmin("/admin/club-requests");
   const rows = await withUser(user, (tx) => listClubRequests(tx));
   return (
-    <StandaloneFrame width="xl">
+    <AdminFrame current="requests">
       <h1 className="text-title font-bold font-stretch-[80%]">Demandes de création de club</h1>
       <p className="mb-6 mt-1 text-sm text-ink-soft">Rien n&apos;est créé avant votre approbation. Le demandeur est prévenu par e-mail de votre décision.</p>
       {rows.length === 0 ? (
@@ -52,6 +48,6 @@ export default async function ClubRequestsPage() {
           ))}
         </ul>
       )}
-    </StandaloneFrame>
+    </AdminFrame>
   );
 }

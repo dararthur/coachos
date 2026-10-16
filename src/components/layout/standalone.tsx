@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { MatnexaLogo } from "@/components/brand/logo";
 
-const WIDTHS = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-2xl", xl: "max-w-3xl" } as const;
+const WIDTHS = { sm: "max-w-md", md: "max-w-xl", lg: "max-w-2xl", xl: "max-w-3xl", wide: "max-w-6xl" } as const;
 
 /** Cadre des pages hors club (mes clubs, compte, création de club, pointage, invitation, confidentialité). */
 export function StandaloneFrame({ children, width = "lg", aside }: { children: ReactNode; width?: keyof typeof WIDTHS; aside?: ReactNode }) {
