@@ -43,7 +43,7 @@ export default async function NewMemberPage({ params }: { params: Promise<{ acad
             <TextField label="Téléphone du responsable légal" name="guardianPhone" type="tel" inputMode="tel" maxLength={30} autoComplete="off" hint="Facultatif. Pour le recontacter sur WhatsApp." />
           </fieldset>
           <TextField label="Date d'inscription" name="joinedOn" type="date" hint="Facultatif." />
-          <p className="text-sm text-ink-soft">N&apos;enregistrez aucune donnée de santé ni de blessure.</p>
+          <p className="text-sm text-ink-soft">Aucune information de santé ne se saisit ici. Une pause (blessure ou maladie comprises) se déclare ensuite depuis la fiche, avec l&apos;accord de la personne.</p>
           <SubmitButton pendingLabel="Création…">Créer le membre</SubmitButton>
         </ActionForm>
       </Card>

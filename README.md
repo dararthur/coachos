@@ -2,7 +2,7 @@
 
 **Matnexa** est l'application de gestion des clubs de sports de combat (jiu-jitsu brésilien, grappling, MMA) : membres, planning des cours, réservations, présences et pointage par QR code, classement, rapports, équipe et droits RGPD. Elle remplace le cahier d'appel et le tableur, et aide le club à garder ses adhérents (« à qui parler »).
 
-> Nom public : **Matnexa**. `coachos` reste le nom de code interne (dépôt, rôles PostgreSQL, services, scripts). Adhérents **majeurs uniquement**, **aucune donnée de santé**.
+> Nom public : **Matnexa**. `coachos` reste le nom de code interne (dépôt, rôles PostgreSQL, services, scripts). Adhérents majeurs et mineurs (responsable légal). **Seule donnée de santé possible : la raison d'une pause** (blessure, maladie), avec consentement explicite et jamais pour un mineur (docs/rgpd/pauses-sante.md).
 
 ## Sommaire
 
@@ -133,7 +133,7 @@ Si oui → il y a une entreprise. Si non → rien d'autre n'a d'importance (ni l
 | L'import CSV | Intégrations API avec les logiciels existants (phase 3 au plus tôt) |
 
 **Élèves mineurs : hors périmètre du MVP.** RGPD art. 8 + art. 9 (mentions de blessure = donnée de santé).
-Adultes uniquement, pas de donnée de santé, audio transcrit puis supprimé, hébergement UE.
+Adultes uniquement à l'époque, pas de donnée de santé (depuis : pauses, voir ci-dessus), audio transcrit puis supprimé, hébergement UE.
 
 ## Phase actuelle
 
