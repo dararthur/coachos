@@ -68,7 +68,7 @@ async function expectQrAttendance(sql: postgres.Sql, club: string) {
 
 const PHONE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" } as const;
 
-test("QR réel filmé par la caméra simulée : décodage, validation serveur, présence enregistrée en base", async ({ page, baseURL, browserName }) => {
+test("QR réel filmé par la caméra simulée : décodage, validation serveur, présence enregistrée en base", async ({ page, baseURL, browserName, channel }) => {
   test.skip(browserName !== "chromium", "fichier vidéo de caméra simulée propre à Chromium ; Firefox et WebKit : test « canvas » ci-dessous");
   test.setTimeout(120_000);
   const { club, key, sql } = await fixedQrClub(page, "cam-qr");
@@ -77,7 +77,7 @@ test("QR réel filmé par la caméra simulée : décodage, validation serveur, p
     const video = path.join(dir, "qr.y4m");
     qrVideo(`${baseURL}/checkin/club/${key}`, video);
     const camBrowser = await chromium.launch({
-      channel: process.env.PW_CHANNEL || undefined,
+      channel, // même navigateur que le projet (Chrome/Edge en local, Chromium en CI)
       args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream", `--use-file-for-fake-video-capture=${video}`],
     });
     try {

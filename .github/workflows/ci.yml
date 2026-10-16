@@ -54,7 +54,8 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
       - run: npm ci
-      - run: npx playwright install --with-deps ${{ matrix.project }}
+      # chromium : vrai Chromium seulement (channel "chromium" dans playwright.config.ts), pas chrome-headless-shell.
+      - run: npx playwright install --with-deps ${{ matrix.project == 'chromium' && 'chromium --no-shell' || matrix.project }}
       - run: npm run test:e2e -- --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: failure()

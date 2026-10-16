@@ -26,8 +26,11 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      // En local, utiliser Chrome/Edge déjà installés (PW_CHANNEL=chrome|msedge) ; en CI, Chromium de Playwright.
-      use: { ...devices["Desktop Chrome"], channel: process.env.PW_CHANNEL || undefined },
+      // En local, utiliser Chrome/Edge déjà installés (PW_CHANNEL=chrome|msedge) ; en CI, Chromium de Playwright, en VRAI
+      // Chromium (« nouveau » mode headless, channel "chromium") et non chrome-headless-shell, l'ancien mode headless réduit
+      // pris par défaut : celui-ci annonce Notification.permission = "denied" (un vrai Chrome : "default") et masquait
+      // l'activation des notifications (push.spec.ts).
+      use: { ...devices["Desktop Chrome"], channel: process.env.PW_CHANNEL || "chromium" },
     },
     {
       name: "webkit",
