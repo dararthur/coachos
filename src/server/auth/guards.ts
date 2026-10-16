@@ -3,6 +3,7 @@ import { notFound, redirect, unstable_rethrow } from "next/navigation";
 import { cache } from "react";
 import { z } from "zod";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
+import { isFeature, type Feature } from "@/domain/features";
 import { can, isRole, type Permission, type Role } from "@/domain/roles";
 import { withUser, type Tx } from "@/server/db/client";
 import { logger } from "@/server/logger";
@@ -22,13 +23,16 @@ export interface AcademyContext {
   user: SessionUser;
   role: Role;
   academy: { id: string; name: string; timezone: string; currency: string; retentionMonths: number; adultClassMinAge: number; logoVersion: number | null };
+  /** Modules coupés pour ce club par l'administrateur de la plateforme (tout est activé par défaut). */
+  disabledFeatures: readonly Feature[];
 }
 
 const loadContext = cache(async (userId: string, academyId: string) => {
   return withUser({ id: userId }, async (tx) => {
-    const rows = await tx<{ role: string; id: string; name: string; timezone: string; currency: string; retention_months: number; adult_class_min_age: number; logo_version: Date | null }[]>`
+    const rows = await tx<{ role: string; id: string; name: string; timezone: string; currency: string; retention_months: number; adult_class_min_age: number; logo_version: Date | null; disabled_features: string[] }[]>`
       select m.role, a.id, a.name, a.timezone, a.currency, a.retention_months, a.adult_class_min_age,
-             (select l.updated_at from public.academy_logos l where l.academy_id = a.id) as logo_version
+             (select l.updated_at from public.academy_logos l where l.academy_id = a.id) as logo_version,
+             coalesce((select array_agg(f.feature) from public.club_features f where f.academy_id = a.id and not f.enabled), '{}') as disabled_features
       from public.academy_memberships m join public.academies a on a.id = m.academy_id
       where m.academy_id = ${academyId} and m.user_id = ${userId}`;
     return rows[0] ?? null;
@@ -47,28 +51,32 @@ export async function resolveAcademy(user: SessionUser, academyId: string): Prom
     user,
     role: row.role,
     academy: { id: row.id, name: row.name, timezone: row.timezone, currency: row.currency, retentionMonths: row.retention_months, adultClassMinAge: row.adult_class_min_age, logoVersion: row.logo_version?.getTime() ?? null },
+    disabledFeatures: row.disabled_features.filter(isFeature),
   };
 }
 
 /**
- * Pages : académie accessible et permission requise. Non-membre => 404 ; membre sans droit => page « accès refusé ».
+ * Pages : académie accessible et permission requise. Non-membre => 404 ; membre sans droit => page « accès refusé » ;
+ * module coupé pour le club (`feature`) => page « non incluse dans votre formule ».
  */
-export async function requireAcademy(academyId: string, permission?: Permission): Promise<AcademyContext> {
+export async function requireAcademy(academyId: string, permission?: Permission, feature?: Feature): Promise<AcademyContext> {
   const user = await requireUser();
   const ctx = await resolveAcademy(user, academyId);
   if (!ctx) notFound();
   if (permission && !can(ctx.role, permission)) redirect(`/a/${ctx.academy.id}/forbidden`);
+  if (feature && ctx.disabledFeatures.includes(feature)) redirect(`/a/${ctx.academy.id}/unavailable?feature=${feature}`);
   return ctx;
 }
 
 /** Server Actions : lève AppError au lieu de rediriger. */
-export async function authorizeAcademy(academyId: string, permission?: Permission): Promise<AcademyContext> {
+export async function authorizeAcademy(academyId: string, permission?: Permission, feature?: Feature): Promise<AcademyContext> {
   const user = await getSessionUser();
   if (!user) throw new AppError("not_authenticated");
   await enforceRateLimit("write", user.id, LIMITS.writes.max, LIMITS.writes.window);
   const ctx = await resolveAcademy(user, academyId);
   if (!ctx) throw new AppError("not_found");
   if (permission && !can(ctx.role, permission)) throw new AppError("forbidden");
+  if (feature && ctx.disabledFeatures.includes(feature)) throw new AppError("feature_disabled");
   return ctx;
 }
 

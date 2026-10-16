@@ -24,7 +24,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ academ
   const ctx = await requireAcademy(academyId);
   const { me, version, rankingVisible } = await inAcademy(ctx, async (tx) => {
     const me = await getMyProfile(tx, academyId);
-    return { me, version: me ? (await photoVersions(tx, academyId)).get(me.personId) : undefined, rankingVisible: me ? await myRankingVisibility(tx, academyId) : null };
+    return { me, version: me ? (await photoVersions(tx, academyId)).get(me.personId) : undefined, rankingVisible: me && !ctx.disabledFeatures.includes("ranking") ? await myRankingVisibility(tx, academyId) : null };
   });
   // Sans fiche dans ce club (compte d'équipe jamais passé en mode membre), rien à afficher.
   if (!me) notFound();

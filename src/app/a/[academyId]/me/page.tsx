@@ -50,7 +50,7 @@ export default async function MePage({ params, searchParams }: { params: Promise
       profile,
       children: (await myChildrenWithSessions(tx)).filter((c) => c.academyId === academyId),
       photoVersion: profile ? (await photoVersions(tx, academyId)).get(profile.personId) : undefined,
-      rank: profile ? myRank(await attendanceRanking(tx, academyId, month.from, month.to)) : null,
+      rank: profile && !ctx.disabledFeatures.includes("ranking") ? myRank(await attendanceRanking(tx, academyId, month.from, month.to)) : null,
       checkin: await getCheckinSettings(tx, academyId),
       upcoming: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: addDays(today, 13) })),
       // Ses propres présences, filtrées sur sa fiche (la RLS laisserait voir au staff celles de tout le club).

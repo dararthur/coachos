@@ -13,7 +13,7 @@ const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export default async function NewsPage({ params, searchParams }: { params: Promise<{ academyId: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { academyId } = await params;
   const sp = await searchParams;
-  const ctx = await requireAcademy(academyId);
+  const ctx = await requireAcademy(academyId, undefined, "news");
   const tz = ctx.academy.timezone;
   const posts = await inAcademy(ctx, (tx) => listPosts(tx, academyId));
   const staff = can(ctx.role, "news.manage");

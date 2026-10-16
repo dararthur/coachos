@@ -118,6 +118,7 @@ const AUDIT_LABELS: Record<string, string> = {
   "roll.validated": "Feuille d'appel validée",
   "roll.reopened": "Feuille d'appel rouverte",
   "roll.auto_closed": "Feuille d'appel clôturée automatiquement",
+  "platform.feature_set": "Module activé ou coupé par Matnexa",
   "news.published": "Actualité publiée",
   "news.deleted": "Actualité supprimée",
   "account.data_exported": "Données d'un compte exportées",

@@ -34,7 +34,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
   const today = localDate(now, tz);
 
   const { stats, todaySessions, inactive, candidates } = await inAcademy(ctx, async (tx) => ({
-    candidates: can(ctx.role, "members.grade") ? await listPromotionCandidates(tx, academyId, today) : { items: [], total: 0 },
+    candidates: can(ctx.role, "members.grade") && !ctx.disabledFeatures.includes("reports") ? await listPromotionCandidates(tx, academyId, today) : { items: [], total: 0 },
     stats: await getDashboardStats(tx, academyId, tz),
     todaySessions: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: today })),
     inactive: await listInactiveMembers(tx, academyId, tz),

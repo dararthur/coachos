@@ -15,7 +15,7 @@ const noStore = { "Cache-Control": "no-store" };
 export async function GET(request: NextRequest, { params }: { params: Promise<{ academyId: string }> }) {
   const { academyId } = await params;
   try {
-    const ctx = await authorizeAcademy(academyId, "reports.export");
+    const ctx = await authorizeAcademy(academyId, "reports.export", "reports");
     await enforceRateLimit("export", ctx.user.id, LIMITS.exportCsv.max, LIMITS.exportCsv.window);
     const tz = ctx.academy.timezone;
     const q = request.nextUrl.searchParams;

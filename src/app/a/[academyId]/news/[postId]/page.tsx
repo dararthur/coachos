@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: "Modifier la publication" };
 
 export default async function EditPostPage({ params }: { params: Promise<{ academyId: string; postId: string }> }) {
   const { academyId, postId } = await params;
-  const ctx = await requireAcademy(academyId, "news.manage");
+  const ctx = await requireAcademy(academyId, "news.manage", "news");
   if (!uuidField.safeParse(postId).success) notFound();
   const post = await inAcademy(ctx, (tx) => getPost(tx, academyId, postId));
   // Un coach n'accède qu'à ses propres publications.

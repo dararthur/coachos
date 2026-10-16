@@ -8,7 +8,7 @@ export default async function AcademyLayout({ children, params }: { children: Re
   const ctx = await requireAcademy(academyId);
   const viewAsMember = await viewingAsMember(ctx.role);
   return (
-    <AppShell academy={{ id: ctx.academy.id, name: ctx.academy.name, logoVersion: ctx.academy.logoVersion }} role={ctx.role} viewAsMember={viewAsMember} userLabel={ctx.user.email ?? ctx.user.displayName}>
+    <AppShell academy={{ id: ctx.academy.id, name: ctx.academy.name, logoVersion: ctx.academy.logoVersion }} role={ctx.role} viewAsMember={viewAsMember} disabledFeatures={ctx.disabledFeatures} userLabel={ctx.user.email ?? ctx.user.displayName}>
       {children}
     </AppShell>
   );

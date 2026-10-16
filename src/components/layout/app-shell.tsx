@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SCAN_PATH } from "@/domain/checkin";
+import type { Feature } from "@/domain/features";
 import { can, ROLE_LABELS, type Role } from "@/domain/roles";
 import { signOutAction } from "@/server/actions/auth";
 import { switchViewAction } from "@/server/actions/view-mode";
@@ -13,21 +14,23 @@ import { Icon } from "@/components/ui/icons";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { MobileTabBar, NavLinks, type NavItem } from "./nav-links";
 
-export function AppShell({ academy, role, viewAsMember = false, userLabel, children }: { academy: { id: string; name: string; logoVersion: number | null }; role: Role; viewAsMember?: boolean; userLabel: string; children: ReactNode }) {
+export function AppShell({ academy, role, viewAsMember = false, disabledFeatures = [], userLabel, children }: { academy: { id: string; name: string; logoVersion: number | null }; role: Role; viewAsMember?: boolean; disabledFeatures?: readonly Feature[]; userLabel: string; children: ReactNode }) {
   const base = `/a/${academy.id}`;
   const pushKey = vapidPublicKey();
   // En mode membre, l'équipe voit la navigation d'un adhérent ; ses droits réels ne changent pas (ils sont vérifiés côté serveur et par la base).
   const shown: Role = viewAsMember ? "member" : role;
+  // Un module coupé pour le club disparaît de la navigation (le serveur et la base le refusent aussi).
+  const on = (f: Feature) => !disabledFeatures.includes(f);
   const entries: (NavItem | false)[] = [
     can(shown, "dashboard.read") && { href: `${base}/dashboard`, label: "Tableau de bord", short: "Accueil", icon: "home" },
     shown === "member" && { href: `${base}/me`, label: "Mon espace", short: "Espace", icon: "home", also: [`${base}/profile`] },
     can(shown, "members.read") && { href: `${base}/members`, label: "Membres", short: "Membres", icon: "users" },
     { href: `${base}/schedule`, label: "Planning", short: "Planning", icon: "calendar" },
-    { href: `${base}/news`, label: "Actualités", short: "Actus", icon: "news", more: true },
-    shown === "member" && { href: `${base}/ranking`, label: "Classement", short: "Classement", icon: "trophy" },
+    on("news") && { href: `${base}/news`, label: "Actualités", short: "Actus", icon: "news", more: true },
+    shown === "member" && on("ranking") && { href: `${base}/ranking`, label: "Classement", short: "Classement", icon: "trophy" },
     shown === "member" && { href: SCAN_PATH, label: "Pointer ma présence", short: "Pointer", shortName: "Pointer ma présence", icon: "qr" },
     can(shown, "attendance.record") && { href: `${base}/attendance`, label: "Présences", short: "Présences", icon: "roll" },
-    can(shown, "reports.read") && { href: `${base}/reports`, label: "Rapports", short: "Rapports", icon: "chart", more: true },
+    can(shown, "reports.read") && on("reports") && { href: `${base}/reports`, label: "Rapports", short: "Rapports", icon: "chart", more: true },
     can(shown, "academy.update") && { href: `${base}/settings`, label: "Paramètres", short: "Réglages", icon: "settings", more: true },
   ];
   const items = entries.filter((i): i is NavItem => Boolean(i));

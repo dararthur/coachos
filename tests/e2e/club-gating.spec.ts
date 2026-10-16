@@ -109,6 +109,32 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await expect(row).toBeVisible();
     await expect(row).toContainText(founderEmail);
     await expect(row).toContainText("Inactif");
+
+    // 8. Il coupe les actualités pour ce club : navigation, page et serveur les refusent, sans rien supprimer ; la réactivation les rend.
+    await row.getByRole("link", { name: "Gracie Test Club" }).click();
+    await expect(admin.getByRole("heading", { name: "Gracie Test Club" })).toBeVisible();
+    const news = admin.getByTestId("feature-news");
+    await expect(news).toContainText("Activé");
+    const clubHome = new URL(founder.url()).pathname.replace(/\/dashboard.*$/, "");
+    await founder.goto(`${clubHome}/dashboard`);
+    await expect(founder.getByRole("link", { name: "Actualités" }).first()).toBeVisible();
+
+    await news.getByRole("button", { name: "Couper" }).click();
+    await expect(news).toContainText("Coupé");
+    await founder.goto(`${clubHome}/dashboard`);
+    await expect(founder.getByRole("link", { name: "Actualités" })).toHaveCount(0);
+    await founder.goto(`${clubHome}/news`);
+    await expect(founder.getByRole("heading", { name: "Non incluse dans votre formule" })).toBeVisible();
+    await founder.goto(`${clubHome}/news/new`);
+    await expect(founder.getByRole("heading", { name: "Non incluse dans votre formule" })).toBeVisible();
+    // Les autres modules ne sont pas touchés.
+    await founder.goto(`${clubHome}/reports`);
+    await expect(founder.getByRole("heading", { name: "Rapports", exact: true })).toBeVisible();
+
+    await news.getByRole("button", { name: "Activer" }).click();
+    await expect(news).toContainText("Activé");
+    await founder.goto(`${clubHome}/news`);
+    await expect(founder.getByRole("heading", { name: "Actualités", exact: true })).toBeVisible();
   });
 
   test("compte sans club : par défaut on rejoint ; créer un club est discret et mène à la demande", async ({ browser }) => {

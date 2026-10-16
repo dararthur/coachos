@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { AdminFrame } from "@/components/layout/admin-frame";
 import { Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { formatDateTime } from "@/domain/dates";
+import { FEATURES, isFeature } from "@/domain/features";
 import { requirePlatformAdmin } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
 import { platformClubs, platformOverview } from "@/server/repositories/platform";
@@ -80,14 +82,14 @@ export default async function AdminPage() {
           Les clubs apparaissent ici dès qu&apos;une demande approuvée a été réclamée.
         </EmptyState>
       ) : (
-        <DataTable caption="Liste des clubs" headers={["Club", "Activité", "Membres", "Équipe", "Séances (30 j)", "Usage (7 j)", "Dernier usage", "Contact", "Créé le"]} numeric={[2, 3, 4, 5]}>
+        <DataTable caption="Liste des clubs" headers={["Club", "Activité", "Membres", "Équipe", "Séances (30 j)", "Usage (7 j)", "Dernier usage", "Modules coupés", "Contact", "Créé le"]} numeric={[2, 3, 4, 5]}>
           {clubs.map((c) => {
             const a = activity(c.events7d, c.events30d);
             const idle = c.lastEventAt ? Math.floor((now - c.lastEventAt.getTime()) / DAY) : null;
             return (
               <tr key={c.id} data-testid="platform-club">
                 <th scope="row" className="px-4 py-3 text-left font-bold">
-                  {c.name}
+                  <Link href={`/admin/clubs/${c.id}`}>{c.name}</Link>
                 </th>
                 <td className="px-4 py-3">
                   <Badge tone={a.tone}>{a.label}</Badge>
@@ -99,6 +101,7 @@ export default async function AdminPage() {
                 <td className="px-4 py-3 whitespace-nowrap text-ink-soft">
                   {c.lastEventAt ? `${formatDateTime(c.lastEventAt, c.timezone)}${idle !== null && idle > 0 ? ` (il y a ${idle} j)` : ""}` : "Jamais"}
                 </td>
+                <td className="px-4 py-3 text-ink-soft">{c.disabledFeatures.filter(isFeature).map((f) => FEATURES[f].label).join(", ") || "Aucun"}</td>
                 <td className="px-4 py-3 break-all text-ink-soft">{c.ownerEmail ?? "—"}</td>
                 <td className="px-4 py-3 whitespace-nowrap text-ink-soft">{formatDateTime(c.createdAt, "Europe/Paris").split(" ")[0]}</td>
               </tr>

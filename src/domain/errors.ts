@@ -2,6 +2,7 @@
 export const ERROR_MESSAGES = {
   not_authenticated: "Vous n'êtes plus connecté (session expirée ou déconnexion) : reconnectez-vous pour continuer.",
   forbidden: "Vous n'avez pas les droits nécessaires pour cette action.",
+  feature_disabled: "Cette fonctionnalité n'est pas incluse dans la formule de votre club.",
   not_found: "Élément introuvable.",
   validation: "Certaines informations sont invalides.",
   duplicate: "Cet élément existe déjà.",

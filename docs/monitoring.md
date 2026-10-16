@@ -50,3 +50,14 @@ Réservée au compte dont l'e-mail confirmé est `PLATFORM_ADMIN_EMAIL` : tout a
 - **Vue d'ensemble** : nombre de clubs, clubs avec de l'usage sur 30 jours, membres actifs, comptes, demandes en attente, usage 7 et 30 jours par type d'événement, taille et version de la base.
 - **Liste des clubs** : membres, équipe, séances des 30 derniers jours, usage 7 jours, dernier usage, e-mail du propriétaire, date de création. État : *Actif* (usage sur 7 jours), *Calme* (sur 30 jours), *Inactif*.
 - Aucune donnée de membre n'est affichée (ni nom, ni e-mail, ni présence individuelle) : uniquement des compteurs et le contact du propriétaire.
+
+### Fonctionnalités par club (formule)
+
+Depuis la liste, un clic sur le nom d'un club ouvre `/admin/clubs/<id>` : trois interrupteurs, **Classement et assiduité**, **Actualités et notifications**, **Grades et rapports** (migration 20261016000900, table `club_features`, `src/domain/features.ts`).
+
+- Tout est **activé par défaut** : l'absence de ligne vaut « activé », donc aucun club existant ne change.
+- Un module coupé disparaît de la navigation, ses pages renvoient « Non incluse dans votre formule », ses actions et exports sont refusés par le serveur, et la **base** refuse aussi (actualités : politique restrictive ; classement, passages de grade : contrôle dans la fonction). Aucune donnée n'est supprimée : tout revient à la réactivation.
+- Le réglage est tracé dans le journal d'activité du club (« Module activé ou coupé par Matnexa »).
+- Seul l'administrateur de la plateforme règle (`admin_set_club_feature`) ; les membres du club peuvent lire leurs interrupteurs, pas les modifier.
+- Ne sont pas coupés : la ceinture et les barrettes de la fiche d'un membre (champ de la fiche, pas le module des grades), les pointages, le planning et les réservations. Le réglage « apparaître au classement » d'un enfant (compte du responsable) reste visible.
+- Ajouter un module : ajouter son identifiant dans `FEATURES`, dans la contrainte `club_features.feature` et dans `admin_club_features`/`admin_set_club_feature` (nouvelle migration), puis passer `feature` à `requireAcademy`/`authorizeAcademy` aux endroits concernés.

@@ -13,7 +13,7 @@ type FormState = ActionResult<unknown> | null;
 
 export async function createPostAction(academyId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("createPost", async () => {
-    const ctx = await authorizeAcademy(academyId, "news.manage");
+    const ctx = await authorizeAcademy(academyId, "news.manage", "news");
     const input = parseForm(clubPostSchema, formData);
     await inAcademy(ctx, (tx) => news.createPost(tx, academyId, input));
     if (formData.get("notify") === "on") notifyNewsAfterResponse({ academyId, academyName: ctx.academy.name, title: input.title, authorId: ctx.user.id });
@@ -24,7 +24,7 @@ export async function createPostAction(academyId: string, _prev: FormState, form
 
 export async function updatePostAction(academyId: string, postId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("updatePost", async () => {
-    const ctx = await authorizeAcademy(academyId, "news.manage");
+    const ctx = await authorizeAcademy(academyId, "news.manage", "news");
     const id = uuidField.safeParse(postId);
     if (!id.success) throw new AppError("not_found");
     const input = parseForm(clubPostSchema, formData);
@@ -37,7 +37,7 @@ export async function updatePostAction(academyId: string, postId: string, _prev:
 
 export async function deletePostAction(academyId: string, postId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
   return runAction("deletePost", async () => {
-    const ctx = await authorizeAcademy(academyId, "news.manage");
+    const ctx = await authorizeAcademy(academyId, "news.manage", "news");
     const id = uuidField.safeParse(postId);
     if (!id.success) throw new AppError("not_found");
     if (!(await inAcademy(ctx, (tx) => news.deletePost(tx, academyId, id.data)))) throw new AppError("forbidden");

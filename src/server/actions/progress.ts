@@ -7,6 +7,7 @@ import { rankingRange } from "@/domain/ranking";
 import { authorizeUser, runAction } from "@/server/auth/guards";
 import { withUser } from "@/server/db/client";
 import { myAttendanceAt, personHistory } from "@/server/repositories/attendance";
+import { featureEnabled } from "@/server/repositories/features";
 import { attendanceRanking, myRankingVisibility } from "@/server/repositories/ranking";
 
 export interface CheckinProgressDto extends CheckinProgress {
@@ -29,7 +30,8 @@ export async function checkinProgressAction(startsAt: string): Promise<ActionRes
       const { from, to } = rankingRange("mois", localDate(new Date(), found.timezone));
       const [history, ranking, visible] = [
         await personHistory(tx, found.academyId, found.personId, 400),
-        await attendanceRanking(tx, found.academyId, from, to),
+        // Classement coupé pour le club : ni rang ni lien, mais la barrette d'assiduité reste affichée.
+        (await featureEnabled(tx, found.academyId, "ranking")) ? await attendanceRanking(tx, found.academyId, from, to) : [],
         await myRankingVisibility(tx, found.academyId),
       ];
       return { academyId: found.academyId, visible: visible === true, ...checkinProgress(history, ranking, found.timezone) };

@@ -34,11 +34,13 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
   const todayInZone = (zone: string) => new Intl.DateTimeFormat("fr-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   if (!z.uuid().safeParse(personId).success) notFound();
 
+  // Module « Grades et rapports » coupé pour le club : ni historique, ni éligibilité, ni saisie (la ceinture de la fiche reste modifiable).
+  const gradesOn = can(ctx.role, "members.grade") && !ctx.disabledFeatures.includes("reports");
   const data = await inAcademy(ctx, async (tx) => {
     const person = await getPerson(tx, academyId, personId);
     if (!person) return null;
     const guardian = person.birthDate ? await getGuardian(tx, academyId, personId) : null;
-    const grades = can(ctx.role, "members.grade") ? await listPromotions(tx, personId) : [];
+    const grades = gradesOn ? await listPromotions(tx, personId) : [];
     return { person, guardian, grades, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
   });
   if (!data) notFound();
@@ -197,7 +199,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
             </Card>
           )}
 
-          {can(ctx.role, "members.grade") && !person.anonymizedAt && (
+          {gradesOn && !person.anonymizedAt && (
             <Card title="Grade et passages" description="Historique et éligibilité : visibles de l'équipe seulement.">
               <GradeCard
                 history={grades}

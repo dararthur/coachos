@@ -147,7 +147,7 @@ export async function setMemberArchivedAction(academyId: string, personId: strin
 /** Passage de ceinture ou de barrette enregistré par l'équipe, à la date choisie (propriétaire, administrateur, coach). */
 export async function recordPromotionAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("recordPromotion", async () => {
-    const ctx = await authorizeAcademy(academyId, "members.grade");
+    const ctx = await authorizeAcademy(academyId, "members.grade", "reports");
     const id = uuidField.safeParse(personId);
     if (!id.success) throw new AppError("not_found");
     const input = parseForm(promotionSchema, formData);
@@ -161,7 +161,7 @@ export async function recordPromotionAction(academyId: string, personId: string,
 /** Confirme (ou corrige) la date à laquelle la personne a reçu sa ceinture actuelle : elle sert au calcul de l'éligibilité. */
 export async function setBeltSinceAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("setBeltSince", async () => {
-    const ctx = await authorizeAcademy(academyId, "members.grade");
+    const ctx = await authorizeAcademy(academyId, "members.grade", "reports");
     const id = uuidField.safeParse(personId);
     if (!id.success) throw new AppError("not_found");
     const input = parseForm(beltSinceSchema, formData);
@@ -333,7 +333,7 @@ export async function importMembersAction(academyId: string, _prev: ActionResult
 
 export async function setRankingVisibilityAction(academyId: string, visible: boolean, _prev: FormState, _formData: FormData): Promise<FormState> {
   return runAction("setRankingVisibility", async () => {
-    const ctx = await authorizeAcademy(academyId);
+    const ctx = await authorizeAcademy(academyId, undefined, "ranking");
     await inAcademy(ctx, (tx) => ranking.setMyRankingVisibility(tx, academyId, visible));
     revalidatePath(`/a/${academyId}/ranking`);
     revalidatePath(`/a/${academyId}/profile`);

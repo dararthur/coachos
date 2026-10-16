@@ -26,6 +26,8 @@ export interface PlatformClub {
   events7d: number;
   events30d: number;
   lastEventAt: Date | null;
+  /** Modules coupés pour ce club (identifiants de FEATURES). */
+  disabledFeatures: string[];
 }
 
 /** Chiffres globaux de la plateforme. Réservé à l'administrateur de la plateforme (la fonction refuse tout autre compte). */
@@ -42,6 +44,6 @@ export async function platformOverview(tx: Tx): Promise<PlatformOverview> {
 export async function platformClubs(tx: Tx): Promise<PlatformClub[]> {
   return tx<PlatformClub[]>`
     select id, name, timezone, created_at as "createdAt", owner_email as "ownerEmail", members, staff,
-           sessions_30d as "sessions30d", events_7d as "events7d", events_30d as "events30d", last_event_at as "lastEventAt"
+           sessions_30d as "sessions30d", events_7d as "events7d", events_30d as "events30d", last_event_at as "lastEventAt", disabled_features as "disabledFeatures"
     from public.admin_list_clubs()`;
 }

@@ -13,9 +13,9 @@ test("l'administrateur renseigne la ceinture et les barrettes depuis la fiche du
   await expect(page.getByText("Grade non renseigné")).toBeVisible();
   await page.waitForLoadState("networkidle");
 
-  await page.getByLabel("Ceinture").selectOption("purple");
-  await page.getByLabel("Barrettes").selectOption("2");
-  await page.getByRole("button", { name: "Enregistrer" }).click();
+  await page.getByLabel("Ceinture", { exact: true }).selectOption("purple");
+  await page.getByLabel("Barrettes", { exact: true }).selectOption("2");
+  await page.getByRole("button", { name: "Enregistrer", exact: true }).click();
   await expect(page.getByText("Fiche mise à jour.")).toBeVisible();
 
   // Même ceinture dans la liste des membres.

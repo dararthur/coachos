@@ -15,7 +15,7 @@ export const metadata: Metadata = { title: "Classement" };
 export default async function RankingPage({ params, searchParams }: { params: Promise<{ academyId: string }>; searchParams: Promise<Record<string, string | undefined>> }) {
   const { academyId } = await params;
   const sp = await searchParams;
-  const ctx = await requireAcademy(academyId);
+  const ctx = await requireAcademy(academyId, undefined, "ranking");
   const staff = can(ctx.role, "reports.read");
   const period = parseRankingPeriod(sp.periode);
   const { from, to } = rankingRange(period, localDate(new Date(), ctx.academy.timezone));

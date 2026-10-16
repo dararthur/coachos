@@ -36,7 +36,7 @@ describe("console d'administration de la plateforme", () => {
     expect(row).toMatchObject({ name: "Club console compteurs", owner_email: owner.email, members: 2, staff: 1, events_7d: 0, last_event_at: null });
     // La réponse ne porte que les colonnes prévues : aucun nom ni adresse de membre.
     expect(Object.keys(row!).sort()).toEqual(
-      ["created_at", "events_30d", "events_7d", "id", "last_event_at", "members", "name", "owner_email", "sessions_30d", "staff", "timezone"].sort(),
+      ["created_at", "disabled_features", "events_30d", "events_7d", "id", "last_event_at", "members", "name", "owner_email", "sessions_30d", "staff", "timezone"].sort(),
     );
     expect(JSON.stringify(rows)).not.toMatch(/Secrète|Confidentiel/);
   });

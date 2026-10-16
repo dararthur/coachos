@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Nouvelle publication" };
 
 export default async function NewPostPage({ params }: { params: Promise<{ academyId: string }> }) {
   const { academyId } = await params;
-  await requireAcademy(academyId, "news.manage");
+  await requireAcademy(academyId, "news.manage", "news");
   return (
     <>
       <PageHeader title="Nouvelle publication" back={<BackLink href={`/a/${academyId}/news`}>Actualités</BackLink>} />

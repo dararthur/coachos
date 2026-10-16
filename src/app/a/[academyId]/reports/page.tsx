@@ -14,7 +14,7 @@ export const metadata: Metadata = { title: "Rapports" };
 export default async function ReportsPage({ params, searchParams }: { params: Promise<{ academyId: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { academyId } = await params;
   const sp = await searchParams;
-  const ctx = await requireAcademy(academyId, "reports.read");
+  const ctx = await requireAcademy(academyId, "reports.read", "reports");
   const tz = ctx.academy.timezone;
   const today = localDate(new Date(), tz);
   const str = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
