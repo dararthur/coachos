@@ -50,6 +50,16 @@ test("grades : le coach enregistre un passage, voit l'éligibilité et la liste 
     await page.goto(`/a/${club}/dashboard`);
     await expect(page.getByRole("heading", { name: "Passages à évaluer" })).toBeVisible();
     await expect(page.getByRole("link", { name: /Alice Gradée/ })).toBeVisible();
+    // Export CSV « Éligibles au grade suivant » : mêmes personnes que la liste, en entier, avec les dates calculées.
+    const csv = await page.request.get(`/a/${club}/members/eligible-export`);
+    expect(csv.status()).toBe(200);
+    expect(csv.headers()["content-type"]).toContain("text/csv");
+    expect(csv.headers()["content-disposition"]).toContain("eligibles-grade-suivant-");
+    const body = await csv.text();
+    expect(body).toContain('"Ceinture suivante"');
+    expect(body).toContain('"Alice"');
+    expect(body).toContain('"Éligible"');
+    expect(body).toContain('"marron"');
     await page.goto(`/a/${club}/members`);
     await page.getByRole("link", { name: /GRADÉE Alice/ }).click();
   });

@@ -228,7 +228,7 @@ export async function insertImported(tx: Tx, academyId: string, allRows: readonl
   return inserted.length;
 }
 
-export async function recordEvent(tx: Tx, academyId: string, action: "members.imported" | "members.exported" | "attendance.exported", metadata: Record<string, number>) {
+export async function recordEvent(tx: Tx, academyId: string, action: "members.imported" | "members.exported" | "attendance.exported" | "promotions.exported", metadata: Record<string, number>) {
   await tx`select public.record_event(${academyId}, ${action}, ${tx.json(metadata)})`;
 }
 

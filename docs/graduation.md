@@ -55,3 +55,11 @@ Enfants (4 à 15 ans) : **aucune durée minimale**. Groupes gris (dès 4 ans), j
 ## RGPD
 
 Donnée personnelle ordinaire (grade et date), visible du staff seulement, **effacée à l'anonymisation** de la fiche (et en cascade à la suppression), gardée avec la fiche archivée. Incluse dans les exports. Aucun profilage : la date d'éligibilité est un calcul déterministe à partir de durées et d'âges publics, sans effet automatique. Voir [registre](rgpd/registre.md).
+
+## Export « Éligibles au grade suivant »
+
+Bouton sur la carte « Passages à évaluer » du tableau de bord (`/a/<club>/members/eligible-export`, CSV). Il liste **toutes** les personnes de la carte (éligibles aujourd'hui ou sous 30 jours), et non les 8 premières : prénom, nom, ceinture et barrettes actuelles, ceinture suivante, statut, date d'éligibilité calculée à l'instant de l'export, date de départ dans la ceinture et si elle est confirmée, passage attendu.
+
+- Réservé à l'équipe (propriétaire, administrateur, coach) et au module « Grades et rapports » ; limité en débit comme les autres exports.
+- La date d'éligibilité n'est toujours pas stockée : elle n'existe que dans le fichier téléchargé, qui reste sous la responsabilité du club.
+- L'export est journalisé dans le journal d'activité du club (`promotions.exported`, nombre de lignes seulement).

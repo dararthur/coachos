@@ -96,6 +96,7 @@ const AUDIT_LABELS: Record<string, string> = {
   "members.imported": "Import de membres",
   "members.exported": "Export des membres",
   "attendance.exported": "Export des présences",
+  "promotions.exported": "Export des éligibles au grade suivant",
   "team.invited": "Invitation créée",
   "team.joined": "Invitation acceptée",
   "team.joined_by_code": "Membre inscrit avec le code du club",

@@ -161,6 +161,11 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
           className="mt-6"
           flush
           title="Passages à évaluer"
+          actions={
+            <LinkButton href={`${base}/members/eligible-export`} variant="secondary" icon="download" download>
+              Éligibles au grade suivant (CSV)
+            </LinkButton>
+          }
           description={`${plural(candidates.total, "adhérent")} ${candidates.total > 1 ? "atteignent" : "atteint"} les minimums IBJJF de durée et d'âge pour la ceinture suivante. Indicatif : vous décidez. Visible de l'équipe seulement.`}
         >
           <ul className="divide-y divide-line">
