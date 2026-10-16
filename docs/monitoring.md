@@ -8,7 +8,7 @@ Une sonde gratuite appelle `https://app.matnexa.fr/api/health` toutes les 5 minu
 
 ## 2. Une tâche planifiée a échoué (alerte systemd)
 
-`coachos-alert@.service` est lancée par `OnFailure=` quand l'application, les rappels, la clôture des feuilles, la purge ou la sauvegarde échouent. Elle envoie **un message** (nom de l'unité et de la machine) vers `ALERT_URL`, par exemple un sujet [ntfy](https://ntfy.sh) à nom aléatoire, abonné depuis le téléphone. Sans `ALERT_URL`, seul le journal est écrit (`journalctl -t coachos-alert`).
+`coachos-alert@.service` est lancée par `OnFailure=` quand l'application, les rappels, la clôture des feuilles, la purge ou la sauvegarde échouent. Elle envoie **un message** (nom de l'unité et de la machine) par e-mail (`ALERT_EMAIL_TO`, via Resend, avec la clé déjà présente dans `app.env`) et/ou vers `ALERT_URL` (un sujet [ntfy](https://ntfy.sh) à nom aléatoire). ntfy.sh peut refuser les envois depuis un VPS partagé (HTTP 429, constaté sur OVH) : l'e-mail est le canal recommandé. Sans canal, seul le journal est écrit (`sudo journalctl -t coachos-alert`).
 
 Installation (une fois, sur le VPS) :
 
@@ -17,13 +17,13 @@ sudo bash /srv/coachos/current/ops/monitoring/install.sh
 ```
 
 ```bash
-echo 'ALERT_URL=https://ntfy.sh/matnexa-REMPLACER-PAR-UNE-CHAINE-ALEATOIRE' | sudo tee /etc/coachos/alert.env && sudo chown root:coachos /etc/coachos/alert.env && sudo chmod 0640 /etc/coachos/alert.env
+echo 'ALERT_EMAIL_TO=vous@exemple.fr' | sudo tee /etc/coachos/alert.env && sudo chown root:coachos /etc/coachos/alert.env && sudo chmod 0640 /etc/coachos/alert.env
 ```
 
 Test de panne simulée :
 
 ```bash
-sudo systemctl start coachos-alert@coachos-test.service && journalctl -t coachos-alert -n 5 --no-pager
+sudo systemctl start coachos-alert@coachos-test.service && sudo journalctl -t coachos-alert -n 5 --no-pager
 ```
 
 ## 3. Une tâche n'a pas tourné du tout (filet de sécurité)
