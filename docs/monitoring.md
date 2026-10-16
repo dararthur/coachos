@@ -60,6 +60,15 @@ Sur la vue d'ensemble, deux panneaux (migration 20261016001200, tables `job_runs
 - **Limite** : la sauvegarde est lancée par systemd hors application et ne figure pas ici. Son contrôle reste l'alerte `OnFailure=` puis un « dead man's switch » (voir §3).
 - Les écritures de supervision sont « au mieux » : une panne de ces tables ne fait jamais échouer une tâche ni un envoi. Rétention des compteurs : 13 mois (purge nocturne).
 
+### Clubs à surveiller et usage sur 13 mois
+
+Migration 20261016001300 (lecture seule, aucune donnée de plus). Sur la vue d'ensemble, le panneau **Clubs à surveiller** liste, du plus grave au moins grave :
+
+- **Inactif** : aucun usage depuis 14 jours ou plus, ou jamais d'usage depuis la création ;
+- **En baisse** : l'usage des 30 derniers jours est inférieur à la moitié de celui des 30 jours précédents, à condition que ceux-ci aient compté au moins 10 événements (sinon la comparaison n'a pas de sens).
+
+Un club de moins de 14 jours est « en démarrage » et n'est jamais signalé. Règles dans `src/domain/club-alerts.ts` (testées). La courbe **Usage par mois** (13 mois, tous clubs, puis club par club sur sa page) additionne les pointages QR, les réservations et les feuilles d'appel ; elle s'arrête à 13 mois, comme la rétention de `usage_events`.
+
 ### Double authentification par e-mail
 
 L'administration exige, après le mot de passe, un **code à 6 chiffres envoyé à l'adresse du compte** (`PLATFORM_ADMIN_EMAIL`). Sans lui, toute page `/admin/*` renvoie vers `/admin/security`, et toute action d'administration est refusée (le contrôle est dans `isPlatformAdminUser`, utilisé par les pages et les actions).

@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminFrame } from "@/components/layout/admin-frame";
 import { Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
+import { UsageChart } from "./usage-chart";
 import { formatDateTime } from "@/domain/dates";
+import { clubAlerts, lastThirteenMonths } from "@/domain/club-alerts";
 import { FEATURES, isFeature } from "@/domain/features";
 import { JOBS, JOB_IDS, METRIC_LABELS, jobHealth, sinceLabel, type JobState, type Metric } from "@/domain/monitoring";
 import { requirePlatformAdmin } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
-import { platformClubs, platformCounters, platformJobs, platformOverview } from "@/server/repositories/platform";
+import { platformClubs, platformCounters, platformJobs, platformOverview, usageSeries } from "@/server/repositories/platform";
 
 export const metadata: Metadata = { title: "Administration", robots: { index: false } };
 
@@ -41,13 +43,18 @@ function activity(events7d: number, events30d: number): { label: string; tone: "
 /** Réservé à l'administrateur de la plateforme : tout autre compte reçoit un 404. Compteurs uniquement, aucune donnée de membre. */
 export default async function AdminPage() {
   const user = await requirePlatformAdmin("/admin");
-  const { overview, clubs, jobs, counters } = await withUser(user, async (tx) => ({
+  const { overview, clubs, jobs, counters, series } = await withUser(user, async (tx) => ({
     overview: await platformOverview(tx),
     clubs: await platformClubs(tx),
     jobs: await platformJobs(tx),
     counters: await platformCounters(tx),
+    series: await usageSeries(tx),
   }));
   const now = Date.now();
+  const watch = clubs
+    .map((c) => ({ club: c, alerts: clubAlerts(c, new Date(now)) }))
+    .filter((x) => x.alerts.length > 0)
+    .sort((a, b) => Number(b.alerts[0]!.level === "danger") - Number(a.alerts[0]!.level === "danger"));
   return (
     <AdminFrame current="overview">
       <PageHeader title="Administration de la plateforme" description="Vue d'ensemble des clubs et de l'usage. Aucune donnée de membre n'est affichée ici : seulement des compteurs." />
@@ -58,6 +65,28 @@ export default async function AdminPage() {
         <Stat label="Usage sur 7 jours" value={overview.events7d} hint={`${overview.events30d} sur 30 jours`} />
         <Stat label="Demandes en attente" value={overview.pendingRequests} href="/admin/club-requests" />
       </StatGrid>
+
+      <Card className="mb-6" title="Clubs à surveiller" description="Aucun usage depuis 14 jours, ou usage en baisse de plus de moitié sur 30 jours. Un club de moins de 14 jours est en démarrage.">
+        {watch.length === 0 ? (
+          <p className="text-sm text-ink-soft" data-testid="watch-empty">Aucun club à surveiller.</p>
+        ) : (
+          <ul className="divide-y divide-line text-sm" data-testid="watch-list">
+            {watch.map(({ club, alerts }) => (
+              <li key={club.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2" data-testid="watch-item">
+                <div className="min-w-0">
+                  <Link href={`/admin/clubs/${club.id}`} className="font-semibold">{club.name}</Link>
+                  <p className="text-xs text-ink-soft">{alerts[0]!.text}</p>
+                </div>
+                <Badge tone={alerts[0]!.level}>{alerts[0]!.level === "danger" ? "Inactif" : "En baisse"}</Badge>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card className="mb-6" title="Usage par mois" description="13 derniers mois, tous clubs confondus : pointages par QR, réservations et feuilles d'appel. Le mois en cours est incomplet.">
+        <UsageChart points={lastThirteenMonths(series, new Date(now))} />
+      </Card>
 
       <div className="mb-6 grid gap-6 lg:grid-cols-2">
         <Card title="Usage sur 30 jours" description="Événements sans identifiant de personne, tous clubs confondus.">

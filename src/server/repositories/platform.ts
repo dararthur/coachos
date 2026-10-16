@@ -29,6 +29,8 @@ export interface PlatformClub {
   lastEventAt: Date | null;
   /** Modules coupés pour ce club (identifiants de FEATURES). */
   disabledFeatures: string[];
+  /** Usage des 30 jours précédant les 30 derniers (pour repérer une baisse). */
+  eventsPrev30d: number;
 }
 
 /** Chiffres globaux de la plateforme. Réservé à l'administrateur de la plateforme (la fonction refuse tout autre compte). */
@@ -45,7 +47,8 @@ export async function platformOverview(tx: Tx): Promise<PlatformOverview> {
 export async function platformClubs(tx: Tx): Promise<PlatformClub[]> {
   return tx<PlatformClub[]>`
     select id, name, timezone, created_at as "createdAt", owner_email as "ownerEmail", members, staff,
-           sessions_30d as "sessions30d", events_7d as "events7d", events_30d as "events30d", last_event_at as "lastEventAt", disabled_features as "disabledFeatures"
+           sessions_30d as "sessions30d", events_7d as "events7d", events_30d as "events30d", last_event_at as "lastEventAt", disabled_features as "disabledFeatures",
+           events_prev_30d as "eventsPrev30d"
     from public.admin_list_clubs()`;
 }
 
@@ -62,4 +65,9 @@ export async function platformJobs(tx: Tx): Promise<JobRun[]> {
 export async function platformCounters(tx: Tx): Promise<Record<Metric, { n7: number; n30: number }>> {
   const rows = await tx<{ metric: Metric; n7: string; n30: string }[]>`select metric, n7, n30 from public.admin_counters()`;
   return Object.fromEntries(rows.map((r) => [r.metric, { n7: Number(r.n7), n30: Number(r.n30) }])) as Record<Metric, { n7: number; n30: number }>;
+}
+
+/** Usage mensuel des 13 derniers mois, par type d'événement : tous les clubs (sans identifiant) ou un seul. */
+export async function usageSeries(tx: Tx, academyId: string | null = null): Promise<{ month: string; event: string; n: number }[]> {
+  return tx<{ month: string; event: string; n: number }[]>`select month::text as month, event, n from public.admin_usage_series(${academyId}::uuid)`;
 }

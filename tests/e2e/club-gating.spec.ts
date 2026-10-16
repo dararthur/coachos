@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import postgres from "postgres";
 import type { Browser, Page } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
 import { ADMIN_EMAIL, approveClub, expect, logIn, mailsTo, PASSWORD, randomIp, test, uniqueEmail, unlockAdmin, waitForMail } from "./support/helpers";
 
 const NO_CODE_MESSAGE = /Si cette adresse peut créer un compte/;
@@ -136,6 +137,10 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await expect(row).toBeVisible();
     await expect(row).toContainText(founderEmail);
     await expect(row).toContainText("Inactif");
+    // Un club créé à l'instant est « en démarrage » : rien à surveiller ; la courbe sur 13 mois est là.
+    await expect(admin.getByRole("heading", { name: "Clubs à surveiller" })).toBeVisible();
+    await expect(admin.getByTestId("watch-item").filter({ hasText: "Gracie Test Club" })).toHaveCount(0);
+    await expect(admin.getByRole("heading", { name: "Usage par mois" })).toBeVisible();
     // Supervision : état des tâches planifiées et compteurs d'envois (les e-mails de ce parcours sont déjà comptés).
     await expect(admin.getByTestId("job-reminders")).toContainText("Rappels de séance");
     await expect(admin.getByTestId("job-purge")).toContainText("Purge de rétention");
@@ -145,6 +150,7 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     // 8. Il coupe les actualités pour ce club : navigation, page et serveur les refusent, sans rien supprimer ; la réactivation les rend.
     await row.getByRole("link", { name: "Gracie Test Club" }).click();
     await expect(admin.getByRole("heading", { name: "Gracie Test Club" })).toBeVisible();
+    await expect(admin.getByRole("heading", { name: "Usage par mois" })).toBeVisible();
     const news = admin.getByTestId("feature-news");
     await expect(news).toContainText("Activé");
     const clubHome = new URL(founder.url()).pathname.replace(/\/dashboard.*$/, "");
@@ -162,6 +168,20 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     // Les autres modules ne sont pas touchés.
     await founder.goto(`${clubHome}/reports`);
     await expect(founder.getByRole("heading", { name: "Rapports", exact: true })).toBeVisible();
+
+    // Les pages d'administration respectent l'accessibilité (axe, WCAG AA) et ne débordent pas sur téléphone.
+    const clubId = clubHome.split("/").pop()!;
+    for (const path of ["/admin", `/admin/clubs/${clubId}`, "/admin/club-requests", "/admin/security"]) {
+      await admin.goto(path);
+      await admin.waitForLoadState("networkidle");
+      const results = await new AxeBuilder({ page: admin }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"]).analyze();
+      expect(results.violations.map((v) => `${v.id} (${v.impact}) : ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`), `${path} : violations axe`).toEqual([]);
+      await admin.setViewportSize({ width: 375, height: 812 });
+      const overflow = await admin.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow, `${path} déborde de ${overflow}px sur téléphone`).toBeLessThanOrEqual(1);
+      await admin.setViewportSize({ width: 1280, height: 720 });
+    }
+    await admin.goto(`/admin/clubs/${clubId}`);
 
     await news.getByRole("button", { name: "Activer" }).click();
     await expect(news).toContainText("Activé");
