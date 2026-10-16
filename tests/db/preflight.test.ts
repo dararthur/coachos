@@ -4,7 +4,7 @@ import postgres from "postgres";
 import { afterAll, describe, expect, it } from "vitest";
 // @ts-expect-error module .mjs sans déclaration de types
 import { checkAuthDatabase, checkDatabase, checkEnv, checkMigrationTracking, expectedObjects } from "../../scripts/lib/preflight.mjs";
-import { closeAll } from "./support";
+import { MIGRATION_COUNT, closeAll } from "./support";
 
 type Check = { id: string; label: string; status: "ok" | "fail" | "warn"; detail?: string };
 const migrationsDir = path.resolve(import.meta.dirname, "../../db/migrations");
@@ -64,7 +64,7 @@ describe("préflight : contrôles base de données (réels)", () => {
 
   it("la liste attendue vient des migrations réelles", () => {
     const exp = expectedObjects(migrationsDir);
-    expect(exp.files).toHaveLength(39);
+    expect(exp.files).toHaveLength(MIGRATION_COUNT);
     expect(exp.tables).toEqual(expect.arrayContaining(["academies", "people", "attendance", "session_checkins", "checkin_tokens"]));
     expect(exp.functions).toEqual(expect.arrayContaining(["claim_academy_request", "checkin_redeem", "erase_person"]));
   });

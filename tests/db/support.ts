@@ -1,6 +1,11 @@
+import { readdirSync } from "node:fs";
+import path from "node:path";
 import postgres from "postgres";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createTestClient, withUser, type Sql, type Tx } from "@/server/db/client";
+
+/** Nombre de migrations réelles du dépôt (calculé : plus de compteur à corriger à chaque migration). */
+export const MIGRATION_COUNT = readdirSync(path.resolve(import.meta.dirname, "../../db/migrations")).filter((f) => f.endsWith(".sql")).length;
 
 let admin: Sql | undefined;
 let app: Sql | undefined;

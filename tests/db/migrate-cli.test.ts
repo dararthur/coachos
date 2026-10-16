@@ -2,7 +2,7 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import postgres from "postgres";
 import { afterAll, describe, expect, it } from "vitest";
-import { adminSql, closeAll } from "./support";
+import { MIGRATION_COUNT, adminSql, closeAll } from "./support";
 
 const script = path.resolve(import.meta.dirname, "../../scripts/migrate.mjs");
 const created: string[] = [];
@@ -36,14 +36,14 @@ describe("scripts/migrate.mjs (processus réel)", () => {
 
     const dry = run({ MIGRATION_DATABASE_URL: url }, ["--dry-run"]);
     expect(dry.status, dry.stderr).toBe(0);
-    expect(dry.stdout).toMatch(/en attente : 39/);
+    expect(dry.stdout).toMatch(new RegExp(`en attente : ${MIGRATION_COUNT}`));
     const probe = postgres(url, { max: 1, onnotice: () => {} });
     expect((await probe`select to_regclass('coachos_migrations.applied') is not null as ok`)[0]!.ok).toBe(false);
 
     const first = run({ MIGRATION_DATABASE_URL: url });
     expect(first.status, first.stderr).toBe(0);
-    expect(first.stdout).toMatch(/39 migration\(s\) appliquée\(s\) au total/);
-    expect((await probe`select count(*)::int as n from coachos_migrations.applied`)[0]!.n).toBe(39);
+    expect(first.stdout).toMatch(new RegExp(`${MIGRATION_COUNT} migration\\(s\\) appliquée\\(s\\) au total`));
+    expect((await probe`select count(*)::int as n from coachos_migrations.applied`)[0]!.n).toBe(MIGRATION_COUNT);
     const again = run({ MIGRATION_DATABASE_URL: url }, ["--dry-run"]);
     expect(again.stdout).toMatch(/en attente : 0/);
     await probe.end();

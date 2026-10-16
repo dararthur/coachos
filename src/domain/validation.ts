@@ -199,7 +199,7 @@ export const myProfileSchema = z.object({
 });
 
 // --- Catalogue ----------------------------------------------------------------------------------
-const noControl = (v: string) => !/[ --]/.test(v);
+const noControl = (v: string) => !/[\u0000--]/.test(v);
 
 /** Publication du club. La visibilité (« public » pour le futur site du club) n'est pas encore proposée : toujours « members ». */
 export const clubPostSchema = z.object({
