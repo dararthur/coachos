@@ -12,7 +12,7 @@ import {
 import { changeRoleAction, removeMemberAction, revokeInvitationAction } from "@/server/actions/team";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { listClassTypes, listDisciplines } from "@/server/repositories/academies";
-import { listAudit, listInvitations, listTeam } from "@/server/repositories/team";
+import { listAudit, listInvitations, listTeam, listUsage } from "@/server/repositories/team";
 import { getJoinCode } from "@/server/repositories/join";
 import { formatJoinCode } from "@/domain/join-code";
 import { env } from "@/server/env";
@@ -44,6 +44,13 @@ function DeleteClassType({ academyId, id, name }: { academyId: string; id: strin
     </ConfirmAction>
   );
 }
+
+const USAGE_LABELS: Record<string, string> = {
+  checkin_qr: "Pointages par QR",
+  booking_created: "Réservations",
+  roll_validated: "Feuilles validées par un coach",
+  roll_auto_closed: "Feuilles clôturées automatiquement",
+};
 
 const AUDIT_LABELS: Record<string, string> = {
   "catalog.class_type_deleted": "Type de cours supprimé",
@@ -103,6 +110,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
     joinCode: await getJoinCode(tx, academyId),
     checkin: await getCheckinSettings(tx, academyId),
     audit: await listAudit(tx, academyId, 30),
+    usage: await listUsage(tx, academyId),
     members: await listUnlinkedPeople(tx, academyId),
   }));
   const assignable = assignableRoles(ctx.role);
@@ -211,7 +219,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           ["pointage", "Pointage"],
           ["cours", "Types de cours"],
           ["disciplines", "Disciplines"],
-          ...(can(ctx.role, "audit.read") ? [["journal", "Journal"]] : []),
+          ...(can(ctx.role, "audit.read") ? [["activite", "Activité"], ["journal", "Journal"]] : []),
           ...(can(ctx.role, "academy.delete") ? [["suppression", "Suppression"]] : []),
         ].map(([id, label]) => (
           <a key={id} href={`#${id}`} className="inline-flex min-h-11 shrink-0 items-center px-3 text-sm font-semibold text-ink-soft no-underline hover:text-ink">
@@ -439,6 +447,33 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
 
 
 
+
+        {can(ctx.role, "audit.read") && (
+          <Card id="activite" title="Activité du club" description="Ce qui est réellement utilisé, en nombre d'événements (aucune donnée personnelle). Conservé 13 mois.">
+            {data.usage.length === 0 ? (
+              <p className="text-sm text-ink-soft">Aucune activité sur les 30 derniers jours.</p>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-ink-soft">
+                    <th className="py-1 font-medium">Événement</th>
+                    <th className="py-1 text-right font-medium">7 jours</th>
+                    <th className="py-1 text-right font-medium">30 jours</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {data.usage.map((u) => (
+                    <tr key={u.event}>
+                      <td className="py-2">{USAGE_LABELS[u.event] ?? u.event}</td>
+                      <td className="py-2 text-right tabular-nums">{u.last7}</td>
+                      <td className="py-2 text-right tabular-nums">{u.last30}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </Card>
+        )}
 
         {can(ctx.role, "audit.read") && (
           <Card id="journal" title="Journal d'audit" description="Actions administratives récentes (aucune donnée personnelle n'y est stockée). Conservé 24 mois.">

@@ -1,5 +1,5 @@
 import "server-only";
-import type { Tx } from "@/server/db/client";
+import { withApp, type Tx } from "@/server/db/client";
 import type { Role } from "@/domain/roles";
 
 export interface TeamMember {
@@ -72,4 +72,25 @@ export async function listAudit(tx: Tx, academyId: string, limit = 50): Promise<
     from public.audit_events e left join public.profiles p on p.id = e.actor_user_id
     where e.academy_id = ${academyId}
     order by e.id desc limit ${limit}`;
+}
+
+export interface UsageRow {
+  event: string;
+  last7: number;
+  last30: number;
+}
+
+/** Activité du club (compteurs sans identifiant de personne), lisible par les administrateurs. */
+export async function listUsage(tx: Tx, academyId: string): Promise<UsageRow[]> {
+  return tx<UsageRow[]>`
+    select event, (count(*) filter (where created_at > now() - interval '7 days'))::int as last7, count(*)::int as last30
+    from public.usage_events
+    where academy_id = ${academyId} and created_at > now() - interval '30 days'
+    group by event order by event`;
+}
+
+/** Rétention de 13 mois (appelée par la purge quotidienne). */
+export async function purgeUsageEvents(): Promise<number> {
+  const [row] = await withApp((tx) => tx<{ n: number }[]>`select app_private.purge_usage_events() as n`);
+  return row?.n ?? 0;
 }
