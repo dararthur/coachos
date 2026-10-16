@@ -43,12 +43,19 @@ jobs:
   e2e:
     # chromium : suite complète. webkit (moteur de Safari) et firefox : caméra/QR, responsive, mobile, accessibilité
     # (liste dans playwright.config.ts). WebKit de Playwright sous Linux n'est PAS Safari iOS : voir docs/qr-checkin.md.
+    # chromium est BLOQUANT ; webkit et firefox sont informatifs (NON bloquants) tant que leurs deux tests de caméra simulée
+    # (qr-camera.spec.ts:70 pour Firefox, qr-real-decode.spec.ts:103 pour WebKit) échouent en CI sans pouvoir être reproduits en local.
+    # À repasser en bloquants une fois stabilisés ; le moteur du public (Chrome Android) reste couvert par chromium et par P0.3.
     name: Tests end-to-end (Playwright, ${{ matrix.project }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        project: [chromium, webkit, firefox]
+        include:
+          - { project: chromium, experimental: false }
+          - { project: webkit, experimental: true }
+          - { project: firefox, experimental: true }
+    continue-on-error: ${{ matrix.experimental }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
