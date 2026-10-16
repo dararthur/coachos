@@ -3,6 +3,14 @@ import { createClub, expect, signUp, test, uniqueEmail } from "./support/helpers
 // L'abonnement réel dépend du service de notification du navigateur (réseau) : il se vérifie sur appareil. Ici : l'interface,
 // la politique de sécurité et le refus des abonnements non conformes.
 
+// Précondition du navigateur de TEST (pas de l'application) : un vrai Chrome sans réglage présente la permission « default ».
+// chrome-headless-shell (ancien mode headless, défaut de Playwright) annonce « denied » : l'application affiche alors, à juste
+// titre, « notifications bloquées » au lieu du bouton. playwright.config.ts utilise donc le vrai Chromium (channel "chromium").
+test.beforeEach(async ({ page }) => {
+  await page.goto("/login");
+  expect(await page.evaluate(() => Notification.permission), "navigateur de test : permission de notification attendue « default » (chrome-headless-shell ?)").toBe("default");
+});
+
 test("notifications : bloc sur « Mon compte », case sur la publication", async ({ page }) => {
   await signUp(page, uniqueEmail("push"), "Push Test");
   const club = await createClub(page, "Club Push");

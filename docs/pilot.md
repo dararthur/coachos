@@ -11,7 +11,7 @@ git clone https://github.com/dararthur/coachos.git && cd coachos
 git checkout feature/self-hosted-infra
 npm ci
 npm run check                        # types, lint, tests unitaires + base de données, scan de secrets
-PW_CHANNEL=chrome npm run test:e2e   # (ou npx playwright install chromium puis npm run test:e2e)
+PW_CHANNEL=chrome npm run test:e2e -- --project=chromium   # (ou npx playwright install chromium puis la même commande sans PW_CHANNEL)
 ```
 
 Cette séquence prouve le comportement de l'application, de la RLS et de Better Auth sur un PostgreSQL 17 embarqué avec une boîte d'envoi d'e-mails de test. Elle ne prouve rien sur Nginx, HTTPS, Resend ni le PostgreSQL du serveur : voir sections 3 et 4.

@@ -1,12 +1,15 @@
+import { cameraPermissions, fakeCameraLaunch, skipWithoutCamera } from "./support/camera";
 import { completeProfile, createClub, expect, PASSWORD, randomIp, signUp, test, uniqueEmail } from "./support/helpers";
 
-// Caméra SIMULÉE par Chrome (motif de test, sans QR) : vérifie le démarrage, l'aperçu et l'arrêt du flux.
-test.use({ launchOptions: { args: ["--use-fake-device-for-media-stream", "--use-fake-ui-for-media-stream"] } });
+// Caméra SIMULÉE par le navigateur (motif de test, sans QR) : vérifie le démarrage, l'aperçu et l'arrêt du flux. Réglages propres à
+// chaque moteur (Chromium, Firefox, WebKit) : voir support/camera.ts.
+test.use({ launchOptions: [async ({ browserName, launchOptions }, use) => use(fakeCameraLaunch(browserName, launchOptions)), { scope: "worker" }] });
 const MOBILE = { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, locale: "fr-FR", timezoneId: "Europe/Paris" } as const;
 
-test("la caméra démarre après le clic, affiche l'aperçu et s'éteint à l'arrêt ; un QR étranger ne mène nulle part", async ({ browser }) => {
-  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+test("la caméra démarre après le clic, affiche l'aperçu et s'éteint à l'arrêt ; un QR étranger ne mène nulle part", async ({ browser, browserName }) => {
+  const context = await browser.newContext({ ...MOBILE, permissions: cameraPermissions(browserName), extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const page = await context.newPage();
+  await skipWithoutCamera(page, browserName);
   await signUp(page, uniqueEmail("cam"), "Cam");
   await createClub(page, "Club Cam");
   await page.goto("/checkin");
@@ -22,9 +25,10 @@ test("la caméra démarre après le clic, affiche l'aperçu et s'éteint à l'ar
   await context.close();
 });
 
-test("ouverte depuis « Pointer ma présence » (?scan=1), la caméra démarre sans second appui", async ({ browser }) => {
-  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+test("ouverte depuis « Pointer ma présence » (?scan=1), la caméra démarre sans second appui", async ({ browser, browserName }) => {
+  const context = await browser.newContext({ ...MOBILE, permissions: cameraPermissions(browserName), extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const page = await context.newPage();
+  await skipWithoutCamera(page, browserName);
   await signUp(page, uniqueEmail("cam-auto"), "Cam Auto");
   await createClub(page, "Club Cam Auto");
   await page.goto("/checkin?scan=1");
@@ -38,9 +42,10 @@ test("ouverte depuis « Pointer ma présence » (?scan=1), la caméra démarre s
 // Régression (Android/Chrome) : la Permissions-Policy est figée au CHARGEMENT du document. Arrivé sur /checkin par la navigation
 // interne de l'application (onglet « Pointer », bouton « Pointer ma présence »), le document restait celui de la page précédente,
 // servi avec `camera=()` : Chrome refusait la caméra (NotAllowedError) alors que le site était autorisé.
-test("arrivée par la navigation interne (onglet « Pointer ») : la caméra démarre sans rechargement", async ({ browser }) => {
-  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+test("arrivée par la navigation interne (onglet « Pointer ») : la caméra démarre sans rechargement", async ({ browser, browserName }) => {
+  const context = await browser.newContext({ ...MOBILE, permissions: cameraPermissions(browserName), extraHTTPHeaders: { "x-real-ip": randomIp() } });
   const page = await context.newPage();
+  await skipWithoutCamera(page, browserName);
   await signUp(page, uniqueEmail("cam-nav"), "Cam Nav");
   const club = await createClub(page, "Club Cam Nav");
   await page.getByRole("button", { name: "Mode membre" }).click();
@@ -56,18 +61,20 @@ test("arrivée par la navigation interne (onglet « Pointer ») : la caméra dé
   await context.close();
 });
 
-// Échecs de caméra SIMULÉS dans Chrome (getUserMedia et l'API Permissions remplacés) : prouve le comportement du scanner pour
-// chaque cause, sous l'identité d'un Chrome Android. Ce n'est PAS un essai sur un téléphone physique.
+// Échecs de caméra SIMULÉS dans le navigateur de test (getUserMedia et l'API Permissions remplacés) : prouve le comportement du
+// scanner pour chaque cause, sous l'identité d'un Chrome Android, quel que soit le moteur (Chromium, Firefox, WebKit). Ce n'est
+// PAS un essai sur un téléphone physique.
 const ANDROID_UA = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36";
 type CamControl = { mode: string; perm: PermissionState; delay: number; calls: number; streams: MediaStream[] };
 
-test("scanner : chaque échec de caméra a son message, et la caméra n'est jamais laissée allumée (Chrome, identité Android)", async ({ browser }) => {
+test("scanner : chaque échec de caméra a son message, et la caméra n'est jamais laissée allumée (identité Android)", async ({ browser, browserName }) => {
   test.setTimeout(120_000);
-  const context = await browser.newContext({ ...MOBILE, userAgent: ANDROID_UA, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+  const context = await browser.newContext({ ...MOBILE, userAgent: ANDROID_UA, permissions: cameraPermissions(browserName), extraHTTPHeaders: { "x-real-ip": randomIp() } });
   await context.addInitScript(() => {
     const cam: CamControl = { mode: "ok", perm: "granted", delay: 0, calls: 0, streams: [] };
     (window as unknown as { __cam: CamControl }).__cam = cam;
     const md = navigator.mediaDevices;
+    if (!md) return; // moteur sans caméra : le test est sauté (skipWithoutCamera)
     const real = md.getUserMedia.bind(md);
     md.getUserMedia = async (c?: MediaStreamConstraints) => {
       cam.calls++;
@@ -82,6 +89,7 @@ test("scanner : chaque échec de caméra a son message, et la caméra n'est jama
       d.name === ("camera" as PermissionName) ? Promise.resolve({ state: cam.perm, addEventListener() {}, removeEventListener() {} } as unknown as PermissionStatus) : query(d);
   });
   const page = await context.newPage();
+  await skipWithoutCamera(page, browserName);
   await signUp(page, uniqueEmail("cam-fail"), "Cam Fail");
   await createClub(page, "Club Cam Fail");
 
@@ -174,9 +182,41 @@ test("scanner : chaque échec de caméra a son message, et la caméra n'est jama
   await context.close();
 });
 
-test("raccourci « Pointer ma présence » ouvert hors connexion : après la connexion, retour direct au scanner", async ({ browser }) => {
-  const context = await browser.newContext({ ...MOBILE, permissions: ["camera"], extraHTTPHeaders: { "x-real-ip": randomIp() } });
+// Identité iPhone : refus SIMULÉ (getUserMedia et l'API Permissions remplacés), sans besoin d'un flux caméra, donc exécuté dans
+// tous les moteurs, y compris WebKit sans caméra. Prouve la marche à suivre iOS ; ce n'est PAS un essai sur un iPhone.
+const IPHONE_UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1";
+
+test("identité iPhone : caméra refusée, marche à suivre de l'iPhone (Réglages › Safari › Caméra)", async ({ browser }) => {
+  const context = await browser.newContext({ ...MOBILE, userAgent: IPHONE_UA, extraHTTPHeaders: { "x-real-ip": randomIp() } });
+  await context.addInitScript(() => {
+    const deny = async () => {
+      throw new DOMException("simulé", "NotAllowedError");
+    };
+    if (navigator.mediaDevices) navigator.mediaDevices.getUserMedia = deny;
+    else Object.defineProperty(navigator, "mediaDevices", { value: { getUserMedia: deny }, configurable: true });
+    const query = navigator.permissions?.query.bind(navigator.permissions);
+    if (query)
+      navigator.permissions.query = (d: PermissionDescriptor) =>
+        d.name === ("camera" as PermissionName) ? Promise.resolve({ state: "denied", addEventListener() {}, removeEventListener() {} } as unknown as PermissionStatus) : query(d);
+  });
   const page = await context.newPage();
+  await signUp(page, uniqueEmail("cam-ios"), "Cam iOS");
+  await createClub(page, "Club Cam iOS");
+  await page.goto("/checkin");
+  await page.getByRole("button", { name: "Scanner un QR code" }).tap();
+  const problem = page.getByTestId("camera-problem");
+  await expect(problem).toHaveAttribute("data-phase", "denied");
+  await expect(problem).toContainText("Réglages de l'iPhone, puis Safari › Caméra");
+  await expect(problem).not.toContainText("Applications › Chrome");
+  await expect(page.getByRole("button", { name: "Réessayer la caméra" })).toBeVisible();
+  await expect(page.getByLabel("Aperçu de la caméra")).toBeHidden();
+  await context.close();
+});
+
+test("raccourci « Pointer ma présence » ouvert hors connexion : après la connexion, retour direct au scanner", async ({ browser, browserName }) => {
+  const context = await browser.newContext({ ...MOBILE, permissions: cameraPermissions(browserName), extraHTTPHeaders: { "x-real-ip": randomIp() } });
+  const page = await context.newPage();
+  await skipWithoutCamera(page, browserName);
   const email = uniqueEmail("cam-login");
   await signUp(page, email, "Cam Login");
   await createClub(page, "Club Cam Login");

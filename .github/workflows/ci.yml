@@ -41,19 +41,26 @@ jobs:
       - run: npm run test:db
 
   e2e:
-    name: Tests end-to-end (Playwright)
+    # chromium : suite complète. webkit (moteur de Safari) et firefox : caméra/QR, responsive, mobile, accessibilité
+    # (liste dans playwright.config.ts). WebKit de Playwright sous Linux n'est PAS Safari iOS : voir docs/qr-checkin.md.
+    name: Tests end-to-end (Playwright, ${{ matrix.project }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [chromium, webkit, firefox]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
         with: { node-version: "${{ env.NODE_VERSION }}", cache: npm }
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      # chromium : vrai Chromium seulement (channel "chromium" dans playwright.config.ts), pas chrome-headless-shell.
+      - run: npx playwright install --with-deps ${{ matrix.project == 'chromium' && 'chromium --no-shell' || matrix.project }}
+      - run: npm run test:e2e -- --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.project }}
           path: |
             playwright-report/
             test-results/

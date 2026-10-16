@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { hstsHeader } from "@/server/security-headers";
+import { hstsHeader, upgradeInsecureRequests } from "@/server/security-headers";
 
 /**
  * Proxy Next.js (ex-middleware) : pose une Content-Security-Policy stricte avec nonce par requête.
@@ -20,7 +20,7 @@ export async function proxy(request: NextRequest) {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(isDev ? [] : ["upgrade-insecure-requests"]),
+    ...(!isDev && upgradeInsecureRequests(process.env.SITE_URL) ? ["upgrade-insecure-requests"] : []),
   ].join("; ");
 
   const requestHeaders = new Headers(request.headers);

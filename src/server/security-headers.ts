@@ -14,6 +14,15 @@ export interface HstsInput {
   maxAge?: string | undefined;
 }
 
+/**
+ * Directive CSP `upgrade-insecure-requests` : seulement pour une instance servie en https (où elle réécrit d'éventuels liens http).
+ * Pour une SITE_URL en http (pile de test locale), WebKit (Safari) l'applique même à 127.0.0.1 : scripts et styles partaient vers
+ * https://127.0.0.1 et échouaient, la page n'était jamais interactive. Chrome et Firefox exemptent l'adresse locale.
+ */
+export function upgradeInsecureRequests(siteUrl: string | undefined): boolean {
+  return !!siteUrl?.startsWith("https://");
+}
+
 export function hstsHeader({ appEnv, siteUrl, maxAge }: HstsInput): string | null {
   if (appEnv !== "staging" && appEnv !== "production") return null;
   if (!siteUrl?.startsWith("https://")) return null;

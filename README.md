@@ -73,7 +73,7 @@ Matnexa s'installe sur l'écran d'accueil des téléphones (Android : bouton « 
 ```bash
 npm ci
 npm run check                         # types, lint, tests unitaires + base de données (PostgreSQL réel), scan de secrets
-PW_CHANNEL=chrome npm run test:e2e    # parcours complets dans un navigateur (build inclus)
+PW_CHANNEL=chrome npm run test:e2e -- --project=chromium   # parcours complets dans Chrome (build inclus)
 ```
 
 Lancer l'application en local (base, rôles, variables d'environnement) : [docs/setup.md](docs/setup.md). Les tests démarrent leur propre PostgreSQL embarqué ; aucun serveur externe n'est nécessaire.
@@ -84,6 +84,7 @@ Lancer l'application en local (base, rôles, variables d'environnement) : [docs/
 - `npm run test:unit` : règles métier, normalisation d'images, analyse des QR
 - `npm run test:db` : migrations, RLS, isolation entre clubs, réservations, QR, photos, RGPD, Better Auth
 - `npm run test:e2e` : inscription, réservation, pointage (QR tournant et fixe), photo, logo, accessibilité (axe), mobile
+  - projets Playwright : `chromium` (suite complète), `webkit` (moteur de Safari) et `firefox` (caméra/QR, responsive, mobile, accessibilité) ; `npx playwright install webkit firefox` puis `npm run test:e2e -- --project=webkit`. Le WebKit de Playwright n'est pas un iPhone : voir [docs/qr-checkin.md](docs/qr-checkin.md).
 - `npm run audit:secrets`, `npm run audit:deps`
 
 ## Structure du dépôt
