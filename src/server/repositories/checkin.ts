@@ -5,17 +5,19 @@ export interface CheckinState {
   status: "open" | "closed";
   windowEndsAt: Date | null;
   validatedAt: Date | null;
+  /** Feuille clôturée par la tâche de minuit, pas par un coach. */
+  validatedAuto: boolean;
 }
 
 /** État du pointage d'une séance (lisible par le staff du club via la RLS). Absent = jamais ouvert. */
 export async function getCheckinState(tx: Tx, academyId: string, sessionId: string): Promise<CheckinState> {
-  const [row] = await tx<{ status: "open" | "closed"; windowEndsAt: Date | null; validatedAt: Date | null }[]>`
-    select status, window_ends_at as "windowEndsAt", validated_at as "validatedAt"
+  const [row] = await tx<{ status: "open" | "closed"; windowEndsAt: Date | null; validatedAt: Date | null; validatedAuto: boolean }[]>`
+    select status, window_ends_at as "windowEndsAt", validated_at as "validatedAt", validated_auto as "validatedAuto"
     from public.session_checkins where session_id = ${sessionId} and academy_id = ${academyId}`;
-  if (!row) return { status: "closed", windowEndsAt: null, validatedAt: null };
+  if (!row) return { status: "closed", windowEndsAt: null, validatedAt: null, validatedAuto: false };
   // Une fenêtre échue est considérée fermée, même si le coach n'a rien fait.
   const expired = row.windowEndsAt !== null && row.windowEndsAt.getTime() <= Date.now();
-  return { status: row.status === "open" && !expired ? "open" : "closed", windowEndsAt: row.windowEndsAt, validatedAt: row.validatedAt };
+  return { status: row.status === "open" && !expired ? "open" : "closed", windowEndsAt: row.windowEndsAt, validatedAt: row.validatedAt, validatedAuto: row.validatedAuto };
 }
 
 export async function openCheckin(tx: Tx, sessionId: string): Promise<void> {

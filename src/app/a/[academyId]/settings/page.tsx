@@ -84,6 +84,7 @@ const AUDIT_LABELS: Record<string, string> = {
   "checkin.closed": "Pointage QR fermé",
   "roll.validated": "Feuille d'appel validée",
   "roll.reopened": "Feuille d'appel rouverte",
+  "roll.auto_closed": "Feuille d'appel clôturée automatiquement",
   "news.published": "Actualité publiée",
   "news.deleted": "Actualité supprimée",
   "account.data_exported": "Données d'un compte exportées",

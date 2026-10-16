@@ -21,6 +21,7 @@ export interface CheckinStateDto {
   status: "open" | "closed";
   windowEndsAt: number | null;
   validatedAt: number | null;
+  validatedAuto: boolean;
 }
 
 export interface RollSnapshot {
@@ -34,6 +35,7 @@ const toDto = (s: checkin.CheckinState): CheckinStateDto => ({
   status: s.status,
   windowEndsAt: s.windowEndsAt?.getTime() ?? null,
   validatedAt: s.validatedAt?.getTime() ?? null,
+  validatedAuto: s.validatedAuto,
 });
 
 const sessionIdOf = (sessionId: string) => {

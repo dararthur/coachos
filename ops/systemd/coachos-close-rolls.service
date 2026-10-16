@@ -1,0 +1,14 @@
+# Clôture automatique des feuilles d appel (docs/qr-checkin.md). Même jeton que la purge : /etc/coachos/purge.header (root:coachos, 0640).
+[Unit]
+Description=Matnexa - cloture des feuilles d appel
+Wants=network-online.target
+After=network-online.target coachos.service
+
+[Service]
+Type=oneshot
+User=coachos
+ExecStart=/usr/bin/curl -fsS --max-time 60 -X POST -H @/etc/coachos/purge.header http://127.0.0.1:3400/api/cron/close-rolls
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

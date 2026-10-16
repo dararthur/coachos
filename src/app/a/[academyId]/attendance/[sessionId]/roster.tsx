@@ -472,7 +472,15 @@ function CheckinPanel({
       {checkin.validatedAt ? (
         <div className="space-y-3">
           <p className="text-sm">
-            <Badge tone="success">Feuille validée</Badge> le {clock(checkin.validatedAt)}. Le pointage est clos.
+            {checkin.validatedAuto ? (
+              <>
+                <Badge tone="success">Clôturée automatiquement</Badge> le {clock(checkin.validatedAt)} : les inscrits sans présence ont été marqués absents. Vous pouvez rouvrir la feuille pour corriger.
+              </>
+            ) : (
+              <>
+                <Badge tone="success">Feuille validée</Badge> le {clock(checkin.validatedAt)}. Le pointage est clos.
+              </>
+            )}
           </p>
           <button type="button" className={buttonClasses({ variant: "secondary" })} disabled={working} onClick={() => run(() => validateRollAction(academyId, sessionId, false))}>
             Rouvrir la feuille

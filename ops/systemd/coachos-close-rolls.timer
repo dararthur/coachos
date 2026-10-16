@@ -1,0 +1,11 @@
+# Toutes les heures, à 10 minutes. Rattrapage activé : la clôture est idempotente, un passage manqué est simplement rejoué.
+[Unit]
+Description=Matnexa - cloture des feuilles d appel toutes les heures
+
+[Timer]
+OnCalendar=*:10
+Persistent=true
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

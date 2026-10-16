@@ -89,3 +89,20 @@ Prérequis : application déployée en **https** (la caméra n'existe pas en htt
 9. **Appareil photo natif** (second chemin officiel) : sans ouvrir Matnexa, viser l'affiche du QR fixe avec l'application Appareil photo et toucher le lien. Android : la confirmation du cours s'ouvre directement. iPhone : Safari affiche la connexion avec l'aide « Sur iPhone… » ; se connecter, confirmer, puis rescanner : la confirmation doit s'ouvrir sans nouvelle connexion. Refaire avec le QR tournant de l'écran du coach.
 
 Noter pour chaque étape : modèle, version d'Android, version de Chrome, résultat. En cas d'échec, `chrome://inspect` (débogage USB) donne la console et le nom exact de l'erreur.
+
+## Clôture automatique des feuilles d'appel
+
+Une feuille jamais validée laisse les absences non enregistrées (classement faux, brief aveugle). La tâche `coachos-close-rolls.timer` appelle `/api/cron/close-rolls` toutes les heures (à `:10`, avec rattrapage) ; la base (`app_private.close_due_rolls()`) clôture toute séance programmée dont la **fin** est antérieure à minuit, heure locale du club, et dont la feuille n'est pas validée. Règles identiques à la validation manuelle (`app_private.roll_apply_validation`) : coach affecté présent, réservations confirmées sans présence absentes, QR révoqués. La feuille affiche « Clôturée automatiquement » ; un coach ou un admin peut la rouvrir et corriger. Audit : `roll.auto_closed`, acteur vide (système), `no_shows` en métadonnée.
+
+- Idempotente (une feuille déjà validée n'est jamais touchée), fenêtre de 3 jours en arrière (l'historique n'est pas réécrit), séances annulées ignorées, une séance en échec n'arrête pas les autres.
+- Mesure de suivi : part des feuilles clôturées automatiquement (`audit_events.action = 'roll.auto_closed'` contre `roll.validated`). Au-delà de 30 % en semaine 3, l'appel n'est pas fait : comprendre pourquoi.
+
+Installation (une fois, sur le VPS) :
+
+```bash
+sudo cp /srv/coachos/current/ops/systemd/coachos-close-rolls.service /srv/coachos/current/ops/systemd/coachos-close-rolls.timer /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now coachos-close-rolls.timer
+sudo systemctl start coachos-close-rolls.service && systemctl status coachos-close-rolls.service --no-pager
+```
+
+Réponse attendue de l'appel : `{"closed":0,"failed":0,"noShows":0}` hors séance de la veille non validée. Journal : `journalctl -u coachos | grep rolls.auto_closed`.

@@ -50,7 +50,7 @@ export default async function RosterPage({ params }: { params: Promise<{ academy
         initial={{
           entries: roster,
           serverNow: now,
-          checkin: { status: checkin.status, windowEndsAt: checkin.windowEndsAt?.getTime() ?? null, validatedAt: checkin.validatedAt?.getTime() ?? null },
+          checkin: { status: checkin.status, windowEndsAt: checkin.windowEndsAt?.getTime() ?? null, validatedAt: checkin.validatedAt?.getTime() ?? null, validatedAuto: checkin.validatedAuto },
         }}
         editable={editable}
         capacity={session.capacity}
