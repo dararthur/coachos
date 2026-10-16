@@ -297,7 +297,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             ))}
           </ul>
         )}
-        {rollEditable && <p className="mt-3 text-xs text-ink-soft">Touchez à nouveau le statut actif pour effacer l&apos;enregistrement. Un pointage par QR peut être corrigé à tout moment.</p>}
+        {rollEditable && <p className="mt-3 text-xs text-ink-soft">Erreur de saisie ? Touchez à nouveau le statut choisi pour l&apos;effacer. Un pointage par QR peut aussi être corrigé.</p>}
         <div className="sticky bottom-[var(--tabbar-h)] z-20 -mx-4 mt-4 [@media(max-height:30rem)]:static border-t border-line bg-canvas px-4 pb-3 pt-2.5 sm:mx-0 sm:rounded-sm sm:border sm:bg-surface sm:px-4">
           <div role="status" aria-live="polite" className="empty:hidden">
             {!sync.ok && (
