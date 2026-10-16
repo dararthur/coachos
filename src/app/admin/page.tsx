@@ -4,9 +4,10 @@ import { AdminFrame } from "@/components/layout/admin-frame";
 import { Badge, Card, DataTable, EmptyState, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
 import { formatDateTime } from "@/domain/dates";
 import { FEATURES, isFeature } from "@/domain/features";
+import { JOBS, JOB_IDS, METRIC_LABELS, jobHealth, sinceLabel, type JobState, type Metric } from "@/domain/monitoring";
 import { requirePlatformAdmin } from "@/server/auth/platform-admin";
 import { withUser } from "@/server/db/client";
-import { platformClubs, platformOverview } from "@/server/repositories/platform";
+import { platformClubs, platformCounters, platformJobs, platformOverview } from "@/server/repositories/platform";
 
 export const metadata: Metadata = { title: "Administration", robots: { index: false } };
 
@@ -18,6 +19,13 @@ const EVENT_LABELS: Record<string, string> = {
 };
 
 const DAY = 24 * 60 * 60 * 1000;
+
+const JOB_STATE: Record<JobState, { label: string; tone: "success" | "warning" | "danger" | "neutral" }> = {
+  ok: { label: "Bon", tone: "success" },
+  late: { label: "En retard", tone: "warning" },
+  failing: { label: "En échec", tone: "danger" },
+  never: { label: "Jamais exécutée", tone: "neutral" },
+};
 
 function size(bytes: number): string {
   return bytes < 1024 ** 3 ? `${(bytes / 1024 ** 2).toFixed(0)} Mo` : `${(bytes / 1024 ** 3).toFixed(1)} Go`;
@@ -33,7 +41,12 @@ function activity(events7d: number, events30d: number): { label: string; tone: "
 /** Réservé à l'administrateur de la plateforme : tout autre compte reçoit un 404. Compteurs uniquement, aucune donnée de membre. */
 export default async function AdminPage() {
   const user = await requirePlatformAdmin("/admin");
-  const { overview, clubs } = await withUser(user, async (tx) => ({ overview: await platformOverview(tx), clubs: await platformClubs(tx) }));
+  const { overview, clubs, jobs, counters } = await withUser(user, async (tx) => ({
+    overview: await platformOverview(tx),
+    clubs: await platformClubs(tx),
+    jobs: await platformJobs(tx),
+    counters: await platformCounters(tx),
+  }));
   const now = Date.now();
   return (
     <AdminFrame current="overview">
@@ -73,6 +86,57 @@ export default async function AdminPage() {
             </div>
           </dl>
           <p className="mt-3 text-xs text-ink-soft">La disponibilité du site et des tâches planifiées se surveille hors de l&apos;application (docs/monitoring.md).</p>
+        </Card>
+      </div>
+
+      <div className="mb-6 grid gap-6 lg:grid-cols-2">
+        <Card title="Tâches planifiées" description="Appelées par systemd. Une tâche « en retard » signale souvent un minuteur arrêté.">
+          <ul className="divide-y divide-line text-sm">
+            {JOB_IDS.map((id) => {
+              const run = jobs.find((j) => j.job === id) ?? null;
+              const health = jobHealth(id, run, new Date(now));
+              const view = JOB_STATE[health.state];
+              return (
+                <li key={id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2" data-testid={`job-${id}`}>
+                  <div className="min-w-0">
+                    <p className="font-semibold">{JOBS[id].label}</p>
+                    <p className="text-xs text-ink-soft">
+                      {JOBS[id].every}
+                      {run && health.minutesSinceRun !== null ? ` · dernier passage ${sinceLabel(health.minutesSinceRun)}` : ""}
+                      {run && health.state === "failing" && run.lastError ? ` · ${run.lastError}` : ""}
+                    </p>
+                  </div>
+                  <Badge tone={view.tone}>{view.label}</Badge>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-xs text-ink-soft">La sauvegarde chiffrée est lancée par systemd hors application : son contrôle reste dans docs/monitoring.md (alerte en cas d&apos;échec, puis « dead man&apos;s switch »).</p>
+        </Card>
+        <Card title="Envois" description="E-mails (Resend) et notifications, tous clubs confondus.">
+          <table className="w-full text-sm">
+            <caption className="sr-only">Envois des 7 et 30 derniers jours</caption>
+            <thead className="text-xs text-ink-soft">
+              <tr>
+                <th scope="col" className="pb-1 text-left font-semibold">Type</th>
+                <th scope="col" className="pb-1 text-right font-semibold">7 jours</th>
+                <th scope="col" className="pb-1 text-right font-semibold">30 jours</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {(Object.keys(METRIC_LABELS) as Metric[]).map((m) => {
+                const c = counters[m] ?? { n7: 0, n30: 0 };
+                const bad = (m === "mail_failed" || m === "push_failed") && c.n7 > 0;
+                return (
+                  <tr key={m} data-testid={`metric-${m}`}>
+                    <th scope="row" className="py-2 text-left font-normal">{METRIC_LABELS[m]}</th>
+                    <td className={`py-2 text-right font-bold tabular-nums ${bad ? "text-danger-ink" : ""}`}>{c.n7}</td>
+                    <td className="py-2 text-right tabular-nums">{c.n30}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </Card>
       </div>
 

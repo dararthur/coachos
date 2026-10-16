@@ -4,6 +4,7 @@ import { deliverBookingPromotions } from "@/server/booking-notifications";
 import { withApp } from "@/server/db/client";
 import { env } from "@/server/env";
 import { logger } from "@/server/logger";
+import { purgePlatformCounters, recordJob } from "@/server/monitoring";
 import { purgeClubRequests } from "@/server/repositories/club-requests";
 import { purgePauses } from "@/server/repositories/members";
 import { purgeUsageEvents } from "@/server/repositories/team";
@@ -25,18 +26,21 @@ export async function POST(request: NextRequest) {
   if (!authorized(request)) return new NextResponse(null, { status: 404 });
   try {
     const rows = await withApp((tx) => tx<{ r: Record<string, number>; a: Record<string, number>; g: number }[]>`select app_private.purge_expired_data() as r, app_private.purge_expired_auth() as a, app_private.graduate_minors() as g`);
-    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}), minors_graduated: rows[0]?.g ?? 0, club_requests: await purgeClubRequests(), usage_events: await purgeUsageEvents(), pauses: await purgePauses() };
+    const result = { ...(rows[0]?.r ?? {}), ...(rows[0]?.a ?? {}), minors_graduated: rows[0]?.g ?? 0, club_requests: await purgeClubRequests(), usage_events: await purgeUsageEvents(), pauses: await purgePauses(), platform_counters: await purgePlatformCounters() };
     logger.info("cron.purge", result);
     let mail: { sent: number; failed: number };
     try {
       mail = await deliverBookingPromotions();
     } catch (error) {
       logger.error("cron.booking_emails_failed", error);
+      await recordJob("purge", false, "booking_emails_failed");
       return NextResponse.json({ error: "booking_emails_failed" }, { status: 500 });
     }
+    await recordJob("purge", true);
     return NextResponse.json({ ...result, booking_emails_sent: mail.sent, booking_emails_failed: mail.failed }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     logger.error("cron.purge_failed", error);
+    await recordJob("purge", false, "purge_failed");
     return NextResponse.json({ error: "purge_failed" }, { status: 500 });
   }
 }

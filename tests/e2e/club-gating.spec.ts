@@ -136,6 +136,11 @@ test.describe("création de club sur approbation et inscription sur ticket", () 
     await expect(row).toBeVisible();
     await expect(row).toContainText(founderEmail);
     await expect(row).toContainText("Inactif");
+    // Supervision : état des tâches planifiées et compteurs d'envois (les e-mails de ce parcours sont déjà comptés).
+    await expect(admin.getByTestId("job-reminders")).toContainText("Rappels de séance");
+    await expect(admin.getByTestId("job-purge")).toContainText("Purge de rétention");
+    await expect(admin.getByTestId("metric-mail_sent")).toContainText("E-mails envoyés");
+    await expect(admin.getByTestId("metric-mail_failed")).toBeVisible();
 
     // 8. Il coupe les actualités pour ce club : navigation, page et serveur les refusent, sans rien supprimer ; la réactivation les rend.
     await row.getByRole("link", { name: "Gracie Test Club" }).click();

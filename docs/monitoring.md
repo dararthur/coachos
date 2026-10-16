@@ -51,6 +51,15 @@ Réservée au compte dont l'e-mail confirmé est `PLATFORM_ADMIN_EMAIL` : tout a
 - **Liste des clubs** : membres, équipe, séances des 30 derniers jours, usage 7 jours, dernier usage, e-mail du propriétaire, date de création. État : *Actif* (usage sur 7 jours), *Calme* (sur 30 jours), *Inactif*.
 - Aucune donnée de membre n'est affichée (ni nom, ni e-mail, ni présence individuelle) : uniquement des compteurs et le contact du propriétaire.
 
+### Tâches planifiées et santé des envois
+
+Sur la vue d'ensemble, deux panneaux (migration 20261016001200, tables `job_runs` et `platform_counters`, `src/domain/monitoring.ts`) :
+
+- **Tâches planifiées** : rappels de séance (toutes les 5 min), clôture des feuilles (toutes les heures), purge (chaque nuit). Chaque appel d'une route `/api/cron/*` enregistre son succès ou son échec (code d'erreur court). État : *Bon*, *En retard* (pas de passage depuis 15 min, 2 h 30 ou 30 h selon la tâche : le minuteur est probablement arrêté), *En échec* (le dernier passage a échoué), *Jamais exécutée*.
+- **Envois** : compteurs des 7 et 30 derniers jours, sans aucune donnée personnelle : e-mails envoyés et en échec (tous les envois passent par `getMailer`), notifications envoyées, en échec et appareils expirés supprimés. Un chiffre rouge sur « en échec » mérite un coup d'œil aux journaux.
+- **Limite** : la sauvegarde est lancée par systemd hors application et ne figure pas ici. Son contrôle reste l'alerte `OnFailure=` puis un « dead man's switch » (voir §3).
+- Les écritures de supervision sont « au mieux » : une panne de ces tables ne fait jamais échouer une tâche ni un envoi. Rétention des compteurs : 13 mois (purge nocturne).
+
 ### Double authentification par e-mail
 
 L'administration exige, après le mot de passe, un **code à 6 chiffres envoyé à l'adresse du compte** (`PLATFORM_ADMIN_EMAIL`). Sans lui, toute page `/admin/*` renvoie vers `/admin/security`, et toute action d'administration est refusée (le contrôle est dans `isPlatformAdminUser`, utilisé par les pages et les actions).

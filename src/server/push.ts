@@ -5,6 +5,7 @@ import type { PushPayload } from "@/domain/push";
 import { withApp, type Sql } from "@/server/db/client";
 import { env } from "@/server/env";
 import { logger } from "@/server/logger";
+import { countMetric } from "@/server/monitoring";
 
 /**
  * Notifications push (Web Push, chiffrées de bout en bout ; le service du navigateur ne voit passer qu'un message opaque).
@@ -59,6 +60,11 @@ export async function deliverPush(targets: PushTarget[], payload: PushPayload, s
         }
       }),
     );
+  }
+  if (send === defaultSender) {
+    void countMetric("push_sent", sent);
+    void countMetric("push_failed", failed);
+    void countMetric("push_gone", gone.length);
   }
   return { sent, failed, gone };
 }
