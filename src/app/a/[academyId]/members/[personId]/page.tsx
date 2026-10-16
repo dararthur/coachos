@@ -16,11 +16,11 @@ import { GradeCard } from "@/components/ui/grade-card";
 import { assessEligibility } from "@/domain/graduation";
 import { listPromotions } from "@/server/repositories/graduation";
 import { DEPARTURE_REASONS } from "@/domain/lifecycle";
-import { clearMemberPauseAction, eraseMemberAction, recordPromotionAction, resendGuardianConsentAction, setBeltSinceAction, setMemberArchivedAction, setMemberPauseAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
+import { clearMemberPauseAction, eraseMemberAction, mergeDuplicateAction, recordPromotionAction, resendGuardianConsentAction, setBeltSinceAction, setMemberArchivedAction, setMemberPauseAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
 import { ageOn } from "@/domain/minors";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
-import { getGuardian, getPerson } from "@/server/repositories/members";
+import { getGuardian, getPerson, listMergeCandidates } from "@/server/repositories/members";
 import { Assiduity, weeksAttended } from "@/components/ui/assiduity";
 import { AttendanceHistory } from "@/components/ui/attendance-history";
 import { EraseForm } from "./erase-form";
@@ -41,10 +41,13 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
     if (!person) return null;
     const guardian = person.birthDate ? await getGuardian(tx, academyId, personId) : null;
     const grades = gradesOn ? await listPromotions(tx, personId) : [];
-    return { person, guardian, grades, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
+    // Fiche saisie ou importée, sans compte : l'adhérent a peut-être déjà créé son compte (donc une seconde fiche) via le lien d'inscription.
+    const canMerge = can(ctx.role, "members.update") && !person.birthDate && !person.hasAccount && !person.archivedAt && !person.anonymizedAt;
+    const duplicates = canMerge ? await listMergeCandidates(tx, academyId, personId) : [];
+    return { person, guardian, grades, duplicates, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
   });
   if (!data) notFound();
-  const { person, guardian, grades, history, totals } = data;
+  const { person, guardian, grades, duplicates, history, totals } = data;
   const isMinor = Boolean(person.birthDate);
   const tz = ctx.academy.timezone;
   const canEdit = can(ctx.role, "members.update") && !person.anonymizedAt;
@@ -162,6 +165,34 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
               </dl>
             )}
           </Card>
+
+          {duplicates.length > 0 && (
+            <Card title="Compte déjà créé ?" description="Un adhérent qui s'inscrit avec le lien du club obtient une seconde fiche. Rattachez son compte à celle-ci.">
+              <ConfirmAction
+                action={mergeDuplicateAction.bind(null, academyId, personId)}
+                trigger="Rattacher un compte…"
+                title="Rattacher un compte à cette fiche ?"
+                description={
+                  <p>
+                    Le compte choisi est relié à la fiche de <strong className="text-ink">{person.firstName} {person.lastName}</strong> et sa fiche en double est supprimée. Ses réservations sont reportées. L&apos;adhérent
+                    devra valider de nouveau son profil.
+                  </p>
+                }
+                confirmLabel="Rattacher"
+                confirmVariant="primary"
+              >
+                <SelectField label="Compte à rattacher" name="duplicateId" defaultValue={duplicates[0]!.id}>
+                  {duplicates.map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                      {d.email ? ` · ${d.email}` : ""}
+                      {d.sameName ? " (même nom)" : ""}
+                    </option>
+                  ))}
+                </SelectField>
+              </ConfirmAction>
+            </Card>
+          )}
 
           {guardian && !person.anonymizedAt && (
             <Card title="Responsable légal">

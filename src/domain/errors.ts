@@ -36,6 +36,8 @@ export const ERROR_MESSAGES = {
   minor_too_young: "Un compte propre n'est possible qu'à partir de 15 ans.",
   not_minor: "Cette personne est majeure : créez une fiche de membre majeur.",
   consent_required: "L'accord du responsable légal n'est pas encore confirmé.",
+  merge_invalid: "Ces deux fiches ne peuvent pas être fusionnées : il faut une fiche sans compte et une fiche de membre majeur avec compte, toutes deux actives.",
+  merge_has_history: "Ce compte a déjà des présences enregistrées : la fusion les effacerait. Contactez le support pour la faire à la main.",
   mail_failed: "Le message n'a pas pu être envoyé. Réessayez dans quelques minutes.",
   booking_no_profile: "Votre fiche n'est pas active dans ce club : contactez le coach.",
   booking_closed: "Cette séance est terminée : la réservation n'est plus possible.",

@@ -127,6 +127,21 @@ export async function withdrawGuardianConsentAction(academyId: string, personId:
   });
 }
 
+/** Rattache le compte d'un adhérent à sa fiche d'origine (saisie ou importée) et supprime la fiche en double créée à son inscription. */
+export async function mergeDuplicateAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("mergeDuplicate", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.update");
+    const keep = uuidField.safeParse(personId);
+    const dup = uuidField.safeParse(formData.get("duplicateId"));
+    if (!keep.success) throw new AppError("not_found");
+    if (!dup.success) return failure("validation", { duplicateId: "Choisissez le compte à rattacher." });
+    await inAcademy(ctx, (tx) => members.mergeDuplicate(tx, keep.data, dup.data));
+    revalidatePath(`/a/${academyId}/members`);
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    return { ok: true, data: null, message: "Compte rattaché à cette fiche." };
+  });
+}
+
 export async function setMemberArchivedAction(academyId: string, personId: string, archive: boolean, _prev: FormState, formData: FormData): Promise<FormState> {
   return runAction("archiveMember", async () => {
     const ctx = await authorizeAcademy(academyId, "members.update");

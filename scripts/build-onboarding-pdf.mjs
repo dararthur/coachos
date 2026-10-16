@@ -257,9 +257,9 @@ pages.push(`
           "Exportez votre liste depuis votre ancien outil ou un tableur, au format <b>CSV</b>. Deux colonnes obligatoires : <b>prénom</b> et <b>nom</b> ; facultatives : e-mail, téléphone, date d'inscription, identifiant.",
           "Ouvrez <b>Membres › Importer un CSV</b>, choisissez le fichier, touchez « Analyser le fichier ».",
           "Vérifiez l'aperçu : <b>rien n'est enregistré avant votre confirmation</b>. Les lignes invalides et les doublons sont signalés avec leur raison.",
-          "Confirmez : les fiches sont créées. Pour qu'un adhérent importé ait son propre compte, invitez-le depuis <b>Paramètres › Équipe</b> avec le rôle <b>Membre</b> et sa <b>fiche à lier</b>.",
+          "Confirmez : les fiches sont créées. Quand un adhérent importé s'inscrit avec le lien du club, son compte est rattaché à sa fiche s'il utilise l'adresse e-mail du fichier.",
         ])}
-        <p class="soft" style="font-size:8.3pt"><b>Attention :</b> un adhérent déjà importé qui s'inscrit avec le lien d'inscription crée une seconde fiche. Pour un adhérent importé, passez par l'invitation. Vous pouvez aussi ajouter un membre à la main (Membres › Nouveau membre). Un fichier compte au plus 2 000 lignes.</p>
+        <p class="soft" style="font-size:8.3pt"><b>Sans e-mail dans le fichier</b>, l'inscription crée une seconde fiche : ouvrez la fiche d'origine et touchez <b>Rattacher un compte</b>. Vous pouvez aussi ajouter un membre à la main (Membres › Nouveau membre). Un fichier compte au plus 2 000 lignes.</p>
       </div>
       <div style="width:84mm;flex:none">${win("d-import", "L'aperçu avant import, sur ordinateur", { w: 84, h: 66 })}</div>
     </div>

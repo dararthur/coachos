@@ -23,6 +23,8 @@ export interface PersonRow {
   /** Date de naissance : renseignée pour un mineur seulement (effacée à la majorité). */
   birthDate: string | null;
   hasPhoto: boolean;
+  /** Renseigné par getPerson : la fiche est reliée à un compte (sinon elle a été saisie ou importée par le club). */
+  hasAccount?: boolean;
   /** Pause déclarée (« blessure » et « malade » sont des données de santé : à n'afficher qu'au staff, voir docs/rgpd/pauses-sante.md). */
   pausedUntil: string | null;
   pauseReason: PauseReason | null;
@@ -95,9 +97,36 @@ export async function getPerson(tx: Tx, academyId: string, personId: string): Pr
            p.belt, p.belt_stripes as "beltStripes", p.avatar_style as "avatarStyle", p.birth_date::text as "birthDate",
            p.paused_until::text as "pausedUntil", p.pause_reason as "pauseReason",
            exists (select 1 from public.person_photos ph where ph.person_id = p.id) as "hasPhoto",
+           p.user_id is not null as "hasAccount",
            null::timestamptz as "lastAttendedAt"
     from public.people p where p.id = ${personId} and p.academy_id = ${academyId}`;
   return rows[0] ?? null;
+}
+
+export interface MergeCandidate {
+  id: string;
+  name: string;
+  email: string | null;
+  /** Le même nom que la fiche d'origine (casse ignorée) : proposé en premier. */
+  sameName: boolean;
+}
+
+/** Fiches créées par un compte (adultes actifs, sans aucune présence) qui peuvent être fusionnées dans la fiche d'origine. */
+export async function listMergeCandidates(tx: Tx, academyId: string, personId: string): Promise<MergeCandidate[]> {
+  return tx<MergeCandidate[]>`
+    select c.id, c.first_name || ' ' || c.last_name as name, c.email,
+           (lower(c.first_name || ' ' || c.last_name) = lower(o.first_name || ' ' || o.last_name)) as "sameName"
+    from public.people o
+    join public.people c on c.academy_id = o.academy_id and c.id <> o.id
+    where o.id = ${personId} and o.academy_id = ${academyId} and o.user_id is null
+      and c.user_id is not null and c.birth_date is null and c.archived_at is null and c.anonymized_at is null
+      and not exists (select 1 from public.attendance a where a.person_id = c.id)
+    order by "sameName" desc, c.last_name, c.first_name
+    limit 200`;
+}
+
+export async function mergeDuplicate(tx: Tx, keepId: string, duplicateId: string): Promise<void> {
+  await tx`select public.merge_member_duplicate(${keepId}, ${duplicateId})`;
 }
 
 export interface PersonInput {

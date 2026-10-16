@@ -40,7 +40,7 @@ describe("inscription autonome par code de club", () => {
     expect(await adminSql()`select id from public.audit_events where academy_id = ${academy} and action = 'team.joined_by_code'`).toHaveLength(1);
   });
 
-  it("la fiche créée à l'arrivée reprend l'e-mail du compte, sauf si une autre fiche du club le porte déjà", async () => {
+  it("la fiche créée à l'arrivée reprend l'e-mail du compte", async () => {
     const owner = await createUser("jc5-owner");
     const academy = await createAcademy(owner, "Club e-mail fiche");
     const code = await codeOf(academy);
@@ -48,13 +48,17 @@ describe("inscription autonome par code de club", () => {
     await asUser(user, (tx) => tx`select public.join_academy_with_code(${code})`);
     const [p] = await adminSql()<{ email: string | null }[]>`select email from public.people where academy_id = ${academy} and user_id = ${user.id}`;
     expect(p!.email).toBe(user.email);
+  });
 
-    // Fiche saisie à la main avec la même adresse : pas de doublon, la fiche du compte reste sans e-mail.
-    const other = await createUser("jc5-other");
-    await adminSql()`insert into public.people (academy_id, first_name, last_name, email) values (${academy}, 'Déjà', 'Saisi', ${other.email})`;
+  it("une fiche déjà saisie avec la même adresse est rattachée au compte : pas de doublon (voir member-duplicates.test.ts)", async () => {
+    const owner = await createUser("jc6-owner");
+    const academy = await createAcademy(owner, "Club fiche existante");
+    const code = await codeOf(academy);
+    const other = await createUser("jc6-other");
+    const [existing] = await adminSql()<{ id: string }[]>`insert into public.people (academy_id, first_name, last_name, email) values (${academy}, 'Déjà', 'Saisi', ${other.email}) returning id`;
     await asUser(other, (tx) => tx`select public.join_academy_with_code(${code})`);
-    const [q] = await adminSql()<{ email: string | null }[]>`select email from public.people where academy_id = ${academy} and user_id = ${other.id}`;
-    expect(q!.email).toBeNull();
+    const rows = await adminSql()<{ id: string; user_id: string | null; first_name: string }[]>`select id, user_id, first_name from public.people where academy_id = ${academy}`;
+    expect(rows).toEqual([{ id: existing!.id, user_id: other.id, first_name: "Déjà" }]);
   });
 
   it("un code inconnu est refusé ; un e-mail non confirmé ne peut pas rejoindre", async () => {
