@@ -164,6 +164,22 @@ describe("catalogue, planning, présences", () => {
     const totals = await asUser(w.alice, (tx) => attendance.personTotals(tx, w.academyA, w.personA));
     expect(totals.absent).toBeGreaterThanOrEqual(1);
   });
+
+  it("« marquer les inscrits présents » ne touche que les réservations confirmées, jamais le reste du club", async () => {
+    const classTypeId = await firstClassType(w.academyA);
+    await asUser(w.alice, (tx) => schedule.createSessions(tx, w.academyA, { classTypeId, instructorId: null, dates: ["2027-07-02"], time: "18:00", durationMinutes: 60, capacity: null, notes: null }));
+    const session = (await asUser(w.alice, (tx) => schedule.listSessions(tx, w.academyA, TZ, { from: "2027-07-02", to: "2027-07-02" })))[0]!;
+    const booked = await createPerson(w.academyA, "Inscrit", "Confirmé");
+    const waiting = await createPerson(w.academyA, "En", "Attente");
+    await adminSql()`insert into public.session_bookings (academy_id, session_id, person_id, status, confirmed_at) values
+      (${w.academyA}, ${session.id}, ${booked}, 'booked', now()), (${w.academyA}, ${session.id}, ${waiting}, 'waitlisted', null)`;
+
+    expect(await asUser(w.carl, (tx) => attendance.markRemainingPresent(tx, w.academyA, session.id, true))).toBe(1);
+    const roster = await asUser(w.carl, (tx) => attendance.getRoster(tx, w.academyA, session.id));
+    expect(roster.find((r) => r.personId === booked)?.status).toBe("present");
+    expect(roster.find((r) => r.personId === waiting)?.status).toBeNull();
+    expect(roster.find((r) => r.personId === w.personA)?.status ?? null).toBeNull();
+  });
 });
 
 describe("rapports et tableau de bord", () => {

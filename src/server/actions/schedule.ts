@@ -117,12 +117,12 @@ export async function setAttendanceAction(academyId: string, input: { sessionId:
 
 const sessionIdSchema = z.object({ sessionId: uuidField });
 
-export async function markRemainingPresentAction(academyId: string, input: { sessionId: string }): Promise<ActionResult<{ marked: number }>> {
+export async function markRemainingPresentAction(academyId: string, input: { sessionId: string; onlyBooked?: boolean }): Promise<ActionResult<{ marked: number }>> {
   return runAction("markRemainingPresent", async () => {
     const ctx = await authorizeAcademy(academyId, "attendance.record");
     const parsed = sessionIdSchema.safeParse(input);
     if (!parsed.success) return failure("validation");
-    const marked = await inAcademy(ctx, (tx) => attendance.markRemainingPresent(tx, academyId, parsed.data.sessionId));
+    const marked = await inAcademy(ctx, (tx) => attendance.markRemainingPresent(tx, academyId, parsed.data.sessionId, input.onlyBooked === true));
     return { ok: true, data: { marked } };
   });
 }

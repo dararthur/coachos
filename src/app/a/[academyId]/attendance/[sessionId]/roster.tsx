@@ -140,11 +140,15 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
   }
 
   // Appelée depuis une confirmation (ConfirmAction) : le résultat ferme la fenêtre ou y affiche l'erreur.
+  // Sous le filtre « Inscrits », l'action groupée ne touche que les inscrits : elle ne marque jamais tout le club à l'insu du coach.
+  const bulkBooked = view === "booked";
+  const bulkCount = bulkBooked ? counts.noShows : counts.none;
+
   async function markAll() {
     setMessage(null);
     lastMutation.current = Date.now();
     try {
-      const result = await markRemainingPresentAction(academyId, { sessionId });
+      const result = await markRemainingPresentAction(academyId, { sessionId, onlyBooked: bulkBooked });
       if (!result.ok) {
         setMessage({ tone: "error", text: result.error });
       } else {
@@ -217,13 +221,21 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             ))}
           </div>
           {/* Action groupée en tête de liste : atteignable sans faire défiler tout l'effectif. */}
-          {rollEditable && counts.none > 0 && (
+          {rollEditable && bulkCount > 0 && (view === "booked" || view === "all" || view === "todo") && (
             <ConfirmAction
               action={markAll}
-              trigger="Marquer les non renseignés présents"
+              trigger={bulkBooked ? `Marquer les ${bulkCount} inscrit${bulkCount > 1 ? "s" : ""} présent${bulkCount > 1 ? "s" : ""}` : "Marquer tout le monde présent"}
               triggerClassName="w-full sm:w-auto"
-              title={`Marquer ${counts.none} membre${counts.none > 1 ? "s" : ""} présent${counts.none > 1 ? "s" : ""} ?`}
-              description={<p>Tous les membres non renseignés de la liste seront enregistrés présents, y compris ceux qui ne sont pas venus. Vous pourrez corriger chaque ligne ensuite.</p>}
+              title={bulkBooked ? `Marquer ${bulkCount} inscrit${bulkCount > 1 ? "s" : ""} présent${bulkCount > 1 ? "s" : ""} ?` : `Marquer ${bulkCount} membre${bulkCount > 1 ? "s" : ""} présent${bulkCount > 1 ? "s" : ""} ?`}
+              description={
+                bulkBooked ? (
+                  <p>Les inscrits pas encore marqués seront enregistrés présents (pas ceux de la liste d&apos;attente). Vous pourrez corriger chaque ligne ensuite.</p>
+                ) : (
+                  <p>
+                    <strong>Tous les membres actifs du club</strong> pas encore marqués seront enregistrés présents, y compris ceux qui ne sont pas venus. Pour ne marquer que les inscrits, choisissez d&apos;abord le filtre « Inscrits ».
+                  </p>
+                )
+              }
               confirmLabel="Marquer présents"
               confirmVariant="primary"
             />
@@ -256,7 +268,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                     <p className="mt-1 flex flex-wrap items-center gap-2">
                       <Badge tone="warning">Liste d&apos;attente</Badge>
                       {rollEditable && (
-                        <button type="button" className="min-h-9 text-sm font-semibold underline underline-offset-[3px] disabled:opacity-60" disabled={busy === e.personId} onClick={() => promote(e.personId)}>
+                        <button type="button" className="min-h-11 text-sm font-semibold underline underline-offset-[3px] disabled:opacity-60" disabled={busy === e.personId} onClick={() => promote(e.personId)}>
                           Accorder une place
                         </button>
                       )}
@@ -304,11 +316,12 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
               <RollProgress counts={counts} total={entries.length} />
               <p className="mt-1.5 text-sm" aria-live="polite">
                 <strong>{attended}</strong> présent{attended > 1 ? "s" : ""}
-                {capacity ? ` / ${capacity} places` : ""} · {counts.absent} absent{counts.absent > 1 ? "s" : ""} · {counts.none} non renseigné{counts.none > 1 ? "s" : ""}
+                {capacity ? ` / ${capacity} places` : ""} · {counts.absent} absent{counts.absent > 1 ? "s" : ""}
               </p>
               <p className="text-xs text-ink-soft">
                 {counts.booked} inscrit{counts.booked > 1 ? "s" : ""}
-                {counts.waitlisted > 0 ? ` · ${counts.waitlisted} en attente` : ""}
+                {counts.noShows > 0 ? ` dont ${counts.noShows} pas encore marqué${counts.noShows > 1 ? "s" : ""}` : ""}
+                {counts.waitlisted > 0 ? ` · ${counts.waitlisted} en liste d'attente` : ""}
               </p>
             </div>
             {qrAllowed && !checkin.validatedAt && <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} noShows={counts.noShows} />}

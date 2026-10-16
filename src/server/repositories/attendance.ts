@@ -59,14 +59,19 @@ export async function setAttendance(
   return rows.length === 1;
 }
 
-/** Marque « présent » tous les membres actifs sans enregistrement (raccourci de fin de cours). */
-export async function markRemainingPresent(tx: Tx, academyId: string, sessionId: string): Promise<number> {
+/**
+ * Marque « présent » les membres actifs sans enregistrement (raccourci de fin de cours). `onlyBooked` : seulement les inscrits
+ * (réservation confirmée, hors liste d'attente) — ce que le coach voit sous le filtre « Inscrits ».
+ */
+export async function markRemainingPresent(tx: Tx, academyId: string, sessionId: string, onlyBooked = false): Promise<number> {
   const rows = await tx`
     insert into public.attendance (academy_id, session_id, person_id, status)
     select ${academyId}::uuid, ${sessionId}::uuid, p.id, 'present'
     from public.people p
     where p.academy_id = ${academyId} and p.archived_at is null and p.anonymized_at is null
       and not exists (select 1 from public.attendance a where a.session_id = ${sessionId} and a.person_id = p.id)
+      and (not ${onlyBooked}::boolean or exists (
+        select 1 from public.session_bookings b where b.session_id = ${sessionId} and b.person_id = p.id and b.status = 'booked'))
     on conflict do nothing
     returning id`;
   return rows.length;
