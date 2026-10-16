@@ -4,7 +4,7 @@ import { SCAN_PATH } from "@/domain/checkin";
 import { can, ROLE_LABELS, type Role } from "@/domain/roles";
 import { signOutAction } from "@/server/actions/auth";
 import { switchViewAction } from "@/server/actions/view-mode";
-import { MatnexaLogo } from "@/components/brand/logo";
+import { MatnexaLogo, MatnexaMark } from "@/components/brand/logo";
 import { AcademyLogo } from "@/components/ui/academy-logo";
 import { InstallApp } from "@/components/ui/install-app";
 import { PushPrompt } from "@/components/ui/push-prompt";
@@ -60,10 +60,11 @@ function ViewSwitch({ academyId, viewAsMember, compact = false }: { academyId: s
       <button
         type="submit"
         title={viewAsMember ? "Revenir à l'espace de l'équipe" : "Voir et réserver les cours comme un adhérent"}
-        className={compact ? "inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm font-semibold hover:bg-sunken" : "-mx-2 inline-flex min-h-11 w-[calc(100%+1rem)] items-center gap-2.5 rounded-sm px-2 font-semibold text-white hover:bg-bar-raised"}
+        className={compact ? TOP_ACTION : "-mx-2 inline-flex min-h-11 w-[calc(100%+1rem)] items-center gap-2.5 rounded-sm px-2 font-semibold text-white hover:bg-bar-raised"}
       >
-        <Icon name="users" size={compact ? 20 : 18} />
-        <span className={compact ? "sr-only min-[30rem]:not-sr-only" : undefined}>{label}</span>
+        {/* « Bascule » et non « personnes » : l'icône des personnes est déjà celle de l'onglet Membres. */}
+        <Icon name="swap" size={compact ? 20 : 18} />
+        <span>{label}</span>
       </button>
     </form>
   );
@@ -109,25 +110,32 @@ function SideBar({ academy, role, viewAsMember, userLabel, items }: Shell & { us
     </aside>
   );
 }
-/** Bandeau mobile (< md) : symbole, club et accès au compte ; la navigation est en bas (barre d'onglets). */
+/** Action du bandeau mobile : icône et libellé toujours visible dessous (une icône seule n'est pas comprise de tous). */
+const TOP_ACTION = "inline-flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-sm px-1.5 text-[11px] font-semibold leading-tight no-underline hover:bg-sunken";
+
+/**
+ * Bandeau mobile (< md) : symbole, club et accès au compte ; la navigation est en bas (barre d'onglets). Sans le nom « Matnexa »,
+ * qui prenait la place du nom du club (coupé en plein mot à 320 px) ; le symbole reste le lien d'accueil.
+ */
 function MobileTopBar({ academy, role, viewAsMember }: Shell) {
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden print:hidden">
-      <div className="flex items-center gap-3 px-4 py-1.5">
-        <Link href="/" title="Accueil" className="inline-flex min-h-11 shrink-0 items-center no-underline">
-          <MatnexaLogo size="sm" />
+    <header className="sticky top-0 z-30 border-b border-line bg-surface pt-[env(safe-area-inset-top)] md:hidden print:hidden [@media(max-height:30rem)]:static">
+      <div className="flex items-center gap-2 px-3 py-1 min-[22rem]:px-4">
+        <Link href="/" title="Accueil" className="inline-flex min-h-11 min-w-11 shrink-0 items-center no-underline">
+          <MatnexaMark size={28} />
+          <span className="sr-only">Matnexa, accueil</span>
         </Link>
-        <div className="flex min-w-0 flex-1 items-center gap-2.5 border-l border-line pl-3 leading-tight">
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 leading-tight">
           <AcademyLogo academy={academy} size={32} />
           <div className="min-w-0">
-          <p className="line-clamp-2 break-words text-sm font-bold leading-tight">{academy.name}</p>
+          <p className="line-clamp-2 text-sm font-bold leading-tight [overflow-wrap:anywhere] min-[22rem]:[overflow-wrap:normal]">{academy.name}</p>
           {role !== "member" && <p className="truncate text-xs text-ink-soft">{ROLE_LABELS[role]}{viewAsMember ? " · mode membre" : ""}</p>}
           </div>
         </div>
         {role !== "member" && <ViewSwitch academyId={academy.id} viewAsMember={viewAsMember} compact />}
-        <Link href="/account" className="inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-1.5 rounded-sm px-2 text-sm font-semibold no-underline hover:bg-sunken">
+        <Link href="/account" className={TOP_ACTION}>
           <Icon name="user" size={20} />
-          <span className="sr-only min-[30rem]:not-sr-only">Mon compte</span>
+          <span>Mon compte</span>
         </Link>
       </div>
     </header>
