@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { formatTime, localDate, formatDateTime, formatDay } from "@/domain/dates";
+import { formatTime, localDate, formatDateTime, formatDay, formatCalendarDate } from "@/domain/dates";
 import { whatsappHref } from "@/domain/phone";
 import { can } from "@/domain/roles";
 import { Alert, Badge, Card, EmptyState, LinkButton, PageHeader, Stat, StatGrid } from "@/components/ui/ui";
@@ -10,6 +10,9 @@ import { occupancyLabel } from "@/components/ui/booking";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { attachBookings } from "@/server/repositories/bookings";
 import { getDashboardStats, listInactiveMembers } from "@/server/repositories/dashboard";
+import { listPromotionCandidates } from "@/server/repositories/graduation";
+import { BeltLabel } from "@/components/ui/belt";
+import { GROUP_LABELS } from "@/domain/graduation";
 import { listSessions, type SessionRow } from "@/server/repositories/schedule";
 import { WeeklyBars } from "./weekly-bars";
 
@@ -30,7 +33,8 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
   const now = new Date();
   const today = localDate(now, tz);
 
-  const { stats, todaySessions, inactive } = await inAcademy(ctx, async (tx) => ({
+  const { stats, todaySessions, inactive, candidates } = await inAcademy(ctx, async (tx) => ({
+    candidates: can(ctx.role, "members.grade") ? await listPromotionCandidates(tx, academyId, today) : { items: [], total: 0 },
     stats: await getDashboardStats(tx, academyId, tz),
     todaySessions: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: today })),
     inactive: await listInactiveMembers(tx, academyId, tz),
@@ -152,6 +156,33 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
           )}
         </Card>
       </div>
+      {candidates.total > 0 && (
+        <Card
+          className="mt-6"
+          flush
+          title="Passages à évaluer"
+          description={`${plural(candidates.total, "adhérent")} ${candidates.total > 1 ? "atteignent" : "atteint"} les minimums IBJJF de durée et d'âge pour la ceinture suivante. Indicatif : vous décidez. Visible de l'équipe seulement.`}
+        >
+          <ul className="divide-y divide-line">
+            {candidates.items.map((c) => (
+              <li key={c.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 sm:px-5">
+                <Link href={`${base}/members/${c.id}`} className="flex min-h-11 min-w-0 flex-1 flex-col justify-center font-semibold no-underline hover:underline">
+                  {c.firstName} {c.lastName}
+                  <span className="text-xs font-normal text-ink-soft">
+                    {c.eligibility.status === "eligible"
+                      ? `${c.eligibility.due ? "Passage attendu" : "Éligible"} à la ceinture ${GROUP_LABELS[c.eligibility.next!]} depuis le ${formatCalendarDate(c.eligibility.eligibleOn!)}`
+                      : `Éligible à la ceinture ${GROUP_LABELS[c.eligibility.next!]} à partir du ${formatCalendarDate(c.eligibility.eligibleOn!)}`}
+                  </span>
+                </Link>
+                <BeltLabel belt={c.belt} stripes={c.stripes} size="sm" />
+              </li>
+            ))}
+          </ul>
+          {candidates.total > candidates.items.length && (
+            <p className="px-4 py-3 text-sm text-ink-soft sm:px-5">+ {candidates.total - candidates.items.length} autre{candidates.total - candidates.items.length > 1 ? "s" : ""} : ouvrez les fiches des adhérents concernés.</p>
+          )}
+        </Card>
+      )}
       <Card className="mt-6" title="Présences par semaine" description="8 dernières semaines, présents et retards. La semaine en cours est incomplète.">
         <WeeklyBars weeks={stats.weekly} />
       </Card>

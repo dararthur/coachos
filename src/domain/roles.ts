@@ -32,6 +32,8 @@ export const PERMISSIONS = {
   "members.erase": ["owner", "admin"],
   // Poser ou lever la pause d'un adhérent (peut être une blessure ou une maladie : données de santé, voir docs/rgpd/pauses-sante.md).
   "members.pause": ["owner", "admin", "coach"],
+  // Enregistrer un passage de ceinture, confirmer sa date et voir l'éligibilité (équipe seulement : jamais l'adhérent). Voir docs/graduation.md.
+  "members.grade": ["owner", "admin", "coach"],
   "schedule.read": ["owner", "admin", "coach", "member"],
   "schedule.manage": ["owner", "admin"],
   "attendance.record": ["owner", "admin", "coach"],

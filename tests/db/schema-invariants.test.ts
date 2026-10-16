@@ -73,12 +73,12 @@ describe("invariants du schéma", () => {
     expect(rows.map((r) => r.proname)).toEqual([
       "accept_invitation", "attendance_ranking", "book_for_child", "book_session", "cancel_booking", "cancel_child_booking", "checkin_book_and_redeem", "checkin_close", "checkin_fixed_peek", "checkin_fixed_redeem", "checkin_issue_token", "checkin_open", "checkin_peek", "checkin_redeem", "child_sessions",
       "claim_academy_request", "clear_member_pause", "clear_my_pause", "create_invitation", "create_minor_member", "decide_academy_request", "delete_academy", "delete_class_type", "delete_discipline", "delete_my_account", "ensure_my_member_record", "erase_person",
-      "export_my_data", "export_person_data", "invite_minor_account", "join_academy_with_code", "list_academy_requests", "my_approved_academy_request", "my_children", "preview_join_code", "promote_booking", "record_event", "regenerate_checkin_key", "regenerate_join_code", "remove_academy_logo", "remove_member", "remove_person_photo", "renew_guardian_consent", "roll_set_validated", "session_bookings_overview", "set_academy_logo", "set_checkin_settings", "set_child_ranking_visibility", "set_member_pause", "set_member_role", "set_my_pause", "set_my_photo", "set_my_ranking_visibility", "update_guardian", "update_my_profile", "withdraw_guardian_consent",
+      "export_my_data", "export_person_data", "invite_minor_account", "join_academy_with_code", "list_academy_requests", "my_approved_academy_request", "my_children", "preview_join_code", "promote_booking", "record_event", "record_promotion", "regenerate_checkin_key", "regenerate_join_code", "remove_academy_logo", "remove_member", "remove_person_photo", "renew_guardian_consent", "roll_set_validated", "session_bookings_overview", "set_academy_logo", "set_belt_since", "set_checkin_settings", "set_child_ranking_visibility", "set_member_pause", "set_member_role", "set_my_pause", "set_my_photo", "set_my_ranking_visibility", "update_guardian", "update_my_profile", "withdraw_guardian_consent",
     ]);
   });
 
   it("les tables tenant portent academy_id et une clé unique (id, academy_id) pour les FK composites", async () => {
-    const tenantTables = ["people", "disciplines", "class_types", "sessions", "attendance", "invitations", "session_bookings", "booking_notifications", "session_reminders", "guardianships"];
+    const tenantTables = ["people", "disciplines", "class_types", "sessions", "attendance", "invitations", "session_bookings", "booking_notifications", "session_reminders", "guardianships", "rank_promotions"];
     for (const t of tenantTables) {
       const cols = await adminSql()`select 1 from information_schema.columns where table_schema = 'public' and table_name = ${t} and column_name = 'academy_id' and is_nullable = 'NO'`;
       expect(cols, `${t}.academy_id`).toHaveLength(1);

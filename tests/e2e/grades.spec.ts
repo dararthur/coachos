@@ -1,0 +1,66 @@
+import { completeProfile, createClub, expect, parisToday, signUp, test, uniqueEmail } from "./support/helpers";
+
+/**
+ * Idée 7 : historique des passages et éligibilité (minimums IBJJF), réservés à l'équipe.
+ * Règles de calcul : tests/unit/graduation.test.ts ; confidentialité et effacement : tests/db/rank-promotions.test.ts.
+ */
+test("grades : le coach enregistre un passage, voit l'éligibilité et la liste « à évaluer » ; l'adhérent n'en voit rien", async ({ page }) => {
+  await signUp(page, uniqueEmail("grade"), "Admin Grade");
+  const club = await createClub(page, "Club Grade");
+
+  await test.step("un membre adulte est créé à la main", async () => {
+    await page.goto(`/a/${club}/members/new`);
+    await page.getByLabel("Prénom").fill("Alice");
+    await page.getByRole("textbox", { name: "Nom", exact: true }).fill("Gradée");
+    await page.getByLabel("Type de membre").selectOption("adult");
+    await page.getByLabel("Je confirme que ce membre est majeur.").check();
+    await page.getByRole("button", { name: "Créer le membre" }).click();
+    await expect(page.getByRole("heading", { name: "Alice Gradée" })).toBeVisible();
+    await expect(page.getByText("Aucun passage enregistré.")).toBeVisible();
+  });
+
+  await test.step("passage à la ceinture bleue il y a plus de deux ans : éligible à la violette", async () => {
+    await page.getByLabel("Nouveau grade").selectOption("blue");
+    await page.getByLabel("Date du passage").fill(parisToday(-800));
+    await page.getByRole("button", { name: "Enregistrer le passage" }).click();
+    await expect(page.getByText("Passage enregistré.")).toBeVisible();
+    await expect(page.getByText(/Éligible à la ceinture violette depuis le/)).toBeVisible();
+    await expect(page.getByRole("table", { name: "Historique des passages de ceinture" })).toBeVisible();
+  });
+
+  await test.step("une date future est refusée ; un passage à la violette hier n'ouvre l'éligibilité à la marron que dans dix-huit mois", async () => {
+    await page.getByLabel("Nouveau grade").selectOption("purple");
+    await page.getByLabel("Date du passage").evaluate((el: HTMLInputElement) => el.removeAttribute("max"));
+    await page.getByLabel("Date du passage").fill(parisToday(3));
+    await page.getByRole("button", { name: "Enregistrer le passage" }).click();
+    await expect(page.getByText(/Passage invalide/)).toBeVisible();
+
+    await page.getByLabel("Date du passage").fill(parisToday(-1));
+    await page.getByRole("button", { name: "Enregistrer le passage" }).click();
+    await expect(page.getByText("Passage enregistré.")).toBeVisible();
+    await expect(page.getByText(/Éligible à la ceinture marron à partir du/)).toBeVisible();
+  });
+
+  await test.step("la date de la ceinture actuelle se corrige ; le tableau de bord liste alors Alice (équipe seulement)", async () => {
+    await page.getByLabel("Reçue le").fill(parisToday(-600));
+    await page.getByRole("button", { name: "Confirmer la date" }).click();
+    await expect(page.getByText("Date enregistrée.")).toBeVisible();
+    await expect(page.getByText(/Éligible à la ceinture marron depuis le/)).toBeVisible();
+
+    await page.goto(`/a/${club}/dashboard`);
+    await expect(page.getByRole("heading", { name: "Passages à évaluer" })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Alice Gradée/ })).toBeVisible();
+    await page.goto(`/a/${club}/members`);
+    await page.getByRole("link", { name: /GRADÉE Alice/ }).click();
+  });
+
+  await test.step("l'adhérent ne voit ni historique, ni éligibilité, ni liste", async () => {
+    await page.getByRole("button", { name: "Mode membre" }).click();
+    await completeProfile(page, club);
+    await page.goto(`/a/${club}/profile`);
+    await expect(page.getByRole("heading", { name: "Faire une pause" })).toBeVisible();
+    await expect(page.getByText(/Grade et passages|Éligible|minimums IBJJF|Passages à évaluer/)).toHaveCount(0);
+    await page.goto(`/a/${club}/me`);
+    await expect(page.getByText(/Éligible|minimums IBJJF|Passages à évaluer/)).toHaveCount(0);
+  });
+});

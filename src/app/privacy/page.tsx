@@ -35,6 +35,9 @@ export default function PrivacyPage() {
             <strong>Fiche membre</strong> (prénom, nom, e-mail et téléphone facultatifs, date d&apos;inscription, identifiant d&apos;origine facultatif, ceinture et barrettes, silhouette d&apos;avatar, attestation de majorité) : gérer les adhérents du club, sur la base légale retenue par celui-ci (en général l&apos;exécution du contrat d&apos;adhésion). Le téléphone permet à l&apos;équipe du club de vous recontacter, notamment via WhatsApp depuis son propre téléphone.
           </li>
           <li>
+            <strong>Historique des grades</strong> : chaque changement de ceinture ou de barrette (grade, date, qui l&apos;a saisi) est daté. Visible de l&apos;équipe du club seulement ; vous le recevez dans l&apos;export de vos données. À titre indicatif, le club peut en tirer une date à partir de laquelle vous atteignez les durées et âges minimums de la Fédération internationale de jiu-jitsu brésilien (IBJJF) pour la ceinture suivante : ce calcul n&apos;est jamais montré aux autres membres, n&apos;a aucun effet automatique, et la décision d&apos;un passage reste celle de votre professeur. Base légale : intérêt légitime du club.
+          </li>
+          <li>
             <strong>Photo de profil</strong> (facultative, ajoutée par vous) : visible de vous et de l&apos;équipe du club, et des autres membres seulement si vous apparaissez dans le classement.
           </li>
           <li>
@@ -109,6 +112,7 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-1 pl-5">
           <li>Fiche membre : tant que vous êtes membre actif ; une fois archivée, anonymisée automatiquement après le délai fixé par le club (24 mois par défaut). Les présences sont alors conservées sans identité, à des fins statistiques.</li>
           <li>Pause : jusqu&apos;à ce que vous la leviez, et au plus tard 30 jours après la date de reprise ; effacée aussi à l&apos;archivage ou à l&apos;anonymisation de la fiche. Motif de départ : avec la fiche archivée, puis sans identité après anonymisation.</li>
+          <li>Historique des grades : avec votre fiche ; effacé à son anonymisation.</li>
           <li>Photo : jusqu&apos;à ce que vous la retiriez, ou à l&apos;anonymisation de la fiche ou à la suppression de votre compte.</li>
           <li>Compte : jusqu&apos;à sa suppression. Une session de connexion expire après un an sans utilisation.</li>
           <li>Invitations : 30 jours après expiration ou acceptation. Demandes de création de club : 90 jours (180 jours au plus).</li>

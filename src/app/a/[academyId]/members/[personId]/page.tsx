@@ -12,8 +12,11 @@ import { MAX_STRIPES } from "@/domain/profile";
 import { ConfirmAction } from "@/components/ui/confirm";
 import { PauseBadge } from "@/components/ui/pause-badge";
 import { PauseForm } from "@/components/ui/pause-forms";
+import { GradeCard } from "@/components/ui/grade-card";
+import { assessEligibility } from "@/domain/graduation";
+import { listPromotions } from "@/server/repositories/graduation";
 import { DEPARTURE_REASONS } from "@/domain/lifecycle";
-import { clearMemberPauseAction, eraseMemberAction, resendGuardianConsentAction, setMemberArchivedAction, setMemberPauseAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
+import { clearMemberPauseAction, eraseMemberAction, recordPromotionAction, resendGuardianConsentAction, setBeltSinceAction, setMemberArchivedAction, setMemberPauseAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
 import { ageOn } from "@/domain/minors";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
@@ -35,10 +38,11 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
     const person = await getPerson(tx, academyId, personId);
     if (!person) return null;
     const guardian = person.birthDate ? await getGuardian(tx, academyId, personId) : null;
-    return { person, guardian, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
+    const grades = can(ctx.role, "members.grade") ? await listPromotions(tx, personId) : [];
+    return { person, guardian, grades, history: await personHistory(tx, academyId, personId), totals: await personTotals(tx, academyId, personId) };
   });
   if (!data) notFound();
-  const { person, guardian, history, totals } = data;
+  const { person, guardian, grades, history, totals } = data;
   const isMinor = Boolean(person.birthDate);
   const tz = ctx.academy.timezone;
   const canEdit = can(ctx.role, "members.update") && !person.anonymizedAt;
@@ -190,6 +194,20 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                   />
                 </div>
               )}
+            </Card>
+          )}
+
+          {can(ctx.role, "members.grade") && !person.anonymizedAt && (
+            <Card title="Grade et passages" description="Historique et éligibilité : visibles de l'équipe seulement.">
+              <GradeCard
+                history={grades}
+                eligibility={assessEligibility({ belt: person.belt, birthDate: person.birthDate, history: grades, today: todayInZone(tz) })}
+                belt={person.belt}
+                today={todayInZone(tz)}
+                recordAction={recordPromotionAction.bind(null, academyId, personId)}
+                sinceAction={setBeltSinceAction.bind(null, academyId, personId)}
+                editable={!person.archivedAt}
+              />
             </Card>
           )}
 

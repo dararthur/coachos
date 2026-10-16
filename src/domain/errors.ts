@@ -39,6 +39,7 @@ export const ERROR_MESSAGES = {
   booking_closed: "Cette séance est terminée : la réservation n'est plus possible.",
   pause_consent_required: "Le consentement explicite de la personne est requis pour noter une blessure ou une maladie.",
   pause_health_minor: "Pour un mineur, la blessure ou la maladie ne peut pas être notée : choisissez « Autre » ou « Ne souhaite pas s'exprimer ».",
+  invalid_promotion: "Passage invalide : choisissez un grade différent du grade actuel, avec une date qui n'est pas dans le futur.",
   invalid_pause: "Pause invalide : choisissez une raison et une date de reprise dans l'année à venir.",
   audience_not_allowed: "Ce cours n'est pas ouvert à cette personne (public ou âge minimum du cours).",
   booking_attended: "Votre présence est déjà enregistrée : la réservation ne peut plus être annulée.",

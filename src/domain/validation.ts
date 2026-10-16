@@ -228,6 +228,15 @@ export const pauseSchema = z.object({
   consent: optional(z.literal("on")),
 });
 
+/** Passage de ceinture : nouveau grade (liste fermée) et date du passage ; la base refuse une date future et un grade inchangé. */
+export const promotionSchema = z.object({
+  belt: z.enum(BELTS, { error: "Choisissez une ceinture." }),
+  stripes: intField("Barrettes", 0, MAX_STRIPES),
+  on: dateField,
+});
+
+export const beltSinceSchema = z.object({ on: dateField });
+
 export const archiveSchema = z.object({
   departureReason: optional(z.enum(DEPARTURE_VALUES, { error: "Motif inconnu." })),
 });

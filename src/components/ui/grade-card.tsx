@@ -1,0 +1,144 @@
+import { formatCalendarDate } from "@/domain/dates";
+import { GROUP_LABELS, type Eligibility } from "@/domain/graduation";
+import { BELT_LABELS, MAX_STRIPES, type Belt } from "@/domain/profile";
+import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
+import { BeltLabel, BeltOptions } from "@/components/ui/belt";
+import { Badge } from "@/components/ui/ui";
+import type { ActionResult } from "@/domain/errors";
+
+type FormAction = (prev: ActionResult<unknown> | null, formData: FormData) => Promise<ActionResult<unknown> | null>;
+
+export type GradeRow = { id: string; belt: Belt; stripes: number; promotedOn: string; confirmed: boolean; source: "staff" | "member" };
+
+const durationLabel = (months: number) => (months === 12 ? "1 an" : months === 18 ? "1 an et demi" : months % 12 === 0 ? `${months / 12} ans` : `${months} mois`);
+
+/** Phrase d'état pour l'équipe : jamais montrée à l'adhérent (voir docs/graduation.md). */
+export function eligibilityText(e: Eligibility): { tone: "success" | "warning" | "neutral"; text: string } | null {
+  const next = e.next ? `la ceinture ${GROUP_LABELS[e.next]}` : null;
+  switch (e.status) {
+    case "none":
+      return null;
+    case "no_minimum":
+      return { tone: "neutral", text: `Aucun minimum IBJJF ne s'oppose à un passage à ${next}. C'est à vous d'en décider.` };
+    case "eligible":
+      return { tone: "success", text: `${e.due ? "Passage à " + next + " attendu" : "Éligible à " + next} depuis le ${formatCalendarDate(e.eligibleOn!)} d'après les minimums IBJJF.` };
+    case "waiting":
+      return { tone: "warning", text: `Éligible à ${next} à partir du ${formatCalendarDate(e.eligibleOn!)} d'après les minimums IBJJF.` };
+    case "date_unknown":
+      return {
+        tone: "warning",
+        text: `Pour calculer l'éligibilité à ${next} (${durationLabel(e.minMonths)} minimum à la ceinture actuelle), confirmez la date à laquelle la personne l'a reçue.`,
+      };
+  }
+}
+
+/**
+ * Historique des passages et éligibilité d'un adhérent : bloc RÉSERVÉ à l'équipe (propriétaire, administrateur, coach).
+ * Les minimums sont ceux de l'IBJJF, à titre indicatif : le club décide librement de ses passages.
+ */
+export function GradeCard({
+  history,
+  eligibility,
+  belt,
+  today,
+  recordAction,
+  sinceAction,
+  editable,
+}: {
+  history: GradeRow[];
+  eligibility: Eligibility;
+  belt: Belt | null;
+  today: string;
+  recordAction: FormAction;
+  sinceAction: FormAction;
+  /** Faux pour une fiche archivée : l'historique reste lisible. */
+  editable: boolean;
+}) {
+  const state = eligibilityText(eligibility);
+  const shown = [...history].reverse();
+  return (
+    <div className="space-y-4">
+      {state && (
+        <p className={`rounded-xs border px-3 py-2 text-sm ${state.tone === "success" ? "border-success/30 bg-success-soft text-success-ink" : state.tone === "warning" ? "border-warning/35 bg-warning-soft text-warning-ink" : "border-line bg-surface text-ink"}`}>
+          {state.text}
+        </p>
+      )}
+      {eligibility.notes.length > 0 && (
+        <ul className="list-disc space-y-1 pl-5 text-sm text-ink-soft">
+          {eligibility.notes.map((n) => (
+            <li key={n}>{n}</li>
+          ))}
+        </ul>
+      )}
+
+      {shown.length === 0 ? (
+        <p className="text-sm text-ink-soft">Aucun passage enregistré.</p>
+      ) : (
+        <table className="w-full text-sm">
+          <caption className="sr-only">Historique des passages de ceinture</caption>
+          <thead className="sr-only">
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Grade</th>
+              <th scope="col">Saisi par</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-line">
+            {shown.map((r) => (
+              <tr key={r.id}>
+                <td className="whitespace-nowrap py-2 pr-3 align-top text-ink-soft">{formatCalendarDate(r.promotedOn)}</td>
+                <td className="py-2 pr-3 align-top">
+                  <BeltLabel belt={r.belt} stripes={r.stripes} size="sm" />
+                </td>
+                <td className="py-2 text-right align-top">
+                  {!r.confirmed ? <Badge tone="warning">Date à confirmer</Badge> : r.source === "member" ? <Badge>Adhérent</Badge> : null}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {editable && (
+        <>
+          <ActionForm action={recordAction} className="space-y-3 border-t border-line pt-4">
+            <p className="text-sm font-semibold">Enregistrer un passage</p>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <SelectField label="Nouveau grade" name="belt" required defaultValue={belt ?? ""}>
+                <BeltOptions />
+              </SelectField>
+              <SelectField label="Nombre de barrettes" name="stripes" defaultValue="0">
+                {Array.from({ length: MAX_STRIPES + 1 }, (_, n) => (
+                  <option key={n} value={n}>
+                    {n}
+                  </option>
+                ))}
+              </SelectField>
+              <TextField label="Date du passage" name="on" type="date" required max={today} defaultValue={today} className="sm:col-span-2 lg:col-span-1 xl:col-span-2" />
+            </div>
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer le passage</SubmitButton>
+          </ActionForm>
+
+          {belt && (
+            <ActionForm action={sinceAction} className="space-y-3 border-t border-line pt-4">
+              <p className="text-sm font-semibold">Date de la ceinture actuelle ({BELT_LABELS[belt].toLowerCase()})</p>
+              <TextField
+                label="Reçue le"
+                name="on"
+                type="date"
+                required
+                max={today}
+                defaultValue={eligibility.since ?? undefined}
+                hint={eligibility.sinceConfirmed ? "Date confirmée." : "Date à confirmer : sans elle, la durée minimale ne peut pas être calculée."}
+              />
+              <SubmitButton variant="secondary" pendingLabel="Enregistrement…">Confirmer la date</SubmitButton>
+            </ActionForm>
+          )}
+        </>
+      )}
+      <p className="text-sm text-ink-soft">
+        Visible de l&apos;équipe du club seulement, jamais de l&apos;adhérent. Minimums de durée et d&apos;âge du système de graduation de l&apos;IBJJF (juin 2026), à titre indicatif : le passage reste votre décision.
+      </p>
+    </div>
+  );
+}

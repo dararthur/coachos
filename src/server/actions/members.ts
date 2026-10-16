@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_IMPORT_BYTES, analyzeImport, planImport, type ImportRow, type RowIssue } from "@/domain/csv-import";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { archiveSchema, guardianUpdateSchema, myProfileSchema, pauseSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
+import { archiveSchema, beltSinceSchema, guardianUpdateSchema, myProfileSchema, pauseSchema, promotionSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import { newConsentToken, sendGuardianConsent } from "@/server/guardian-consent";
+import * as graduation from "@/server/repositories/graduation";
 import * as members from "@/server/repositories/members";
 import * as profile from "@/server/repositories/profile";
 import * as ranking from "@/server/repositories/ranking";
@@ -140,6 +141,34 @@ export async function setMemberArchivedAction(academyId: string, personId: strin
     revalidatePath(`/a/${academyId}/members`);
     revalidatePath(`/a/${academyId}/members/${personId}`);
     return { ok: true, data: null, message: archive ? "Membre archivé." : "Membre restauré." };
+  });
+}
+
+/** Passage de ceinture ou de barrette enregistré par l'équipe, à la date choisie (propriétaire, administrateur, coach). */
+export async function recordPromotionAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("recordPromotion", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.grade");
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    const input = parseForm(promotionSchema, formData);
+    await inAcademy(ctx, (tx) => graduation.recordPromotion(tx, id.data, input.belt, input.stripes, input.on));
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    revalidatePath(`/a/${academyId}/dashboard`);
+    return { ok: true, data: null, message: "Passage enregistré." };
+  });
+}
+
+/** Confirme (ou corrige) la date à laquelle la personne a reçu sa ceinture actuelle : elle sert au calcul de l'éligibilité. */
+export async function setBeltSinceAction(academyId: string, personId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("setBeltSince", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.grade");
+    const id = uuidField.safeParse(personId);
+    if (!id.success) throw new AppError("not_found");
+    const input = parseForm(beltSinceSchema, formData);
+    await inAcademy(ctx, (tx) => graduation.setBeltSince(tx, id.data, input.on));
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    revalidatePath(`/a/${academyId}/dashboard`);
+    return { ok: true, data: null, message: "Date enregistrée." };
   });
 }
 

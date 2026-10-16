@@ -34,6 +34,7 @@ Une seule catégorie particulière (art. 9) est possible, depuis le 16/10/2026 :
 | `public.booking_notifications` | identifiants seuls (file d'envoi) | aucun rôle applicatif | supprimée à l'envoi ou à l'abandon |
 | `public.invitations` | e-mail invité, rôle, hachage du jeton | admins | purge 30 j après expiration/acceptation |
 | `public.academy_requests` | nom du club, nom et e-mail du demandeur, note | administrateur de la plateforme | purge 90/180 j ; suppression du compte du demandeur |
+| `public.rank_promotions` | grade, barrettes, date du passage, auteur (équipe ou adhérent) ; **jamais la date d'éligibilité** (calculée à l'affichage) | équipe du club seulement | avec la fiche ; effacé à l'anonymisation |
 | `public.usage_events` | club, type d'événement (pointage QR, réservation, validation, clôture automatique), date ; **aucun identifiant de personne** | administrateurs du club | purge 13 mois |
 | `public.audit_events` | identifiant de l'acteur, action, objet, compteurs (jamais de nom/e-mail) | propriétaire, admins | purge 24 mois ; pseudonymisé à la suppression du compte |
 | `app_private.rate_limits` | HMAC d'IP / e-mail | aucun | purge > 24 h |
