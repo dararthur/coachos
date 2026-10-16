@@ -1,0 +1,12 @@
+# Chaque dimanche à 20 h, heure de Paris (le fuseau est fixé dans la règle : le changement d'heure est suivi, quel que soit le fuseau du serveur).
+# Persistent : si le serveur était éteint à 20 h, le récapitulatif part au redémarrage ; l'application ignore un second envoi dans la même semaine.
+[Unit]
+Description=Matnexa - recapitulatif hebdomadaire, dimanche 20 h
+
+[Timer]
+OnCalendar=Sun *-*-* 20:00:00 Europe/Paris
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target

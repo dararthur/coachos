@@ -199,6 +199,11 @@ test.describe("authentification et en-têtes de sécurité", () => {
   test("la route de purge n'existe pas sans le bon jeton, et la santé ne révèle rien", async ({ request }) => {
     expect((await request.post("/api/cron/purge")).status()).toBe(404);
     expect((await request.post("/api/cron/purge", { headers: { Authorization: "Bearer faux" } })).status()).toBe(404);
+    // Toutes les routes de tâches planifiées se comportent de même, récapitulatif hebdomadaire compris.
+    for (const job of ["reminders", "close-rolls", "weekly-digest"]) {
+      expect((await request.post(`/api/cron/${job}`)).status(), job).toBe(404);
+      expect((await request.post(`/api/cron/${job}?force=1`, { headers: { Authorization: "Bearer faux" } })).status(), job).toBe(404);
+    }
     const health = await request.get("/api/health");
     expect(await health.json()).toEqual({ status: "ok" });
   });

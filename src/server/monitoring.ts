@@ -1,15 +1,15 @@
 import "server-only";
 import type { JobId, Metric } from "@/domain/monitoring";
-import { withApp } from "@/server/db/client";
+import { withApp, type Sql } from "@/server/db/client";
 import { logger } from "@/server/logger";
 
 /**
  * Écritures de supervision, « au mieux » : une panne de la base de supervision ne doit jamais faire échouer la tâche ni l'envoi qu'elle observe.
  * Aucune donnée personnelle : un nom de tâche, un succès ou un échec, un code d'erreur court ; un type d'événement et un nombre.
  */
-export async function recordJob(job: JobId, ok: boolean, error?: string): Promise<void> {
+export async function recordJob(job: JobId, ok: boolean, error?: string, sql?: Sql): Promise<void> {
   try {
-    await withApp((tx) => tx`select app_private.job_record(${job}, ${ok}, ${error ?? null})`);
+    await withApp((tx) => tx`select app_private.job_record(${job}, ${ok}, ${error ?? null})`, sql);
   } catch {
     logger.warn("monitoring.job_record_failed", { job });
   }

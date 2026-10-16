@@ -1,0 +1,15 @@
+# Récapitulatif hebdomadaire des chiffres clés par e-mail à l'administrateur de la plateforme (docs/monitoring.md).
+# Même jeton que la purge : /etc/coachos/purge.header (root:coachos, 0640). Le destinataire est PLATFORM_ADMIN_EMAIL (jamais dans la requête).
+[Unit]
+Description=Matnexa - recapitulatif hebdomadaire des chiffres cles
+Wants=network-online.target
+After=network-online.target coachos.service
+
+[Service]
+Type=oneshot
+User=coachos
+ExecStart=/usr/bin/curl -fsS --max-time 120 -X POST -H @/etc/coachos/purge.header http://127.0.0.1:3400/api/cron/weekly-digest
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true

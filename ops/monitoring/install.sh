@@ -3,7 +3,7 @@
 set -eu
 src=/srv/coachos/current/ops
 install -m 0644 "$src/systemd/coachos-alert@.service" /etc/systemd/system/
-for unit in coachos.service coachos-reminders.service coachos-close-rolls.service coachos-purge.service coachos-backup.service; do
+for unit in coachos.service coachos-reminders.service coachos-close-rolls.service coachos-purge.service coachos-weekly-digest.service coachos-backup.service; do
   if [ -f "/etc/systemd/system/$unit" ]; then
     mkdir -p "/etc/systemd/system/$unit.d"
     printf '[Unit]\nOnFailure=coachos-alert@%%n.service\n' > "/etc/systemd/system/$unit.d/onfailure.conf"

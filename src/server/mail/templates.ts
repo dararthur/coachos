@@ -1,4 +1,5 @@
 import { formatDay, formatTime } from "@/domain/dates";
+import type { Digest } from "@/domain/digest";
 import type { MailMessage } from "./types";
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -89,6 +90,18 @@ Matnexa`;
 <p style="font-size:32px;font-weight:700;letter-spacing:0.25em;margin:8px 0 16px">${escapeHtml(code)}</p>
 <p style="font-size:13px;color:#585d64">Il est valable 10 minutes et ne sert qu'une fois. Si vous n'êtes pas à l'origine de cette connexion, changez votre mot de passe sans attendre.</p></body></html>`;
   return { to, kind: "admin_code", subject: "Votre code de vérification — Matnexa", link, code, text, html };
+}
+
+/** À l'administrateur de la plateforme : chiffres clés de la semaine (dimanche 20 h). Compteurs et noms de clubs, aucune donnée de membre. */
+export function weeklyDigestEmail(to: string, digest: Digest, link: string): MailMessage {
+  const text = `${digest.subject}\n\n${digest.sections.map((s) => `${s.title.toUpperCase()}\n${s.lines.map((l) => `- ${l}`).join("\n")}`).join("\n\n")}\n\nAdministration : ${link}\n\nMatnexa`;
+  const html = `<!doctype html><html lang="fr"><body style="font-family:system-ui,sans-serif;line-height:1.5;color:#16191d;background:#ffffff">
+<p style="font-size:16px;font-weight:700;letter-spacing:-0.01em;margin:0 0 20px">Matnexa</p>
+<h1 style="font-size:20px;margin:0 0 4px">Chiffres clés de la semaine</h1>
+<p style="margin:0 0 16px;color:#585d64">${escapeHtml(digest.flags > 0 ? `${digest.flags} point${digest.flags > 1 ? "s" : ""} à voir` : "Rien d'urgent")}</p>
+${digest.sections.map((s) => `<h2 style="font-size:15px;margin:18px 0 4px">${escapeHtml(s.title)}</h2><ul style="margin:0;padding-left:20px">${s.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>`).join("\n")}
+<p style="margin-top:24px"><a href="${escapeHtml(link)}" style="display:inline-block;padding:12px 18px;background:#c2410c;color:#ffffff;border-radius:4px;font-weight:600;text-decoration:none">Ouvrir l'administration</a></p></body></html>`;
+  return { to, kind: "weekly_digest", subject: digest.subject, link, text, html };
 }
 
 /** Au demandeur : sa demande est approuvée, il peut créer son compte (ou se connecter s'il en a déjà un). */

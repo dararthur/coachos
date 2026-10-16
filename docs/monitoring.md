@@ -79,6 +79,15 @@ Sur la page d'un club (`/admin/clubs/<id>`), carte **Formule et facturation** (m
 - La vue d'ensemble affiche le **revenu mensuel indicatif** : somme des prix des clubs *Actifs* uniquement (hors essais, retards et résiliations) et la liste des formules à suivre.
 - Le prix saisi en euros (« 49 » ou « 29,90 ») est conservé en centimes.
 
+### Récapitulatif hebdomadaire (dimanche, 20 h)
+
+Chaque dimanche à 20 h (heure de Paris, changement d'heure suivi), un e-mail récapitule les **chiffres clés** à `PLATFORM_ADMIN_EMAIL` (migration 20261016001600, `src/domain/digest.ts`, testés) : clubs (nouveaux de la semaine, actifs, suspendus), membres actifs et nouveaux comptes, usage sur 7 et 30 jours avec tendance, **clubs à surveiller**, facturation (revenu mensuel indicatif, retards, essais), demandes de club en attente, et la santé (tâches planifiées, e-mails et notifications en échec). L'objet indique le nombre de « points à voir ». Aucune donnée de membre.
+
+- **Installation** (une fois, sur le VPS) : copier `ops/systemd/coachos-weekly-digest.service` et `.timer` dans `/etc/systemd/system/`, puis `systemctl daemon-reload` et `systemctl enable --now coachos-weekly-digest.timer`. Même jeton que la purge (`/etc/coachos/purge.header`). Relancer `ops/monitoring/install.sh` branche l'alerte d'échec sur l'unité.
+- `Persistent=true` : si le serveur était éteint à 20 h, l'e-mail part au redémarrage ; l'application **n'envoie jamais deux fois dans la même semaine** (6 jours de garde), même si le minuteur se répète.
+- **Essai manuel** : `sudo -u coachos -H bash -c 'curl -fsS -X POST -H @/etc/coachos/purge.header "http://127.0.0.1:3400/api/cron/weekly-digest?force=1"'` ; réponse `{"sent":true}`, sans destinataire ni chiffre.
+- Un échec d'envoi est enregistré (« En échec » dans la vue d'ensemble), relancé en erreur (alerte systemd), et la semaine suivante réessaie.
+
 ### Suspendre un club
 
 Sur la page d'un club, carte **Suspension** (migration 20261016001500, table `club_suspensions`) : un motif interne (jamais montré au club) et « Suspendre l'accès ».
