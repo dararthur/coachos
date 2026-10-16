@@ -4,6 +4,7 @@ export const JOBS = {
   reminders: { label: "Rappels de séance", every: "toutes les 5 min", lateAfterMinutes: 15 },
   close_rolls: { label: "Clôture des feuilles d'appel", every: "toutes les heures", lateAfterMinutes: 150 },
   purge: { label: "Purge de rétention et avis de place", every: "chaque nuit", lateAfterMinutes: 30 * 60 },
+  backup: { label: "Sauvegarde chiffrée", every: "chaque nuit à 3 h 30", lateAfterMinutes: 30 * 60 },
   weekly_digest: { label: "Récapitulatif hebdomadaire", every: "chaque dimanche à 20 h", lateAfterMinutes: 8 * 24 * 60 },
 } as const;
 

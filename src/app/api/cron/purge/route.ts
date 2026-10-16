@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { deliverBookingPromotions } from "@/server/booking-notifications";
 import { withApp } from "@/server/db/client";
 import { env } from "@/server/env";
+import { alertIfBackupStale } from "@/server/backup-watch";
 import { logger } from "@/server/logger";
 import { purgePlatformCounters, recordJob } from "@/server/monitoring";
 import { purgeClubRequests } from "@/server/repositories/club-requests";
@@ -37,7 +38,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "booking_emails_failed" }, { status: 500 });
     }
     await recordJob("purge", true);
-    return NextResponse.json({ ...result, booking_emails_sent: mail.sent, booking_emails_failed: mail.failed }, { headers: { "Cache-Control": "no-store" } });
+    const backupAlert = await alertIfBackupStale();
+    return NextResponse.json({ ...result, backup_alert: backupAlert, booking_emails_sent: mail.sent, booking_emails_failed: mail.failed }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     logger.error("cron.purge_failed", error);
     await recordJob("purge", false, "purge_failed");

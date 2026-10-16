@@ -28,7 +28,23 @@ sudo systemctl start coachos-alert@coachos-test.service && sudo journalctl -t co
 
 ## 3. Une tâche n'a pas tourné du tout (filet de sécurité)
 
-`OnFailure=` ne voit pas un minuteur silencieusement arrêté. Pour la sauvegarde et la purge, créer un contrôle « dead man's switch » (Healthchecks, période 1 jour et marge) et ajouter après la sauvegarde un `ExecStartPost=/usr/bin/curl -fsS --max-time 10 <URL-de-ping>`. Le ping ne contient rien.
+`OnFailure=` ne voit pas un minuteur silencieusement arrêté. **Sauvegarde : dead man's switch intégré** (migration 20261016001700). Après chaque sauvegarde réussie, systemd signale « faite » à l'application (`/api/cron/heartbeat?job=backup`, même jeton que la purge, aucune donnée) ; la console l'affiche dans « Tâches planifiées », et **la purge de 03 h 10 envoie un e-mail à l'administrateur si le signal manque depuis plus de 30 heures** (chaque nuit tant que le problème dure). Tant que le signal n'a jamais été reçu, aucune alerte (rien n'est branché) et la console affiche « Jamais exécutée ».
+
+Installation, une fois, sur le VPS (le signal part en `root` grâce au préfixe `+`, car l'utilisateur de la sauvegarde ne lit pas le fichier du jeton) :
+
+```bash
+sudo mkdir -p /etc/systemd/system/coachos-backup.service.d
+```
+
+```bash
+printf '[Service]\nExecStartPost=+/usr/bin/curl -fsS --max-time 20 -X POST -H @/etc/coachos/purge.header "http://127.0.0.1:3400/api/cron/heartbeat?job=backup"\n' | sudo tee /etc/systemd/system/coachos-backup.service.d/heartbeat.conf
+```
+
+```bash
+sudo systemctl daemon-reload && sudo systemctl start coachos-backup.service
+```
+
+Il ne couvre pas un serveur entièrement éteint (la purge ne tourne alors pas non plus) : c'est le rôle de la sonde externe sur `/api/health` (§1). Pour la purge elle-même, la console indique « En retard » et le récapitulatif du dimanche le signale.
 
 ## 4. Mesure d'usage
 

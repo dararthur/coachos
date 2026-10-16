@@ -104,6 +104,12 @@ ${digest.sections.map((s) => `<h2 style="font-size:15px;margin:18px 0 4px">${esc
   return { to, kind: "weekly_digest", subject: digest.subject, link, text, html };
 }
 
+/** À l'administrateur de la plateforme : un problème d'exploitation à traiter (par exemple une sauvegarde manquée). Texte fourni par le serveur, jamais par un utilisateur. */
+export function adminAlertEmail(to: string, title: string, message: string, link: string): MailMessage {
+  const body = layout(title, message, "Ouvrir l'administration", link, "Alerte automatique de la plateforme Matnexa.");
+  return { to, kind: "admin_alert", subject: `${title} — Matnexa`, link, ...body };
+}
+
 /** Au demandeur : sa demande est approuvée, il peut créer son compte (ou se connecter s'il en a déjà un). */
 export function clubApprovedEmail(to: string, link: string, clubName: string): MailMessage {
   const body = layout(
