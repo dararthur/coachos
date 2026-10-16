@@ -1,0 +1,14 @@
+# Alerte quand une unité échoue (voir docs/monitoring.md). Branchée par ops/monitoring/install.sh via OnFailure=.
+# /etc/coachos/alert.env : ALERT_URL=... (facultatif ; sans lui, seul le journal est écrit).
+[Unit]
+Description=Matnexa - alerte d'echec de %i
+
+[Service]
+Type=oneshot
+User=coachos
+EnvironmentFile=-/etc/coachos/alert.env
+ExecStart=/srv/coachos/current/ops/monitoring/alert.sh %i
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
