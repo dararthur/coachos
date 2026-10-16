@@ -20,6 +20,8 @@ function focusSession(sessions: SessionRow[], now: Date): SessionRow | undefined
   const open = sessions.filter((s) => s.status === "scheduled");
   return open.find((s) => s.endsAt > now) ?? [...open].reverse().find((s) => s.recorded === 0);
 }
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n > 1 ? many : one}`;
+
 export default async function DashboardPage({ params }: { params: Promise<{ academyId: string }> }) {
   const { academyId } = await params;
   const ctx = await requireAcademy(academyId);
@@ -60,10 +62,10 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
         </Alert>
       )}
       <StatGrid className="mb-6">
-        <Stat label="Membres actifs" value={stats.activeMembers} hint={stats.archivedMembers ? `${stats.archivedMembers} archivé(s)` : undefined} href={`${base}/members`} />
+        <Stat label="Membres actifs" value={stats.activeMembers} hint={stats.archivedMembers ? plural(stats.archivedMembers, "archivé") : undefined} href={`${base}/members`} />
         <Stat label="Séances aujourd'hui" value={stats.sessionsToday} href={`${base}/attendance`} />
-        <Stat label="Présences cette semaine" value={stats.attendedThisWeek} hint={`${stats.sessionsThisWeek} séance(s) planifiée(s)`} href={`${base}/reports`} />
-        <Stat label="Moyenne par séance" value={stats.avgPerSession30d ?? "—"} hint="30 derniers jours, séances avec appel" />
+        <Stat label="Présences cette semaine" value={stats.attendedThisWeek} hint={`${plural(stats.sessionsThisWeek, "séance")} ${stats.sessionsThisWeek > 1 ? "planifiées" : "planifiée"}`} href={`${base}/reports`} />
+        <Stat label="Moyenne par séance" value={stats.avgPerSession30d === null ? "—" : new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 1 }).format(stats.avgPerSession30d)} hint="30 derniers jours, séances avec appel" />
       </StatGrid>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
@@ -101,7 +103,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
             </ul>
           )}
         </Card>
-        <Card title="Membres à recontacter" flush description={`${stats.inactive30} membre(s) actif(s) sans présence depuis 30 jours.`}>
+        <Card title="Membres à recontacter" flush description={stats.inactive30 === 0 ? "Membres actifs sans présence depuis 30 jours." : `${plural(stats.inactive30, "membre actif", "membres actifs")} sans présence depuis 30 jours : un message suffit souvent.`}>
           {inactive.length === 0 ? (
             <p className="px-4 py-5 text-sm text-ink-soft sm:px-5">Aucun membre inactif : tous les membres actifs sont venus récemment.</p>
           ) : (

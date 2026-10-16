@@ -44,16 +44,16 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
     <>
       <PageHeader
         title="Membres"
-        description="Adhérents du club, majeurs ou mineurs (avec accord du responsable légal). Aucune donnée de santé n'est collectée."
+        description={`${total} membre${total > 1 ? "s" : ""} ${status === "archived" ? "archivé" : status === "active" ? "actif" : "au total"}${total > 1 && status !== "all" ? "s" : ""}${q ? ` pour « ${q} »` : ""}.`}
         actions={
           <>
             {can(ctx.role, "members.import") && (
-              <LinkButton href={`/a/${academyId}/members/import`} variant="secondary" icon="upload">
+              <LinkButton href={`/a/${academyId}/members/import`} variant="secondary" icon="upload" className="hidden md:inline-flex">
                 Importer un CSV
               </LinkButton>
             )}
             {can(ctx.role, "reports.export") && (
-              <LinkButton href={`/a/${academyId}/members/export`} variant="secondary" icon="download" download>
+              <LinkButton href={`/a/${academyId}/members/export`} variant="secondary" icon="download" download className="hidden md:inline-flex">
                 Exporter (CSV)
               </LinkButton>
             )}
@@ -150,6 +150,21 @@ export default async function MembersPage({ params, searchParams }: { params: Pr
           </ul>
           <Pagination page={page} total={total} pageSize={PAGE_SIZE} hrefFor={(p) => hrefFor(p)} />
         </>
+      )}
+      {/* Téléphone : import et export (tâches de bureau, rares) sous la liste, pour que la recherche arrive en premier. */}
+      {(can(ctx.role, "members.import") || can(ctx.role, "reports.export")) && (
+        <div className="mt-6 flex flex-wrap gap-2 border-t border-line pt-4 md:hidden">
+          {can(ctx.role, "members.import") && (
+            <LinkButton href={`/a/${academyId}/members/import`} variant="secondary" icon="upload">
+              Importer un CSV
+            </LinkButton>
+          )}
+          {can(ctx.role, "reports.export") && (
+            <LinkButton href={`/a/${academyId}/members/export`} variant="secondary" icon="download" download>
+              Exporter (CSV)
+            </LinkButton>
+          )}
+        </div>
       )}
     </>
   );

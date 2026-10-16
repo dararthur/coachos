@@ -53,7 +53,7 @@ export default async function SessionPage({ params }: { params: Promise<{ academ
                 </option>
               ))}
             </SelectField>
-            <TextField label="Capacité" name="capacity" type="number" min={1} max={500} defaultValue={session.capacity} className="max-w-xs" />
+            <TextField label="Nombre de places" name="capacity" type="number" inputMode="numeric" min={1} max={500} defaultValue={session.capacity} hint="Facultatif. Au-delà, les réservations passent en liste d'attente." className="max-w-xs" />
             <TextAreaField label="Note" name="notes" maxLength={500} defaultValue={session.notes} />
             <SubmitButton>Enregistrer</SubmitButton>
           </ActionForm>

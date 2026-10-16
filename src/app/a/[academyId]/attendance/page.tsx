@@ -4,23 +4,34 @@ import { addDays, formatDay, formatTime, localDate } from "@/domain/dates";
 import { buttonClasses } from "@/components/ui/button-classes";
 import { Badge, Card, EmptyState, PageHeader } from "@/components/ui/ui";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
+import { attachBookings } from "@/server/repositories/bookings";
 import { listSessions, type SessionRow } from "@/server/repositories/schedule";
 
 export const metadata: Metadata = { title: "Présences" };
 
-function SessionList({ academyId, sessions, tz, mine }: { academyId: string; sessions: SessionRow[]; tz: string; mine: (s: SessionRow) => boolean }) {
+type Row = SessionRow & { booked: number };
+
+/** « 12 présents · 14 inscrits », « Appel à faire · 8 inscrits » : ce que le coach cherche, sans jargon d'« enregistrements ». */
+function summary(s: Row): string {
+  const inscrits = s.booked > 0 ? `${s.booked} inscrit${s.booked > 1 ? "s" : ""}` : "aucun inscrit";
+  if (s.status === "cancelled") return "Séance annulée";
+  if (s.recorded === 0) return `Appel à faire · ${inscrits}`;
+  return `${s.attended} présent${s.attended > 1 ? "s" : ""}${s.booked > 0 ? ` · ${inscrits}` : ""}`;
+}
+
+function SessionList({ academyId, sessions, tz, mine, showDay }: { academyId: string; sessions: Row[]; tz: string; mine: (s: SessionRow) => boolean; showDay: boolean }) {
   return (
     <ul className="divide-y divide-line">
       {sessions.map((s) => (
         <li key={s.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-5">
           <div className="min-w-0">
             <p className="font-semibold">
+              {showDay && <span className="mr-1.5 text-sm font-normal text-ink-soft first-letter:uppercase">{formatDay(s.startsAt, tz)}</span>}
               <span className="font-bold">{formatTime(s.startsAt, tz)}</span> · {s.classTypeName}
-              <span className="ml-1.5 text-sm font-normal text-ink-soft">{formatDay(s.startsAt, tz)}</span>
             </p>
             <p className="text-sm text-ink-soft">
-              {s.attended} présent{s.attended > 1 ? "s" : ""} · {s.recorded} enregistrement{s.recorded > 1 ? "s" : ""}
-              {s.instructorName ? ` · ${s.instructorName}` : " · sans coach"}
+              {summary(s)}
+              {s.instructorName ? ` · ${s.instructorName}` : ""}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -43,9 +54,9 @@ export default async function AttendancePage({ params }: { params: Promise<{ aca
   const tz = ctx.academy.timezone;
   const today = localDate(new Date(), tz);
   const { todays, recent } = await inAcademy(ctx, async (tx) => ({
-    todays: await listSessions(tx, academyId, tz, { from: today, to: today }),
+    todays: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: today, to: today })),
     // 14 jours : la même fenêtre que l'alerte « Présences à compléter » du tableau de bord, qui renvoie ici.
-    recent: await listSessions(tx, academyId, tz, { from: addDays(today, -14), to: addDays(today, -1) }),
+    recent: await attachBookings(tx, academyId, await listSessions(tx, academyId, tz, { from: addDays(today, -14), to: addDays(today, -1) })),
   }));
   const mine = (s: SessionRow) => ctx.role !== "coach" || s.instructorId === null || s.instructorId === ctx.user.id;
 
@@ -59,11 +70,11 @@ export default async function AttendancePage({ params }: { params: Promise<{ aca
               Consultez le <Link href={`/a/${academyId}/schedule`}>planning</Link> pour une autre date.
             </EmptyState>
           ) : (
-            <SessionList academyId={academyId} sessions={todays} tz={tz} mine={mine} />
+            <SessionList academyId={academyId} sessions={todays} tz={tz} mine={mine} showDay={false} />
           )}
         </Card>
         <Card title="14 derniers jours" flush description="Corrigez ou complétez les présences passées.">
-          {recent.length === 0 ? <p className="px-4 py-5 text-sm text-ink-soft sm:px-5">Aucune séance sur la période.</p> : <SessionList academyId={academyId} sessions={[...recent].reverse()} tz={tz} mine={mine} />}
+          {recent.length === 0 ? <p className="px-4 py-5 text-sm text-ink-soft sm:px-5">Aucune séance sur la période.</p> : <SessionList academyId={academyId} sessions={[...recent].reverse()} tz={tz} mine={mine} showDay />}
         </Card>
       </div>
     </>

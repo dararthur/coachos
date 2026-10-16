@@ -18,7 +18,7 @@ function IssueList({ title, issues, tone }: { title: string; issues: RowIssue[];
             Ligne {i.line} : {i.messages.join(" ")}
           </li>
         ))}
-        {issues.length > 20 && <li>… et {issues.length - 20} autre(s).</li>}
+        {issues.length > 20 && <li>… et {issues.length - 20} {issues.length - 20 > 1 ? "autres" : "autre"}.</li>}
       </ul>
     </Alert>
   );

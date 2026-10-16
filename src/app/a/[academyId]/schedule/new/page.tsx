@@ -32,7 +32,7 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
         <Card className="max-w-2xl">
           <ActionForm action={createSessionsAction.bind(null, academyId)} className="space-y-5">
             <SessionFields types={types.map((t) => ({ id: t.id, label: `${t.disciplineName} — ${t.name} (${t.durationMinutes} min)`, durationMinutes: t.durationMinutes }))} instructors={instructors} today={today} />
-            <TextField label="Capacité" name="capacity" type="number" min={1} max={500} hint="Facultatif." className="max-w-xs" />
+            <TextField label="Nombre de places" name="capacity" type="number" inputMode="numeric" min={1} max={500} hint="Facultatif. Au-delà, les réservations passent en liste d'attente." className="max-w-xs" />
 
             {/* Jours et date de fin n'apparaissent qu'en répétition hebdomadaire (CSS :has ; sans support, tout reste visible). */}
             <fieldset className="space-y-4 rounded-sm border border-line bg-canvas p-4 [&:has(option[value=none]:checked)_[data-repeat]]:hidden">
@@ -48,7 +48,7 @@ export default async function NewSessionPage({ params }: { params: Promise<{ aca
             </fieldset>
 
             <TextAreaField label="Note" name="notes" maxLength={500} hint="Facultatif (ex. « apportez votre gi »)." />
-            <SubmitButton pendingLabel="Création…">Créer</SubmitButton>
+            <SubmitButton pendingLabel="Création…">Créer la séance</SubmitButton>
           </ActionForm>
         </Card>
       )}
