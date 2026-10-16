@@ -50,8 +50,18 @@ export default async function DashboardPage({ params }: { params: Promise<{ acad
 
       {isEmpty && (
         <Alert tone="info" title="Bienvenue !">
-          Commencez par <Link href={`${base}/members/new`}>ajouter vos membres</Link> (ou <Link href={`${base}/members/import`}>importer un CSV</Link>), puis{" "}
-          <Link href={`${base}/schedule/new`}>créez vos séances</Link>. Les indicateurs ci-dessous se rempliront avec vos données réelles.
+          <ol className="mt-1 list-decimal space-y-1 pl-5">
+            <li>
+              <Link href={`${base}/schedule/new`}>Créez vos séances</Link> (une récurrence hebdomadaire suffit).
+            </li>
+            <li>
+              Envoyez à vos adhérents le <Link href={`${base}/settings#inscription`}>lien d&apos;inscription du club</Link> : chacun crée son compte et sa fiche.
+            </li>
+            <li>
+              Vous avez déjà une liste ? <Link href={`${base}/members/import`}>Importez un CSV</Link> ou <Link href={`${base}/members/new`}>ajoutez un membre</Link>.
+            </li>
+          </ol>
+          <p className="mt-1">Les indicateurs ci-dessous se rempliront avec vos données réelles.</p>
         </Alert>
       )}
 
