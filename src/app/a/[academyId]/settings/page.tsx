@@ -17,11 +17,13 @@ import { getJoinCode } from "@/server/repositories/join";
 import { formatJoinCode } from "@/domain/join-code";
 import { env } from "@/server/env";
 import { regenerateJoinCodeAction } from "@/server/actions/join";
-import { listPeople } from "@/server/repositories/members";
+import { listUnlinkedPeople } from "@/server/repositories/members";
 import { InviteForm } from "./invite-form";
 import { getCheckinSettings } from "@/server/repositories/checkin";
 import { regenerateCheckinKeyAction, setCheckinSettingsAction } from "@/server/actions/checkin";
 import { LinkButton } from "@/components/ui/ui";
+import { CopyShare } from "@/components/ui/copy-share";
+import { Icon } from "@/components/ui/icons";
 import { AcademyLogo } from "@/components/ui/academy-logo";
 import { ImageField } from "@/components/ui/image-field";
 import { removeAcademyLogoAction, setAcademyLogoAction } from "@/server/actions/photos";
@@ -61,10 +63,31 @@ const AUDIT_LABELS: Record<string, string> = {
   "members.imported": "Import de membres",
   "members.exported": "Export des membres",
   "attendance.exported": "Export des présences",
-  "team.invited": "Invitation envoyée",
+  "team.invited": "Invitation créée",
   "team.joined": "Invitation acceptée",
+  "team.joined_by_code": "Membre inscrit avec le code du club",
   "team.role_changed": "Rôle modifié",
-  "team.removed": "Membre d'équipe retiré",
+  "team.removed": "Accès au club retiré",
+  "academy.join_code_regenerated": "Code d'inscription régénéré",
+  "member.profile_updated": "Profil complété par le membre",
+  "member.ranking_visibility": "Visibilité au classement modifiée",
+  "member.photo_set": "Photo de profil ajoutée",
+  "member.photo_removed": "Photo de profil retirée",
+  "member.minor_created": "Enfant inscrit",
+  "member.minor_account_invited": "Compte propre proposé à un mineur",
+  "member.guardian_updated": "Responsable légal modifié",
+  "member.guardian_consent_requested": "Accord du responsable demandé",
+  "member.guardian_consent_confirmed": "Accord du responsable confirmé",
+  "member.guardian_consent_withdrawn": "Accord du responsable retiré",
+  "booking.promoted": "Place accordée depuis la liste d'attente",
+  "checkin.opened": "Pointage QR ouvert",
+  "checkin.closed": "Pointage QR fermé",
+  "roll.validated": "Feuille d'appel validée",
+  "roll.reopened": "Feuille d'appel rouverte",
+  "news.published": "Actualité publiée",
+  "news.deleted": "Actualité supprimée",
+  "account.data_exported": "Données d'un compte exportées",
+  "account.deleted": "Compte supprimé",
 };
 
 export default async function SettingsPage({ params }: { params: Promise<{ academyId: string }> }) {
@@ -79,22 +102,114 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
     joinCode: await getJoinCode(tx, academyId),
     checkin: await getCheckinSettings(tx, academyId),
     audit: await listAudit(tx, academyId, 30),
-    members: (await listPeople(tx, academyId, { status: "active", page: 1, q: "" })).rows,
+    members: await listUnlinkedPeople(tx, academyId),
   }));
   const assignable = assignableRoles(ctx.role);
   const timezones = TIMEZONE_OPTIONS.some((t) => t.value === tz) ? TIMEZONE_OPTIONS : [{ value: tz, label: tz }, ...TIMEZONE_OPTIONS];
 
+  // Équipe d'abord (propriétaires, administrateurs, coachs) ; les adhérents qui ont un compte, souvent des dizaines, sont repliés.
+  const staffRows = data.team.filter((m) => m.role !== "member");
+  const memberRows = data.team.filter((m) => m.role === "member");
+  const teamBlock = (rows: typeof data.team) => (
+    <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
+              <div className="hidden sm:block">
+              <DataTable bare caption="Équipe et accès" headers={["Personne", "Rôle", "Depuis", ""]}>
+                {rows.map((m) => {
+                  const self = m.userId === ctx.user.id;
+                  const manageable = !self && canManageMember(ctx.role, m.role);
+                  return (
+                    <tr key={m.userId}>
+                      <th scope="row" className="px-4 py-2.5 font-medium">
+                        {m.displayName || m.email || "—"} {self && <Badge tone="brand">Vous</Badge>}
+                        {m.displayName && m.email && <span className="block text-xs font-normal text-ink-soft">{m.email}</span>}
+                      </th>
+                      <td className="px-4 py-2.5">
+                        {manageable ? (
+                          <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex items-center gap-2">
+                            <input type="hidden" name="userId" value={m.userId} />
+                            <label className="sr-only" htmlFor={`role-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
+                            <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="field w-auto min-w-36">
+                              {assignable.map((r) => (
+                                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                              ))}
+                            </select>
+                            <SubmitButton variant="secondary" pendingLabel="…">Appliquer</SubmitButton>
+                          </ActionForm>
+                        ) : (
+                          <Badge tone="brand">{ROLE_LABELS[m.role]}</Badge>
+                        )}
+                      </td>
+                      <td className="px-4 py-2.5 text-ink-soft">{formatDateTime(m.joinedAt, tz)}</td>
+                      <td className="px-4 py-2.5 text-right">
+                        {manageable && (
+                          <ConfirmAction
+                            action={removeMemberAction.bind(null, academyId)}
+                            trigger="Retirer"
+                            title={`Retirer ${m.displayName || m.email} ?`}
+                            description={<p>La personne perd l&apos;accès au club. Ses séances restent, sans coach assigné.</p>}
+                            confirmLabel="Retirer"
+                          >
+                            <input type="hidden" name="userId" value={m.userId} />
+                          </ConfirmAction>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </DataTable>
+              </div>
+              <ul className="divide-y divide-line sm:hidden">
+                {rows.map((m) => {
+                  const self = m.userId === ctx.user.id;
+                  const manageable = !self && canManageMember(ctx.role, m.role);
+                  return (
+                    <li key={m.userId} className="space-y-2 px-4 py-3">
+                      <p className="min-w-0 font-semibold">
+                        {m.displayName || m.email || "—"} {self && <Badge tone="brand">Vous</Badge>}
+                        {m.displayName && m.email && <span className="block truncate text-xs font-normal text-ink-soft">{m.email}</span>}
+                      </p>
+                      {manageable ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex flex-1 items-center gap-2">
+                            <input type="hidden" name="userId" value={m.userId} />
+                            <label className="sr-only" htmlFor={`role-m-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
+                            <select id={`role-m-${m.userId}`} name="role" defaultValue={m.role} className="field min-w-0 flex-1">
+                              {assignable.map((r) => (
+                                <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                              ))}
+                            </select>
+                            <SubmitButton variant="secondary" pendingLabel="…">Appliquer</SubmitButton>
+                          </ActionForm>
+                          <ConfirmAction
+                            action={removeMemberAction.bind(null, academyId)}
+                            trigger="Retirer"
+                            title={`Retirer ${m.displayName || m.email} ?`}
+                            description={<p>La personne perd l&apos;accès au club. Ses séances restent, sans coach assigné.</p>}
+                            confirmLabel="Retirer"
+                          >
+                            <input type="hidden" name="userId" value={m.userId} />
+                          </ConfirmAction>
+                        </div>
+                      ) : (
+                        <Badge tone="brand">{ROLE_LABELS[m.role]}</Badge>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+  );
   return (
     <>
       <PageHeader title="Paramètres" description="Configuration du club, des cours, de l'équipe et conformité." />
       <nav aria-label="Sections des paramètres" className="-mt-2 mb-5 flex gap-1 overflow-x-auto border-b border-line">
         {[
           ["club", "Club"],
-          ["disciplines", "Disciplines"],
-          ["cours", "Types de cours"],
+          ["inscription", "Inscription des membres"],
           ["equipe", "Équipe"],
-          ["inscription", "Inscription"],
           ["pointage", "Pointage"],
+          ["cours", "Types de cours"],
+          ["disciplines", "Disciplines"],
           ...(can(ctx.role, "audit.read") ? [["journal", "Journal"]] : []),
           ...(can(ctx.role, "academy.delete") ? [["suppression", "Suppression"]] : []),
         ].map(([id, label]) => (
@@ -153,36 +268,92 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
           </ActionForm>
         </Card>
 
-        <Card id="disciplines" title="Disciplines" description="Les disciplines regroupent vos types de cours.">
-          <ul className="mb-4 divide-y divide-line">
-            {data.disciplines.map((d) => (
-              <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                <span className={d.archivedAt ? "text-ink-soft line-through" : "font-medium"}>{d.name}</span>
-                <div className="flex flex-wrap items-center gap-2">
-                  <InlineAction
-                    action={toggleDisciplineArchivedAction.bind(null, academyId, !d.archivedAt)}
-                    hidden={{ id: d.id }}
-                    label={d.archivedAt ? "Restaurer" : "Archiver"}
-                  />
-                  <ConfirmAction
-                    action={deleteDisciplineAction.bind(null, academyId)}
-                    trigger={<>Supprimer<span className="sr-only"> la discipline {d.name}</span></>}
-                    title={`Supprimer la discipline « ${d.name} » ?`}
-                    description="La discipline et ses types de cours sont effacés définitivement. Impossible si une séance (passée ou à venir) les utilise : archivez-la plutôt."
-                    confirmLabel="Supprimer définitivement"
-                  >
-                    <input type="hidden" name="id" value={d.id} />
-                  </ConfirmAction>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <ActionForm action={createDisciplineAction.bind(null, academyId)} className="flex flex-wrap items-end gap-3" resetOnSuccess>
-            <TextField label="Nouvelle discipline" name="name" required minLength={2} maxLength={60} />
-            <SubmitButton>Ajouter</SubmitButton>
-          </ActionForm>
+        <Card id="inscription" title="Inscription des membres" description="Vos adhérents s'inscrivent seuls avec ce code ou ce lien : leur fiche est créée automatiquement, sans action de votre part.">
+          {data.joinCode && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium">Code du club</p>
+                <p data-testid="join-code" className="mt-1 font-mono text-2xl font-bold tracking-widest">{formatJoinCode(data.joinCode)}</p>
+                <p className="mt-1 text-xs text-ink-soft">Valable sans limite de durée pour toutes les inscriptions à venir. Les membres le saisissent sur « Rejoindre un club ».</p>
+              </div>
+              <div>
+                <label htmlFor="join-link" className="text-sm font-medium">Lien de partage</label>
+                <input id="join-link" readOnly value={`${env().SITE_URL}/join/${data.joinCode}`} className="mt-1 block min-h-11 w-full max-w-xl rounded-sm border border-line bg-surface px-3 py-2 font-mono text-xs" />
+                <p className="mt-1 text-xs text-ink-soft">Le code est déjà renseigné : à envoyer par message ou à afficher au club.</p>
+                <CopyShare className="mt-3" text={`${env().SITE_URL}/join/${data.joinCode}`} shareTitle={`Rejoindre ${ctx.academy.name}`} shareText={`Inscris-toi à « ${ctx.academy.name} » sur Matnexa pour réserver tes cours :`} />
+              </div>
+              <ConfirmAction
+                action={regenerateJoinCodeAction.bind(null, academyId)}
+                trigger="Générer un nouveau code"
+                title="Générer un nouveau code ?"
+                description="L'ancien code et l'ancien lien cesseront immédiatement de fonctionner. Les membres déjà inscrits ne sont pas affectés."
+                confirmLabel="Générer un nouveau code"
+              />
+            </div>
+          )}
         </Card>
+        <Card id="equipe" title="Équipe" description="Qui a accès au club, avec quel rôle. Invitez un coach ou un administrateur avec un lien.">
+          {teamBlock(staffRows)}
+          {memberRows.length > 0 && (
+            <details className="group -mt-2 mb-5">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
+                <Icon name="next" size={16} className="shrink-0 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none" />
+                Adhérents avec un compte ({memberRows.length})
+              </summary>
+              <div className="mt-2">{teamBlock(memberRows)}</div>
+            </details>
+          )}
 
+          <h3 className="mb-2 text-sm font-semibold">Inviter quelqu&apos;un</h3>
+          <InviteForm academyId={academyId} roles={assignable.filter((r) => r !== "owner")} members={data.members.map((p) => ({ id: p.id, name: `${p.lastName} ${p.firstName}` }))} />
+
+          {data.invitations.length > 0 && (
+            <div className="mt-5">
+              <h3 className="mb-2 text-sm font-semibold">Invitations en attente</h3>
+              <ul className="divide-y divide-line">
+                {data.invitations.map((i) => (
+                  <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+                    <span>
+                      {i.email} · {ROLE_LABELS[i.role]} · expire le {formatDateTime(i.expiresAt, tz)}
+                    </span>
+                    <InlineAction action={revokeInvitationAction.bind(null, academyId)} hidden={{ id: i.id }} label="Révoquer" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Card>
+        <Card id="pointage" title="Pointage par QR code" description="Comment vos adhérents pointent leur présence avec Matnexa. Dans les deux cas, ils doivent avoir réservé le cours.">
+          <ActionForm action={setCheckinSettingsAction.bind(null, academyId)} className="grid max-w-2xl gap-4 sm:grid-cols-2">
+            <SelectField
+              label="Mode de pointage"
+              name="mode"
+              defaultValue={data.checkin.mode}
+              className="sm:col-span-2"
+              hint="QR tournant : le coach l'affiche sur son téléphone pour chaque cours (le plus sûr). QR fixe : une affiche imprimée dans la salle, le cours est retrouvé selon l'heure."
+            >
+              <option value="rotating">QR tournant, affiché par le coach</option>
+              <option value="fixed">QR fixe, affiche imprimée</option>
+            </SelectField>
+            <TextField label="Pointage possible avant le cours (min)" name="beforeMinutes" type="number" inputMode="numeric" min={0} max={240} defaultValue={String(data.checkin.beforeMinutes)} required hint="Utilisé par le QR fixe." />
+            <TextField label="Pointage possible après le début (min)" name="afterMinutes" type="number" inputMode="numeric" min={0} max={240} defaultValue={String(data.checkin.afterMinutes)} required hint="Utilisé par le QR fixe." />
+            <div className="sm:col-span-2">
+              <SubmitButton>Enregistrer</SubmitButton>
+            </div>
+          </ActionForm>
+          {data.checkin.mode === "fixed" && (
+            <div className="mt-6 flex max-w-2xl flex-wrap items-center gap-3 border-t border-line pt-5">
+              <LinkButton href={`/a/${academyId}/settings/qr`}>Afficher l&apos;affiche à imprimer</LinkButton>
+              <ConfirmAction
+                action={regenerateCheckinKeyAction.bind(null, academyId)}
+                trigger="Régénérer le QR"
+                title="Régénérer le QR du club ?"
+                description="Les affiches déjà imprimées cesseront immédiatement de fonctionner : il faudra imprimer la nouvelle. À faire si l'affiche a été diffusée hors du club."
+                confirmLabel="Régénérer le QR"
+              />
+            </div>
+          )}
+        </Card>
         <Card id="cours" title="Types de cours" description="Un type de cours = un format de séance (durée et capacité par défaut).">
           <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
             <div className="hidden sm:block">
@@ -234,171 +405,39 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
             </div>
           </ActionForm>
         </Card>
-
-        <Card id="inscription" title="Inscription des membres" description="Vos adhérents s'inscrivent seuls avec ce code ou ce lien : leur fiche est créée automatiquement, sans action de votre part.">
-          {data.joinCode && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium">Code du club</p>
-                <p data-testid="join-code" className="mt-1 font-mono text-2xl font-bold tracking-widest">{formatJoinCode(data.joinCode)}</p>
-                <p className="mt-1 text-xs text-ink-soft">Valable sans limite de durée pour toutes les inscriptions à venir. Les membres le saisissent sur « Rejoindre un club ».</p>
-              </div>
-              <div>
-                <label htmlFor="join-link" className="text-sm font-medium">Lien de partage</label>
-                <input id="join-link" readOnly value={`${env().SITE_URL}/join/${data.joinCode}`} className="mt-1 block w-full max-w-xl rounded-sm border border-line bg-surface px-3 py-2 font-mono text-xs" />
-                <p className="mt-1 text-xs text-ink-soft">Le code est déjà renseigné : à envoyer par message ou à afficher au club.</p>
-              </div>
-              <ConfirmAction
-                action={regenerateJoinCodeAction.bind(null, academyId)}
-                trigger="Générer un nouveau code"
-                title="Générer un nouveau code ?"
-                description="L'ancien code et l'ancien lien cesseront immédiatement de fonctionner. Les membres déjà inscrits ne sont pas affectés."
-                confirmLabel="Générer un nouveau code"
-              />
-            </div>
-          )}
-        </Card>
-
-        <Card id="pointage" title="Pointage par QR code" description="Comment vos adhérents pointent leur présence avec Matnexa. Dans les deux cas, ils doivent avoir réservé le cours.">
-          <ActionForm action={setCheckinSettingsAction.bind(null, academyId)} className="grid max-w-2xl gap-4 sm:grid-cols-2">
-            <SelectField
-              label="Mode de pointage"
-              name="mode"
-              defaultValue={data.checkin.mode}
-              className="sm:col-span-2"
-              hint="QR tournant : le coach l'affiche sur son téléphone pour chaque cours (le plus sûr). QR fixe : une affiche imprimée dans la salle, le cours est retrouvé selon l'heure."
-            >
-              <option value="rotating">QR tournant, affiché par le coach</option>
-              <option value="fixed">QR fixe, affiche imprimée</option>
-            </SelectField>
-            <TextField label="Pointage possible avant le cours (min)" name="beforeMinutes" type="number" inputMode="numeric" min={0} max={240} defaultValue={String(data.checkin.beforeMinutes)} required hint="Utilisé par le QR fixe." />
-            <TextField label="Pointage possible après le début (min)" name="afterMinutes" type="number" inputMode="numeric" min={0} max={240} defaultValue={String(data.checkin.afterMinutes)} required hint="Utilisé par le QR fixe." />
-            <div className="sm:col-span-2">
-              <SubmitButton>Enregistrer</SubmitButton>
-            </div>
+        <Card id="disciplines" title="Disciplines" description="Les disciplines regroupent vos types de cours.">
+          <ul className="mb-4 divide-y divide-line">
+            {data.disciplines.map((d) => (
+              <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
+                <span className={d.archivedAt ? "text-ink-soft line-through" : "font-medium"}>{d.name}</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <InlineAction
+                    action={toggleDisciplineArchivedAction.bind(null, academyId, !d.archivedAt)}
+                    hidden={{ id: d.id }}
+                    label={d.archivedAt ? "Restaurer" : "Archiver"}
+                  />
+                  <ConfirmAction
+                    action={deleteDisciplineAction.bind(null, academyId)}
+                    trigger={<>Supprimer<span className="sr-only"> la discipline {d.name}</span></>}
+                    title={`Supprimer la discipline « ${d.name} » ?`}
+                    description="La discipline et ses types de cours sont effacés définitivement. Impossible si une séance (passée ou à venir) les utilise : archivez-la plutôt."
+                    confirmLabel="Supprimer définitivement"
+                  >
+                    <input type="hidden" name="id" value={d.id} />
+                  </ConfirmAction>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <ActionForm action={createDisciplineAction.bind(null, academyId)} className="flex flex-wrap items-end gap-3" resetOnSuccess>
+            <TextField label="Nouvelle discipline" name="name" required minLength={2} maxLength={60} />
+            <SubmitButton>Ajouter</SubmitButton>
           </ActionForm>
-          {data.checkin.mode === "fixed" && (
-            <div className="mt-6 flex max-w-2xl flex-wrap items-center gap-3 border-t border-line pt-5">
-              <LinkButton href={`/a/${academyId}/settings/qr`}>Afficher l&apos;affiche à imprimer</LinkButton>
-              <ConfirmAction
-                action={regenerateCheckinKeyAction.bind(null, academyId)}
-                trigger="Régénérer le QR"
-                title="Régénérer le QR du club ?"
-                description="Les affiches déjà imprimées cesseront immédiatement de fonctionner : il faudra imprimer la nouvelle. À faire si l'affiche a été diffusée hors du club."
-                confirmLabel="Régénérer le QR"
-              />
-            </div>
-          )}
         </Card>
 
-        <Card id="equipe" title="Équipe" description="Propriétaires, administrateurs, coachs et membres connectés.">
-          <div className="-mx-4 mb-5 border-y border-line sm:-mx-5">
-            <div className="hidden sm:block">
-            <DataTable bare caption="Équipe et accès" headers={["Personne", "Rôle", "Depuis", ""]}>
-              {data.team.map((m) => {
-                const self = m.userId === ctx.user.id;
-                const manageable = !self && canManageMember(ctx.role, m.role);
-                return (
-                  <tr key={m.userId}>
-                    <th scope="row" className="px-4 py-2.5 font-medium">
-                      {m.displayName || m.email || "—"} {self && <Badge tone="brand">Vous</Badge>}
-                      {m.displayName && m.email && <span className="block text-xs font-normal text-ink-soft">{m.email}</span>}
-                    </th>
-                    <td className="px-4 py-2.5">
-                      {manageable ? (
-                        <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex items-center gap-2">
-                          <input type="hidden" name="userId" value={m.userId} />
-                          <label className="sr-only" htmlFor={`role-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
-                          <select id={`role-${m.userId}`} name="role" defaultValue={m.role} className="field w-auto min-w-36">
-                            {assignable.map((r) => (
-                              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                            ))}
-                          </select>
-                          <SubmitButton variant="secondary" pendingLabel="…">Appliquer</SubmitButton>
-                        </ActionForm>
-                      ) : (
-                        <Badge tone="brand">{ROLE_LABELS[m.role]}</Badge>
-                      )}
-                    </td>
-                    <td className="px-4 py-2.5 text-ink-soft">{formatDateTime(m.joinedAt, tz)}</td>
-                    <td className="px-4 py-2.5 text-right">
-                      {manageable && (
-                        <ConfirmAction
-                          action={removeMemberAction.bind(null, academyId)}
-                          trigger="Retirer"
-                          title={`Retirer ${m.displayName || m.email} ?`}
-                          description={<p>La personne perd l&apos;accès au club. Ses séances restent, sans coach assigné.</p>}
-                          confirmLabel="Retirer"
-                        >
-                          <input type="hidden" name="userId" value={m.userId} />
-                        </ConfirmAction>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </DataTable>
-            </div>
-            <ul className="divide-y divide-line sm:hidden">
-              {data.team.map((m) => {
-                const self = m.userId === ctx.user.id;
-                const manageable = !self && canManageMember(ctx.role, m.role);
-                return (
-                  <li key={m.userId} className="space-y-2 px-4 py-3">
-                    <p className="min-w-0 font-semibold">
-                      {m.displayName || m.email || "—"} {self && <Badge tone="brand">Vous</Badge>}
-                      {m.displayName && m.email && <span className="block truncate text-xs font-normal text-ink-soft">{m.email}</span>}
-                    </p>
-                    {manageable ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <ActionForm action={changeRoleAction.bind(null, academyId)} className="flex flex-1 items-center gap-2">
-                          <input type="hidden" name="userId" value={m.userId} />
-                          <label className="sr-only" htmlFor={`role-m-${m.userId}`}>Rôle de {m.displayName || m.email}</label>
-                          <select id={`role-m-${m.userId}`} name="role" defaultValue={m.role} className="field min-w-0 flex-1">
-                            {assignable.map((r) => (
-                              <option key={r} value={r}>{ROLE_LABELS[r]}</option>
-                            ))}
-                          </select>
-                          <SubmitButton variant="secondary" pendingLabel="…">Appliquer</SubmitButton>
-                        </ActionForm>
-                        <ConfirmAction
-                          action={removeMemberAction.bind(null, academyId)}
-                          trigger="Retirer"
-                          title={`Retirer ${m.displayName || m.email} ?`}
-                          description={<p>La personne perd l&apos;accès au club. Ses séances restent, sans coach assigné.</p>}
-                          confirmLabel="Retirer"
-                        >
-                          <input type="hidden" name="userId" value={m.userId} />
-                        </ConfirmAction>
-                      </div>
-                    ) : (
-                      <Badge tone="brand">{ROLE_LABELS[m.role]}</Badge>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
 
-          <h3 className="mb-2 text-sm font-semibold">Inviter quelqu&apos;un</h3>
-          <InviteForm academyId={academyId} roles={assignable.filter((r) => r !== "owner")} members={data.members.map((p) => ({ id: p.id, name: `${p.lastName} ${p.firstName}` }))} />
 
-          {data.invitations.length > 0 && (
-            <div className="mt-5">
-              <h3 className="mb-2 text-sm font-semibold">Invitations en attente</h3>
-              <ul className="divide-y divide-line">
-                {data.invitations.map((i) => (
-                  <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-                    <span>
-                      {i.email} · {ROLE_LABELS[i.role]} · expire le {formatDateTime(i.expiresAt, tz)}
-                    </span>
-                    <InlineAction action={revokeInvitationAction.bind(null, academyId)} hidden={{ id: i.id }} label="Révoquer" />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </Card>
+
 
         {can(ctx.role, "audit.read") && (
           <Card id="journal" title="Journal d'audit" description="Actions administratives récentes (aucune donnée personnelle n'y est stockée). Conservé 24 mois.">
@@ -408,7 +447,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
               <ul className="divide-y divide-line text-sm">
                 {data.audit.map((e) => (
                   <li key={e.id} className="flex flex-wrap justify-between gap-2 py-2">
-                    <span>{AUDIT_LABELS[e.action] ?? e.action}</span>
+                    <span>{AUDIT_LABELS[e.action] ?? "Action administrative"}</span>
                     <span className="text-ink-soft">
                       {e.actorName ?? "Système"} · {formatDateTime(e.createdAt, tz)}
                     </span>

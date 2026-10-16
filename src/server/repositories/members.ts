@@ -34,6 +34,19 @@ export function escapeLike(input: string): string {
   return input.replace(/[\\%_]/g, (c) => `\\${c}`);
 }
 
+/**
+ * Toutes les fiches actives sans compte, par ordre alphabétique : choix de la fiche à relier à une invitation.
+ * (La liste paginée des membres n'en donnait que la première page, soit 25 : impossible de relier la 26ᵉ.)
+ */
+export async function listUnlinkedPeople(tx: Tx, academyId: string): Promise<{ id: string; firstName: string; lastName: string }[]> {
+  return tx<{ id: string; firstName: string; lastName: string }[]>`
+    select p.id, p.first_name as "firstName", p.last_name as "lastName"
+    from public.people p
+    where p.academy_id = ${academyId} and p.archived_at is null and p.anonymized_at is null and p.user_id is null
+    order by lower(p.last_name), lower(p.first_name)
+    limit 2000`;
+}
+
 export async function listPeople(
   tx: Tx,
   academyId: string,

@@ -26,6 +26,8 @@ const PATHS = {
   alert: "M12 4 3 20h18L12 4ZM12 10v4.5M12 17v.5",
   clock: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 7v5l3 2",
   check: "M5 12.5 10 17l9-10",
+  copy: "M9 9h11v11H9zM5 15H4V4h11v1",
+  share: "M12 4v11M7.5 8.5 12 4l4.5 4.5M5 12v8h14v-8",
   edit: "M4 20h4L19 9l-4-4L4 16v4ZM13 7l4 4",
   news: "M5 4h11v16H5zM16 8h3v10a2 2 0 0 1-2 2M8 8h5M8 12h5M8 16h3",
   menu: "M4 7h16M4 12h16M4 17h16",
