@@ -9,6 +9,7 @@
   "scripts": {
     "docs:rights-pdf": "node scripts/build-rights-pdf.mjs",
     "docs:contracts": "node scripts/build-contracts.mjs",
+    "docs:onboarding-pdf": "node scripts/build-onboarding-pdf.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 127.0.0.1",
