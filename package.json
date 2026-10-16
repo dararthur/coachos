@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "docs:rights-pdf": "node scripts/build-rights-pdf.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start -H 127.0.0.1",

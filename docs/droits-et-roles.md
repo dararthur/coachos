@@ -2,6 +2,8 @@
 
 > Document de référence pour la présentation aux clubs. Il décrit **qui peut faire quoi**, **qui voit quelles données** et **comment c'est garanti**. Source technique : `src/domain/roles.ts` (matrice des permissions) ; la base de données applique les mêmes règles de son côté, et des tests automatiques vérifient que les deux restent alignées (`tests/db/permissions-matrix.test.ts`, `tests/db/roles-workflows.test.ts`).
 >
+> **Version PDF à diffuser aux clubs** : [droits-et-roles-matnexa.pdf](droits-et-roles-matnexa.pdf) (5 pages, charte Matnexa). Elle est générée par `scripts/build-rights-pdf.mjs` : après tout changement de droits, mettre à jour ce document **et** le script, puis lancer `npm run docs:rights-pdf`.
+>
 > Mis à jour le 16 octobre 2026. Le dossier RGPD (`docs/rgpd/`) reste à faire relire juridiquement avant l'ouverture à des données réelles ; ce document ne vaut pas avis juridique.
 
 ## 1. L'essentiel en une page
