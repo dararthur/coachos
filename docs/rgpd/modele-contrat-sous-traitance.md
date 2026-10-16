@@ -1,5 +1,7 @@
 # Modèle — Accord de traitement des données (article 28 du RGPD)
 
+> **Version Word à remplir pour chaque club : `docs/contrats/accord-traitement-donnees-matnexa.docx`** (avec le contrat de prestation), générée par `npm run docs:contracts` ; le script `scripts/build-contracts.mjs` en est la source à tenir à jour avec ce dossier.
+>
 > **Projet, non relu par un juriste.** Structure calquée sur les mentions obligatoires de l'article 28 §3 du RGPD. La CNIL publie un guide du sous-traitant et la Commission européenne des clauses contractuelles types entre responsable et sous-traitant (décision d'exécution (UE) 2021/915) : les consulter, ou les reprendre telles quelles, est la voie la plus sûre. Les crochets sont à compléter.
 
 **Entre**

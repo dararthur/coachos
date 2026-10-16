@@ -4,7 +4,7 @@ Rappels : art. 28 (contrat de sous-traitance obligatoire, avec les mentions de l
 
 ## Chaîne contractuelle
 
-1. **Club → éditeur** : contrat de sous-traitance (art. 28 §3) entre chaque club et l'éditeur, **à rédiger et signer avant que le club saisisse des données réelles**. [Modèle : à rédiger ; la CNIL publie un guide du sous-traitant et des clauses types.]
+1. **Club → éditeur** : contrat de sous-traitance (art. 28 §3) entre chaque club et l'éditeur, **à rédiger et signer avant que le club saisisse des données réelles**. Modèles Word à remplir pour chaque club : `docs/contrats/` (contrat de prestation + accord de traitement, générés par `npm run docs:contracts`). Texte non relu par un juriste ; la CNIL publie un guide du sous-traitant et des clauses types.
 2. **Éditeur → sous-traitants ultérieurs** : l'éditeur ne peut recourir à un sous-traitant ultérieur qu'avec l'autorisation écrite du club (art. 28 §2) et doit lui imposer les mêmes obligations (art. 28 §4).
 
 ## Liste
