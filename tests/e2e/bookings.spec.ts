@@ -31,7 +31,7 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     await coach.goto(`/a/${club}/schedule/new`);
     await coach.getByLabel("Date de la première séance").fill(day);
     await coach.getByLabel("Heure de début").fill("18:30");
-    await coach.getByLabel("Capacité").fill("1");
+    await coach.getByLabel("Nombre de places").fill("1");
     await coach.getByRole("button", { name: "Créer" }).click();
     await expect(coach.getByText("Création effectuée : 1")).toBeVisible();
 
