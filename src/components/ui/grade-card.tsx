@@ -201,7 +201,8 @@ function GradeRowActions({ row, today, actions, current, previous }: { row: Grad
             Supprimer<span className="sr-only"> le grade {what}</span>
           </>
         }
-        triggerClassName="min-h-11 border-0! bg-transparent! px-0! text-sm underline underline-offset-[3px]"
+        triggerVariant="ghost"
+        triggerClassName="min-h-11 px-0 text-sm underline underline-offset-[3px]"
         title="Supprimer ce grade de l'historique ?"
         description={
           <p>

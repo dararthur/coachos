@@ -91,9 +91,19 @@ export async function canvasCamera(page: Page, pngDataUrl: string): Promise<stri
         ctx.fillRect(0, 0, 640, 480);
         ctx.drawImage(img, 120, 40, 400, 400);
       };
-      draw();
-      const stream = canvas.captureStream(10);
-      const timer = setInterval(draw, 100); // une image régulière : certains moteurs n'émettent rien sur un canvas figé
+      // Images demandées explicitement (requestFrame) quand le moteur le permet : WebKit n'émettait aucune image d'un canvas
+      // filmé à cadence fixe (vidéo jamais prête). Sinon, cadence de 10 images par seconde.
+      const probe = canvas.captureStream(0);
+      const track0 = probe.getVideoTracks()[0] as (MediaStreamTrack & { requestFrame?: () => void }) | undefined;
+      const manual = typeof track0?.requestFrame === "function";
+      if (!manual) probe.getTracks().forEach((t) => t.stop());
+      const stream = manual ? probe : canvas.captureStream(10);
+      const tick = () => {
+        draw();
+        if (manual) track0!.requestFrame!();
+      };
+      tick();
+      const timer = setInterval(tick, 100); // une image régulière : certains moteurs n'émettent rien sur un canvas figé
       stream.getVideoTracks()[0]?.addEventListener("ended", () => clearInterval(timer));
       return stream;
     };
