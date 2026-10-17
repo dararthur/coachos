@@ -340,6 +340,9 @@ export const clubRequestSchema = academySchema.extend({
 export const claimClubSchema = academySchema.extend({ requestId: uuidField });
 
 // --- Formule et facturation d'un club (console de l'administrateur de la plateforme) -------------
+/** Plafond du prix d'une formule, en centimes (contrainte de la base). */
+export const MAX_PRICE_CENTS = 1_000_000;
+
 export const subscriptionSchema = z
   .object({
     planName: z.string({ error: "Nom de la formule requis." }).trim().min(1, "Nom de la formule requis.").max(60, "60 caractères maximum.").refine((v) => !CONTROL_CHARS.test(v), "Caractères non autorisés."),
@@ -350,6 +353,11 @@ export const subscriptionSchema = z
       const cents = parseEuros(v);
       if (cents === undefined) {
         ctx.addIssue({ code: "custom", message: "Montant invalide. Exemple : 49 ou 29,90." });
+        return z.NEVER;
+      }
+      // Même plafond que la base (admin_set_club_subscription) : sinon l'erreur revenait sans explication.
+      if (cents !== null && cents > MAX_PRICE_CENTS) {
+        ctx.addIssue({ code: "custom", message: "10 000 € maximum." });
         return z.NEVER;
       }
       return cents;

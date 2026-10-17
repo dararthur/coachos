@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { billingAlerts, euros, monthlyRevenueCents, parseEuros, type ClubBilling } from "@/domain/billing";
+import { MAX_PRICE_CENTS, subscriptionSchema } from "@/domain/validation";
 
 const today = "2026-10-16";
 const b = (over: Partial<ClubBilling> = {}): ClubBilling => ({ planName: "Club", subscriptionStatus: "active", renewsOn: "2026-12-01", priceCents: 4900, ...over });
@@ -62,5 +63,16 @@ describe("montants", () => {
     expect(parseEuros("abc")).toBeUndefined();
     expect(parseEuros("-5")).toBeUndefined();
     expect(parseEuros("1.234")).toBeUndefined();
+  });
+});
+
+describe("formulaire de formule", () => {
+  const form = (price: string) => subscriptionSchema.safeParse({ planName: "Club", status: "active", price });
+  it("accepte jusqu'au plafond de la base (10 000 €), refuse au-delà avec un message clair", () => {
+    expect(form("10000").data?.price).toBe(MAX_PRICE_CENTS);
+    expect(form("29,90").data?.price).toBe(2990);
+    const over = form("10000,01");
+    expect(over.success).toBe(false);
+    expect(JSON.stringify(over.error?.issues)).toContain("10 000 € maximum");
   });
 });
