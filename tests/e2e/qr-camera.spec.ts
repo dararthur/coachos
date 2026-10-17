@@ -189,6 +189,18 @@ test("scanner : chaque échec de caméra a son message, et la caméra n'est jama
     await expect(page).not.toHaveURL(/\/checkin/);
     await expect.poll(async () => (await cam().catch(() => ({ live: 0 }))).live).toBe(0);
   });
+  await test.step("aperçu qui ne démarre jamais : message et « Réessayer » après le délai, caméra libérée", async () => {
+    await page.goto("/checkin");
+    await set({ mode: "ok", perm: "granted" });
+    await page.evaluate(() => {
+      HTMLMediaElement.prototype.play = () => new Promise<void>(() => {}); // lecture sans réponse
+    });
+    await page.getByRole("button", { name: "Scanner un QR code" }).tap();
+    await expect(scanner).toHaveAttribute("data-phase", "starting");
+    await expect(problem).toHaveAttribute("data-phase", "error", { timeout: 15_000 });
+    await expect(page.getByRole("button", { name: "Réessayer la caméra" })).toBeVisible();
+    await expect.poll(async () => (await cam()).live).toBe(0);
+  });
   await context.close();
 });
 

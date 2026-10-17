@@ -7,6 +7,9 @@ import { checkinPath, clubCheckinPath, extractCheckinToken, extractClubKey, SCAN
 import { buttonClasses } from "@/components/ui/button-classes";
 import { cameraBlockedByPolicy, cameraPermission, classifyCameraError, openCamera, preferContinuousFocus, releaseStream, type CameraProblem } from "./camera";
 
+/** Délai maximal de démarrage de l'aperçu vidéo une fois la caméra accordée. */
+const PLAY_TIMEOUT_MS = 8000;
+
 type Phase = "idle" | "starting" | "scanning" | CameraProblem;
 type Platform = "ios" | "android" | "other";
 
@@ -147,7 +150,9 @@ export function Scanner({ autoStart = false }: { autoStart?: boolean }) {
       void preferContinuousFocus(track);
       el.srcObject = s;
       try {
-        await el.play();
+        // Un aperçu qui ne démarre jamais (play() sans réponse) laissait « Démarrage de la caméra… » à l'écran sans issue :
+        // passé ce délai, on le dit et on propose de réessayer.
+        await Promise.race([el.play(), new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), PLAY_TIMEOUT_MS))]);
       } catch {
         if (current()) {
           halt();
