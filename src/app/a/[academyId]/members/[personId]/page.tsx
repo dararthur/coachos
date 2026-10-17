@@ -146,6 +146,11 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                     ))}
                   </SelectField>
                 </div>
+                {gradesOn && (
+                  <p className="text-sm text-ink-soft">
+                    Changer la ceinture ici l&apos;inscrit dans l&apos;historique à la date du jour. Pour un passage à une autre date, un ancien grade ou une correction, utilisez « Grade et passages ».
+                  </p>
+                )}
                 <SubmitButton>Enregistrer</SubmitButton>
               </ActionForm>
             ) : (
