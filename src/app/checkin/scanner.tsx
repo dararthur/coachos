@@ -165,6 +165,13 @@ export function Scanner({ autoStart = false }: { autoStart?: boolean }) {
       let lastHint = 0;
       const loop = (t: number) => {
         if (!current() || !ctx) return;
+        // Piste arrêtée sans événement « ended » (selon le navigateur ou le téléphone, quand une autre application prend la
+        // caméra) : on le voit à son état, et on propose de réessayer au lieu de laisser un aperçu figé.
+        if (track?.readyState === "ended") {
+          halt();
+          setPhase("interrupted");
+          return;
+        }
         frame.current = requestAnimationFrame(loop);
         if (t - last < 120 || el.readyState < 2 || el.videoWidth === 0) return; // ~8 images/s suffisent
         last = t;

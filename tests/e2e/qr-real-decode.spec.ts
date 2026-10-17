@@ -54,7 +54,29 @@ async function fixedQrClub(page: Page, label: string) {
 async function scanFromTab(phone: Page, club: string, key: string) {
   await phone.goto(`/a/${club}/me`);
   await phone.getByRole("navigation", { name: "Navigation principale" }).getByRole("link", { name: "Pointer ma présence" }).tap();
-  await expect(phone).toHaveURL(new RegExp(`/checkin/club/${key}$`), { timeout: 20_000 }); // décodé dans le flux vidéo
+  try {
+    await expect(phone).toHaveURL(new RegExp(`/checkin/club/${key}$`), { timeout: 20_000 }); // décodé dans le flux vidéo
+  } catch (error) {
+    // Diagnostic joint à l'échec (moteurs non reproductibles en local) : où la chaîne caméra -> vidéo -> image s'arrête.
+    const diag = await phone.evaluate(() => {
+      const v = document.querySelector("video");
+      const s = v?.srcObject as MediaStream | null | undefined;
+      let pixels: string | null = null;
+      if (v && v.videoWidth > 0) {
+        const c = document.createElement("canvas");
+        c.width = 32;
+        c.height = 24;
+        const x = c.getContext("2d")!;
+        x.drawImage(v, 0, 0, 32, 24);
+        const d = x.getImageData(0, 0, 32, 24).data;
+        let min = 255, max = 0;
+        for (let i = 0; i < d.length; i += 4) { min = Math.min(min, d[i]!); max = Math.max(max, d[i]!); }
+        pixels = `${min}-${max}`;
+      }
+      return { phase: document.querySelector("[data-testid=scanner]")?.getAttribute("data-phase"), problem: document.querySelector("[data-testid=camera-problem]")?.textContent?.slice(0, 120), video: v ? { readyState: v.readyState, w: v.videoWidth, h: v.videoHeight, paused: v.paused } : null, track: s?.getVideoTracks()[0]?.readyState ?? null, pixels };
+    });
+    throw new Error(`Diagnostic caméra : ${JSON.stringify(diag)}\n${(error as Error).message}`);
+  }
   expect(await phone.evaluate(() => document.querySelector("video")?.srcObject ?? null)).toBeNull(); // caméra coupée
   await phone.getByRole("button", { name: "Réserver et confirmer ma présence" }).tap();
   await expect(phone.getByRole("heading", { name: "Présence enregistrée" })).toBeVisible();

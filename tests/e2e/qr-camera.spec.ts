@@ -157,7 +157,17 @@ test("scanner : chaque échec de caméra a son message, et la caméra n'est jama
       t.stop();
       t.dispatchEvent(new Event("ended"));
     });
-    await expect(problem).toHaveAttribute("data-phase", "interrupted");
+    try {
+      await expect(problem).toHaveAttribute("data-phase", "interrupted");
+    } catch (error) {
+      // Diagnostic joint à l'échec (Firefox de Playwright ne démarre pas sur le poste de développement) : état réel du scanner.
+      const diag = await page.evaluate(() => {
+        const c = (window as unknown as { __cam: CamControl }).__cam;
+        const v = document.querySelector("video");
+        return { phase: document.querySelector("[data-testid=scanner]")?.getAttribute("data-phase"), streams: c.streams.length, calls: c.calls, tracks: c.streams.map((s) => s.getVideoTracks()[0]?.readyState), videoAttached: Boolean(v?.srcObject) };
+      });
+      throw new Error(`Diagnostic caméra : ${JSON.stringify(diag)}\n${(error as Error).message}`);
+    }
     await page.getByRole("button", { name: "Réessayer la caméra" }).tap();
     await expect(scanner).toHaveAttribute("data-phase", "scanning");
     expect((await cam()).live).toBe(1);

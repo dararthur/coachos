@@ -69,6 +69,10 @@ export async function canvasCamera(page: Page, pngDataUrl: string): Promise<stri
       const canvas = document.createElement("canvas");
       canvas.width = 640;
       canvas.height = 480;
+      // Rattaché au document et peint (presque invisible) : WebKit ne fournit pas d'images pour un canvas détaché.
+      // Styles par CSSOM : la CSP de l'application interdit les attributs style.
+      Object.assign(canvas.style, { position: "fixed", left: "0", top: "0", width: "64px", height: "48px", opacity: "0.02", pointerEvents: "none", zIndex: "-1" });
+      (document.body ?? document.documentElement).appendChild(canvas);
       const ctx = canvas.getContext("2d")!;
       const draw = () => {
         ctx.fillStyle = "#ebebeb";
