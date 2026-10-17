@@ -44,6 +44,34 @@ describe("accès d'un club suspendu", () => {
     for (const u of [t.owner, t.coach, t.member]) expect((await visible(u))[0]!.n).toBeGreaterThan(0);
   });
 
+  it("les chemins hors adhésion sont fermés aussi : responsable légal (réservation, liste des cours, enfants) et écriture directe des présences", async () => {
+    const t = await setup("su1g");
+    const parent = await createUser("su1g-parent");
+    const child = await createPerson(t.club, "Léo", "Enfant");
+    await adminSql()`update public.people set birth_date = current_date - interval '10 years' where id = ${child}`;
+    await adminSql()`insert into public.guardianships (academy_id, child_id, guardian_name, guardian_email, guardian_user_id, consent_confirmed_at)
+      values (${t.club}, ${child}, 'Parent', ${parent.email}, ${parent.id}, now())`;
+    const session = await createSession(t.club, { startsAt: new Date(Date.now() - 10 * 60_000).toISOString() });
+    const children = () => asUser(parent, (tx) => tx`select child_id from public.my_children()`);
+    expect(await children()).toHaveLength(1);
+    expect(await asUser(parent, (tx) => tx`select session_id from public.child_sessions(${child})`)).toHaveLength(1);
+
+    await suspend(t.admin, t.club, true);
+    expect(await children()).toHaveLength(0);
+    expect((await failing(() => asUser(parent, (tx) => tx`select * from public.child_sessions(${child})`))).message).toContain("coachos:not_found");
+    expect((await failing(() => asUser(parent, (tx) => tx`select public.book_for_child(${session}, ${child})`))).message).toContain("coachos:not_found");
+    expect((await failing(() => asUser(parent, (tx) => tx`select public.set_child_ranking_visibility(${child}, true)`))).message).toContain("coachos:not_found");
+    // Le coach ne peut plus écrire de présence, même directement (la RLS des présences ne dépendait pas de la suspension).
+    expect(
+      (await failing(() => asUser(t.coach, (tx) => tx`insert into public.attendance (academy_id, session_id, person_id, status) values (${t.club}, ${session}, ${t.person}, 'present')`))).code,
+    ).toBe("42501");
+    expect(await adminSql()`select 1 from public.session_bookings where person_id = ${child}`).toHaveLength(0);
+
+    await suspend(t.admin, t.club, false);
+    expect(await children()).toHaveLength(1);
+    expect((await asUser(parent, (tx) => tx<{ s: string }[]>`select public.book_for_child(${session}, ${child}) as s`))[0]?.s).toBe("booked");
+  });
+
   it("un autre club n'est pas touché", async () => {
     const a = await setup("su2a");
     const other = await createUser("su2b-owner");
