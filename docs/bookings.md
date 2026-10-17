@@ -10,6 +10,10 @@ d'attente (migration `20261014002200_booking_promotion_notifications.sql`).
 - Une place qui se libère est attribuée **automatiquement** au premier de la liste : annulation d'un inscrit, capacité augmentée
   ou retirée, inscrit archivé ou anonymisé. Le coach peut aussi **accorder une place** à un membre de la liste, même au-delà de
   la capacité.
+- Cette attribution automatique **s'arrête au début du cours** (et ne vaut que pour une séance programmée dont la feuille n'est
+  pas validée ; migration `20261017000100_waitlist_stops_at_start.sql`). Avant cette règle, une place libérée après coup était
+  donnée à une personne qui n'en était pas prévenue, puis comptée absente à la validation. Après le début, seul le coach accorde
+  une place.
 - Annulation possible tant que la feuille d'appel n'est pas validée et qu'aucune présence n'est enregistrée ; à la validation,
   une réservation confirmée sans présence devient une absence.
 - Aucune écriture directe : tout passe par des fonctions `SECURITY DEFINER` qui verrouillent la séance et arbitrent la capacité.

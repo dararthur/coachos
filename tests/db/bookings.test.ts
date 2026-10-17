@@ -218,6 +218,31 @@ describe("annulation et clôture de la feuille d'appel", () => {
     expect(byPerson).toEqual({ [came.person]: "late", [noShow.person]: "absent", [walkIn.person]: "present" });
     expect(byPerson[waiting.person]).toBeUndefined();
   });
+
+  it("une place libérée après le début du cours ne promeut personne : la validation ne compte pas d'absence à la personne en attente", async () => {
+    const owner = await createUser("bk10-owner");
+    const academy = await createAcademy(owner);
+    const past = new Date(Date.now() - 3 * 3_600_000).toISOString(); // terminé depuis 2 h, feuille non validée
+    for (const startsAt of [past, live()]) {
+      const session = await createSession(academy, { startsAt });
+      await setCapacity(session, 1);
+      const [a, b, c] = [await member(academy, `bk10-a`), await member(academy, `bk10-b`), await member(academy, `bk10-c`)];
+      await adminSql()`insert into public.session_bookings (academy_id, session_id, person_id, status, confirmed_at)
+        values (${academy}, ${session}, ${a.person}, 'booked', now()), (${academy}, ${session}, ${b.person}, 'waitlisted', null),
+               (${academy}, ${session}, ${c.person}, 'waitlisted', null)`;
+      // Le membre inscrit annule après coup (permis tant que la feuille n'est pas validée), un autre est archivé.
+      await cancel(a.user, session);
+      expect(await status(session, b.person)).toBe("waitlisted");
+      await adminSql()`update public.sessions set capacity = 5 where id = ${session}`;
+      expect(await status(session, b.person)).toBe("waitlisted");
+      await adminSql()`update public.people set archived_at = now() where id = ${c.person}`;
+      expect(await status(session, b.person)).toBe("waitlisted");
+
+      await asUser(owner, (tx) => tx`select public.roll_set_validated(${session}, true)`);
+      expect(await adminSql()`select 1 from public.attendance where session_id = ${session} and person_id = ${b.person}`).toHaveLength(0);
+      expect(await adminSql()`select 1 from public.booking_notifications n join public.session_bookings k on k.id = n.booking_id where k.session_id = ${session}`).toHaveLength(0);
+    }
+  });
 });
 
 describe("pointage par QR : la réservation est obligatoire", () => {
