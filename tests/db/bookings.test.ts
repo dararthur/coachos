@@ -219,6 +219,21 @@ describe("annulation et clôture de la feuille d'appel", () => {
     expect(byPerson[waiting.person]).toBeUndefined();
   });
 
+  it("la feuille d'un cours pas encore commencé ne peut pas être validée : aucun inscrit n'est marqué absent", async () => {
+    const owner = await createUser("bk11-owner");
+    const academy = await createAcademy(owner);
+    const a = await member(academy, "bk11-a");
+    for (const startsAt of [future(), new Date(Date.now() + 5 * 60_000).toISOString()]) {
+      const session = await createSession(academy, { startsAt });
+      await book(a.user, session);
+      expect((await failing(() => asUser(owner, (tx) => tx`select public.roll_set_validated(${session}, true)`))).message).toContain("coachos:roll_too_early");
+      expect(await adminSql()`select 1 from public.attendance where session_id = ${session}`).toHaveLength(0);
+      expect(await adminSql()`select 1 from public.session_checkins where session_id = ${session} and validated_at is not null`).toHaveLength(0);
+      // La réouverture (sans effet ici) reste permise.
+      await asUser(owner, (tx) => tx`select public.roll_set_validated(${session}, false)`);
+    }
+  });
+
   it("une place libérée après le début du cours ne promeut personne : la validation ne compte pas d'absence à la personne en attente", async () => {
     const owner = await createUser("bk10-owner");
     const academy = await createAcademy(owner);

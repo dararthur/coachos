@@ -17,7 +17,8 @@ describe("mesure d'usage", () => {
     const coach = await createUser("us-coach");
     await addMember(academy, coach, "coach");
     const person = await createPerson(academy, "Ana", "Test");
-    const session = await createSession(academy, { instructor: coach.id });
+    // Cours en cours : la feuille ne se valide qu'une fois le cours commencé (migration 20261017000300).
+    const session = await createSession(academy, { instructor: coach.id, startsAt: new Date(Date.now() - 10 * 60_000).toISOString() });
 
     await adminSql()`insert into public.session_bookings (academy_id, session_id, person_id, status) values (${academy}, ${session}, ${person}, 'booked')`;
     // Le coach affecté (inscrit d'office) ne compte pas comme une réservation de membre.

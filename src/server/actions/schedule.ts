@@ -111,7 +111,11 @@ export async function setAttendanceAction(academyId: string, input: { sessionId:
     const parsed = attendanceSchema.safeParse(input);
     if (!parsed.success) return failure("validation");
     const status = parsed.data.status === "none" ? null : parsed.data.status;
-    const ok = await inAcademy(ctx, (tx) => attendance.setAttendance(tx, academyId, parsed.data.sessionId, parsed.data.personId, status));
+    const ok = await inAcademy(ctx, async (tx) => {
+      // Effacer reste possible (correction) ; enregistrer une présence attend le jour du cours.
+      if (status !== null && (await attendance.isUpcomingDay(tx, academyId, parsed.data.sessionId))) throw new AppError("attendance_too_early");
+      return attendance.setAttendance(tx, academyId, parsed.data.sessionId, parsed.data.personId, status);
+    });
     if (!ok) throw new AppError("not_found");
     return { ok: true, data: { personId: parsed.data.personId, status } };
   });
@@ -124,7 +128,10 @@ export async function markRemainingPresentAction(academyId: string, input: { ses
     const ctx = await authorizeAcademy(academyId, "attendance.record");
     const parsed = sessionIdSchema.safeParse(input);
     if (!parsed.success) return failure("validation");
-    const marked = await inAcademy(ctx, (tx) => attendance.markRemainingPresent(tx, academyId, parsed.data.sessionId, input.onlyBooked === true));
+    const marked = await inAcademy(ctx, async (tx) => {
+      if (await attendance.isUpcomingDay(tx, academyId, parsed.data.sessionId)) throw new AppError("attendance_too_early");
+      return attendance.markRemainingPresent(tx, academyId, parsed.data.sessionId, input.onlyBooked === true);
+    });
     return { ok: true, data: { marked } };
   });
 }

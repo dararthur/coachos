@@ -53,6 +53,8 @@ export const ERROR_MESSAGES = {
   checkin_too_early: "Le pointage ne peut pas encore être ouvert pour cette séance.",
   checkin_too_late: "Cette séance est terminée depuis trop longtemps pour ouvrir le pointage.",
   roll_validated: "La feuille d'appel est validée : rouvrez-la pour modifier le pointage.",
+  roll_too_early: "Ce cours n'a pas encore commencé : la feuille d'appel pourra être validée dès son début.",
+  attendance_too_early: "Ce cours a lieu un autre jour : l'appel sera possible le jour du cours.",
   photo_invalid: "Cette image n'est pas utilisable. Choisissez une autre photo.",
   payload_too_large: "Le fichier est trop volumineux.",
   network: "Pas de connexion : l'action n'a pas pu être confirmée. Vérifiez votre réseau (Wi-Fi ou données mobiles), puis réessayez.",

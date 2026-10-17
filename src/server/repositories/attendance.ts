@@ -40,6 +40,18 @@ export async function getRoster(tx: Tx, academyId: string, sessionId: string): P
   return [...rows];
 }
 
+/**
+ * La séance a-t-elle lieu un jour à venir (dans le fuseau du club) ? L'appel n'y est pas encore possible : des présences saisies sur
+ * la mauvaise séance du planning compteraient dans le classement et les rapports avant même le cours.
+ */
+export async function isUpcomingDay(tx: Tx, academyId: string, sessionId: string): Promise<boolean> {
+  const [row] = await tx<{ upcoming: boolean }[]>`
+    select (s.starts_at at time zone a.timezone)::date > (now() at time zone a.timezone)::date as upcoming
+    from public.sessions s join public.academies a on a.id = s.academy_id
+    where s.id = ${sessionId} and s.academy_id = ${academyId}`;
+  return row?.upcoming ?? false;
+}
+
 /** Enregistre, modifie ou efface (status = null) une présence. Retourne false si la séance/le membre n'existe pas ici. */
 export async function setAttendance(
   tx: Tx,

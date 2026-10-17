@@ -1,5 +1,5 @@
 import type { Browser, Page } from "@playwright/test";
-import { completeProfile, createClub, expect, mailsTo, parisToday, randomIp, signUp, test, uniqueEmail, waitForMail } from "./support/helpers";
+import { completeProfile, createClub, expect, mailsTo, parisToday, randomIp, signUp, startClubSessionsNow, test, uniqueEmail, waitForMail } from "./support/helpers";
 
 async function newPage(browser: Browser): Promise<Page> {
   const context = await browser.newContext({ locale: "fr-FR", timezoneId: "Europe/Paris", extraHTTPHeaders: { "x-real-ip": randomIp() } });
@@ -61,6 +61,9 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     const brunoRow = coach.getByRole("listitem").filter({ hasText: "Bruno" });
     await expect(aliceRow.getByText("Inscrit", { exact: true })).toBeVisible();
     await expect(brunoRow.getByText("Liste d'attente")).toBeVisible();
+    // Cours de demain : la liste se gère déjà, l'appel attendra le jour du cours.
+    await expect(coach.getByText(/Cours à venir : l.appel sera possible le jour du cours/)).toBeVisible();
+    await expect(aliceRow.getByRole("button", { name: "Présent", exact: true })).toBeDisabled();
 
     // Le coach accorde une place à Bruno (au-delà de la capacité).
     await brunoRow.getByRole("button", { name: "Accorder une place" }).click();
@@ -78,7 +81,13 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     // Bruno occupe désormais l'unique place : Alice ne peut plus que rejoindre la liste d'attente.
     await expect(alice.getByRole("button", { name: "Rejoindre la liste d'attente" })).toBeVisible();
 
-    // Validation : Bruno, inscrit sans présence, devient absent. La feuille prévient le coach.
+    // Avant le cours : pas de validation possible (la base la refuse aussi), seulement l'information.
+    await expect(coach.getByText("Validation possible dès le début du cours.")).toBeVisible();
+    await expect(coach.getByRole("button", { name: /Valider/ })).toHaveCount(0);
+
+    // L'heure du cours arrive. Validation : Bruno, inscrit sans présence, devient absent. La feuille prévient le coach.
+    await startClubSessionsNow(club);
+    await coach.reload();
     await coach.getByRole("button", { name: /Valider/ }).click();
     await expect(coach.getByRole("dialog").getByText("1 inscrit sans présence enregistrée sera marqué absent.")).toBeVisible();
     await coach.getByRole("dialog").getByRole("button", { name: "Valider la feuille" }).click();
@@ -86,7 +95,7 @@ test.describe("réservation des séances, liste d'attente, absence des inscrits 
     await expect(brunoRow.getByRole("button", { name: "Absent" })).toHaveAttribute("aria-pressed", "true");
 
     // Après validation, Bruno voit le résultat de l'appel (absent) et ne peut plus annuler (refus côté base : tests/db/bookings.test.ts).
-    await bruno.goto(`/a/${club}/schedule?week=${day}`);
+    await bruno.goto(`/a/${club}/schedule?week=${parisToday()}`);
     await expect(bruno.getByText("Absent", { exact: true })).toBeVisible();
     await expect(bruno.getByRole("button", { name: /Annuler/ })).toHaveCount(0);
   });

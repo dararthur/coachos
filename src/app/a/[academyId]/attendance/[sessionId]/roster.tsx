@@ -36,7 +36,7 @@ const clock = (ms: number) => new Date(ms).toLocaleTimeString("fr-FR", { hour: "
  *  - la liste est actualisée toutes les quelques secondes (et au retour du réseau / de l'onglet) ; un instantané plus
  *    ancien qu'une modification locale est ignoré pour éviter les retours en arrière.
  */
-export function Roster({ academyId, sessionId, initial, editable, capacity, qrAllowed, fixedQr }: { academyId: string; sessionId: string; initial: RollSnapshot; editable: boolean; capacity: number | null; qrAllowed: boolean; fixedQr?: { before: number; after: number } | null }) {
+export function Roster({ academyId, sessionId, initial, editable, upcoming = false, startsAt, capacity, qrAllowed, fixedQr }: { academyId: string; sessionId: string; initial: RollSnapshot; editable: boolean; upcoming?: boolean; startsAt: number; capacity: number | null; qrAllowed: boolean; fixedQr?: { before: number; after: number } | null }) {
   const [entries, setEntries] = useState<Entry[]>(initial.entries);
   const [checkin, setCheckin] = useState(initial.checkin);
   const [query, setQuery] = useState("");
@@ -45,12 +45,15 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState<{ tone: "ok" | "error"; text: string } | null>(null);
   const [sync, setSync] = useState<{ ok: boolean; at: number }>({ ok: true, at: initial.serverNow });
+  // Horloge du serveur (dernier instantané) : la validation n'est proposée qu'une fois le cours commencé, comme la base l'exige.
+  const [serverNow, setServerNow] = useState(initial.serverNow);
   const pending = useRef(new Set<string>());
   const lastMutation = useRef(0);
 
   const apply = useCallback((snap: RollSnapshot) => {
     setEntries((prev) => snap.entries.map((e) => (pending.current.has(e.personId) ? (prev.find((p) => p.personId === e.personId) ?? e) : e)));
     setCheckin(snap.checkin);
+    setServerNow(snap.serverNow);
     setSync({ ok: true, at: Date.now() });
   }, []);
 
@@ -173,6 +176,9 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
 
   const attended = counts.present + counts.late;
   const rollEditable = editable;
+  // Appel (statuts, action groupée) : seulement le jour du cours. Accorder une place reste possible avant.
+  const marking = rollEditable && !upcoming;
+  const started = serverNow >= startsAt;
   const onSnapshot = (s: RollSnapshot) => {
     lastMutation.current = Date.now();
     apply(s);
@@ -222,7 +228,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             ))}
           </div>
           {/* Action groupée en tête de liste : atteignable sans faire défiler tout l'effectif. */}
-          {rollEditable && bulkCount > 0 && (view === "booked" || view === "all" || view === "todo") && (
+          {marking && bulkCount > 0 && (view === "booked" || view === "all" || view === "todo") && (
             <ConfirmAction
               action={markAll}
               trigger={bulkBooked ? `Marquer les ${bulkCount} inscrit${bulkCount > 1 ? "s" : ""} présent${bulkCount > 1 ? "s" : ""}` : "Marquer tout le monde présent"}
@@ -290,7 +296,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                         key={s}
                         type="button"
                         aria-pressed={active}
-                        disabled={!rollEditable || busy === e.personId}
+                        disabled={!marking || busy === e.personId}
                         onClick={() => choose(e.personId, active ? null : s)}
                         className={`min-h-11 rounded-sm border px-3 text-sm font-semibold transition-colors duration-100 disabled:cursor-not-allowed sm:min-w-20 ${active ? ACTIVE_TONE[s] : "border-line-strong bg-surface text-ink hover:border-ink disabled:text-ink-soft"}`}
                       >
@@ -303,7 +309,7 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
             ))}
           </ul>
         )}
-        {rollEditable && <p className="mt-3 text-xs text-ink-soft">Erreur de saisie ? Touchez à nouveau le statut choisi pour l&apos;effacer. Un pointage par QR peut aussi être corrigé.</p>}
+        {marking && <p className="mt-3 text-xs text-ink-soft">Erreur de saisie ? Touchez à nouveau le statut choisi pour l&apos;effacer. Un pointage par QR peut aussi être corrigé.</p>}
         <div className="sticky bottom-[var(--tabbar-h)] z-20 -mx-4 mt-4 [@media(max-height:30rem)]:static border-t border-line bg-canvas px-4 pb-3 pt-2.5 sm:mx-0 sm:rounded-sm sm:border sm:bg-surface sm:px-4">
           <div role="status" aria-live="polite" className="empty:hidden">
             {!sync.ok && (
@@ -330,7 +336,8 @@ export function Roster({ academyId, sessionId, initial, editable, capacity, qrAl
                 {counts.waitlisted > 0 ? ` · ${counts.waitlisted} en liste d'attente` : ""}
               </p>
             </div>
-            {qrAllowed && !checkin.validatedAt && <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} noShows={counts.noShows} />}
+            {qrAllowed && !checkin.validatedAt && started && <ValidateButton academyId={academyId} sessionId={sessionId} onSnapshot={onSnapshot} noShows={counts.noShows} />}
+            {qrAllowed && !checkin.validatedAt && !started && <p className="max-w-40 text-right text-xs text-ink-soft">Validation possible dès le début du cours.</p>}
           </div>
         </div>
       </div>

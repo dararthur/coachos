@@ -180,6 +180,17 @@ describe("catalogue, planning, présences", () => {
     expect(roster.find((r) => r.personId === waiting)?.status).toBeNull();
     expect(roster.find((r) => r.personId === w.personA)?.status ?? null).toBeNull();
   });
+
+  it("l'appel attend le jour du cours (fuseau du club) : séance d'un jour à venir détectée, séance du jour et passée non", async () => {
+    const at = (iso: string) => createSession(w.academyA, { startsAt: iso });
+    const inDays = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString();
+    const upcoming = (id: string) => asUser(w.carl, (tx) => attendance.isUpcomingDay(tx, w.academyA, id));
+    expect(await upcoming(await at(inDays(2)))).toBe(true);
+    expect(await upcoming(await at(inDays(-1)))).toBe(false);
+    expect(await upcoming(await at(new Date(Date.now() - 60_000).toISOString()))).toBe(false);
+    // Une séance d'un autre club n'est pas « à venir » ici : l'action répond ensuite « introuvable ».
+    expect(await upcoming(w.sessionB)).toBe(false);
+  });
 });
 
 describe("rapports et tableau de bord", () => {

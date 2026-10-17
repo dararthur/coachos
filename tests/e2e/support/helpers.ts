@@ -65,6 +65,20 @@ export async function approveClub(email: string, name = "Club e2e") {
   }
 }
 
+/**
+ * Fixture : les séances du club commencent maintenant (début il y a 5 minutes), comme si l'heure du cours était arrivée. Sert aux parcours
+ * qui réservent à l'avance puis valident la feuille d'appel (refusée avant le début du cours).
+ */
+export async function startClubSessionsNow(academyId: string) {
+  const { adminUrl } = JSON.parse(readFileSync(path.join(os.tmpdir(), `coachos-e2e-db-${process.env.E2E_PORT ?? 3100}.json`), "utf8")) as { adminUrl: string };
+  const sql = postgres(adminUrl, { max: 1, onnotice: () => {} });
+  try {
+    await sql`update public.sessions set starts_at = now() - interval '5 minutes', ends_at = now() + interval '55 minutes' where academy_id = ${academyId}`;
+  } finally {
+    await sql.end();
+  }
+}
+
 /** Parcours réel : inscription → e-mail de confirmation (boîte d'envoi) → lien → connexion → onboarding. */
 export async function signUp(page: Page, email: string, displayName: string) {
   await approveClub(email);

@@ -16,6 +16,10 @@ d'attente (migration `20261014002200_booking_promotion_notifications.sql`).
   une place.
 - Annulation possible tant que la feuille d'appel n'est pas validée et qu'aucune présence n'est enregistrée ; à la validation,
   une réservation confirmée sans présence devient une absence.
+- La feuille ne se valide **qu'une fois le cours commencé** (migration `20261017000300_roll_validation_after_start.sql`) et les
+  présences ne se saisissent que **le jour du cours** (fuseau du club ; contrôle des actions serveur). Sur la feuille d'un cours
+  à venir, le coach gère déjà les inscrits et la liste d'attente ; l'appel attend le jour du cours. Avant ces règles, ouvrir la
+  mauvaise séance du planning permettait de marquer absents tous les inscrits d'un cours qui n'avait pas eu lieu.
 - Aucune écriture directe : tout passe par des fonctions `SECURITY DEFINER` qui verrouillent la séance et arbitrent la capacité.
 
 ## E-mail « Votre place est confirmée »
