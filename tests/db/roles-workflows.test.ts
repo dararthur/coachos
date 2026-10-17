@@ -221,6 +221,25 @@ describe("équipe et invitations", () => {
     await expect(asUser(late, (tx) => tx`select public.accept_invitation(${hash(t2)})`)).rejects.toMatchObject({ code: "invitation_invalid" });
   });
 
+  it("un compte déjà dans le club prend le rôle de l'invitation s'il est plus élevé, jamais un rôle inférieur", async () => {
+    const role = async (u: { id: string }) => (await adminSql()<{ role: string }[]>`select role from public.academy_memberships where user_id = ${u.id} and academy_id = ${w.academyA}`)[0]?.role;
+    const invite = async (u: { email: string }, r: string) => {
+      const t = token();
+      await asUser(w.alice, (tx) => tx`select public.create_invitation(${w.academyA}, ${u.email}, ${r}, null, ${hash(t)})`);
+      return t;
+    };
+    // Un adhérent devient coach en acceptant l'invitation « coach » (avant : invitation consommée, rôle inchangé).
+    const promoted = await createUser("membre-promu");
+    await addMember(w.academyA, promoted, "member");
+    await asUser(promoted, async (tx) => tx`select public.accept_invitation(${hash(await invite(promoted, "coach"))})`);
+    expect(await role(promoted)).toBe("coach");
+    // Un administrateur qui accepte une invitation « membre » reste administrateur.
+    const admin = await createUser("admin-garde");
+    await addMember(w.academyA, admin, "admin");
+    await asUser(admin, async (tx) => tx`select public.accept_invitation(${hash(await invite(admin, "member"))})`);
+    expect(await role(admin)).toBe("admin");
+  });
+
   it("une invitation « membre » peut lier le compte à une fiche existante", async () => {
     const user = await createUser("lie");
     const person = await createPerson(w.academyA, "Lie", "Fiche");
