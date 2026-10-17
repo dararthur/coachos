@@ -20,19 +20,22 @@ export interface DashboardStats {
 export async function getDashboardStats(tx: Tx, academyId: string, timezone: string): Promise<DashboardStats> {
   const [row] = await tx<Omit<DashboardStats, "weekly">[]>`
     with bounds as (
+      -- Fins calculées en heure locale : « + 1 jour » sur un instant suivrait le fuseau de la connexion (UTC), décalé d'une heure les jours de changement d'heure.
       select (date_trunc('day', now() at time zone ${timezone})) at time zone ${timezone} as day_start,
-             (date_trunc('week', now() at time zone ${timezone})) at time zone ${timezone} as week_start
+             (date_trunc('day', now() at time zone ${timezone}) + interval '1 day') at time zone ${timezone} as day_end,
+             (date_trunc('week', now() at time zone ${timezone})) at time zone ${timezone} as week_start,
+             (date_trunc('week', now() at time zone ${timezone}) + interval '7 days') at time zone ${timezone} as week_end
     )
     select
       (select count(*)::int from public.people where academy_id = ${academyId} and archived_at is null and anonymized_at is null) as "activeMembers",
       (select count(*)::int from public.people where academy_id = ${academyId} and archived_at is not null and anonymized_at is null) as "archivedMembers",
       (select count(*)::int from public.sessions s, bounds b where s.academy_id = ${academyId} and s.status = 'scheduled'
-         and s.starts_at >= b.day_start and s.starts_at < b.day_start + interval '1 day') as "sessionsToday",
+         and s.starts_at >= b.day_start and s.starts_at < b.day_end) as "sessionsToday",
       (select count(*)::int from public.sessions s, bounds b where s.academy_id = ${academyId} and s.status = 'scheduled'
-         and s.starts_at >= b.week_start and s.starts_at < b.week_start + interval '7 days') as "sessionsThisWeek",
+         and s.starts_at >= b.week_start and s.starts_at < b.week_end) as "sessionsThisWeek",
       (select count(*)::int from public.attendance a join public.sessions s on s.id = a.session_id and s.academy_id = a.academy_id, bounds b
          where a.academy_id = ${academyId} and a.status in ('present', 'late')
-           and s.starts_at >= b.week_start and s.starts_at < b.week_start + interval '7 days') as "attendedThisWeek",
+           and s.starts_at >= b.week_start and s.starts_at < b.week_end) as "attendedThisWeek",
       (select round(avg(c)::numeric, 1)::float8 from (
          select count(*) filter (where a.status in ('present', 'late')) as c
          from public.sessions s left join public.attendance a on a.session_id = s.id and a.academy_id = s.academy_id
