@@ -57,15 +57,17 @@ function AudienceOptions() {
 }
 
 /** Public d'un type de cours : enregistré à la validation du petit formulaire (les réservations déjà prises ne bougent pas). */
-function AudienceForm({ academyId, id, name, audience }: { academyId: string; id: string; name: string; audience: "all" | "adults" | "kids" }) {
+function AudienceForm({ academyId, id, name, audience, showLabel = false }: { academyId: string; id: string; name: string; audience: "all" | "adults" | "kids"; showLabel?: boolean }) {
   return (
     <ActionForm action={setClassTypeAudienceAction.bind(null, academyId)} className="flex items-center gap-2">
       <input type="hidden" name="id" value={id} />
+      {/* Sur téléphone, pas d'en-tête de colonne : le libellé « Public » est écrit en clair. */}
+      {showLabel && <span aria-hidden="true" className="text-sm font-semibold">Public</span>}
       <select name="audience" defaultValue={audience} aria-label={`Public du cours ${name}`} className="min-h-11 rounded-sm border border-line bg-surface px-2 text-sm">
         <AudienceOptions />
       </select>
       <SubmitButton variant="quiet">
-        OK<span className="sr-only"> : public du cours {name}</span>
+        Appliquer<span className="sr-only"> : public du cours {name}</span>
       </SubmitButton>
     </ActionForm>
   );
@@ -430,15 +432,15 @@ export default async function SettingsPage({ params }: { params: Promise<{ acade
             </div>
             <ul className="divide-y divide-line sm:hidden">
               {data.classTypes.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
+                <li key={t.id} className="space-y-2 px-4 py-3">
                   <div className="min-w-0">
                     <p className={`font-semibold ${t.archivedAt ? "text-ink-soft line-through" : ""}`}>{t.name}</p>
                     <p className="text-sm text-ink-soft">
                       {t.disciplineName} · {t.durationMinutes} min{t.capacity ? ` · ${t.capacity} places` : ""}
                     </p>
-                    <AudienceForm academyId={academyId} id={t.id} name={t.name} audience={t.audience} />
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                  <AudienceForm academyId={academyId} id={t.id} name={t.name} audience={t.audience} showLabel />
+                  <div className="flex flex-wrap items-center gap-2">
                     <InlineAction action={toggleClassTypeArchivedAction.bind(null, academyId, !t.archivedAt)} hidden={{ id: t.id }} label={t.archivedAt ? "Restaurer" : "Archiver"} />
                     <DeleteClassType academyId={academyId} id={t.id} name={t.name} />
                   </div>
