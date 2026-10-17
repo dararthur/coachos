@@ -73,7 +73,7 @@ async function scanFromTab(phone: Page, club: string, key: string) {
         for (let i = 0; i < d.length; i += 4) { min = Math.min(min, d[i]!); max = Math.max(max, d[i]!); }
         pixels = `${min}-${max}`;
       }
-      return { phase: document.querySelector("[data-testid=scanner]")?.getAttribute("data-phase"), problem: document.querySelector("[data-testid=camera-problem]")?.textContent?.slice(0, 120), video: v ? { readyState: v.readyState, w: v.videoWidth, h: v.videoHeight, paused: v.paused } : null, track: s?.getVideoTracks()[0]?.readyState ?? null, pixels };
+      return { canvasCam: (window as unknown as { __canvasCam?: unknown }).__canvasCam ?? "absent", phase: document.querySelector("[data-testid=scanner]")?.getAttribute("data-phase"), problem: document.querySelector("[data-testid=camera-problem]")?.textContent?.slice(0, 120), video: v ? { readyState: v.readyState, w: v.videoWidth, h: v.videoHeight, paused: v.paused } : null, track: s?.getVideoTracks()[0]?.readyState ?? null, pixels };
     });
     throw new Error(`Diagnostic caméra : ${JSON.stringify(diag)}\n${(error as Error).message}`);
   }

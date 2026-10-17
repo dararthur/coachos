@@ -61,8 +61,20 @@ export async function skipWithoutCamera(page: Page, browserName: string): Promis
 export async function canvasCamera(page: Page, pngDataUrl: string): Promise<string | null> {
   await page.context().addInitScript((src) => {
     const md = navigator.mediaDevices;
+    // Trace lue par le diagnostic des tests en cas d'échec (moteur non reproductible en local).
+    const trace = { installed: false, calls: 0, error: null as string | null };
+    (window as unknown as { __canvasCam: typeof trace }).__canvasCam = trace;
     if (!md || typeof HTMLCanvasElement.prototype.captureStream !== "function") return;
-    md.getUserMedia = async () => {
+    const fake = async () => {
+      trace.calls++;
+      try {
+        return await film();
+      } catch (e) {
+        trace.error = `${(e as Error).name}: ${(e as Error).message}`;
+        throw e;
+      }
+    };
+    const film = async () => {
       const img = new Image();
       img.src = src;
       await img.decode();
@@ -85,6 +97,10 @@ export async function canvasCamera(page: Page, pngDataUrl: string): Promise<stri
       stream.getVideoTracks()[0]?.addEventListener("ended", () => clearInterval(timer));
       return stream;
     };
+    // Sur l'instance ET sur le prototype : selon le moteur, l'un peut masquer l'autre.
+    Object.defineProperty(md, "getUserMedia", { value: fake, configurable: true, writable: true });
+    Object.defineProperty(Object.getPrototypeOf(md), "getUserMedia", { value: fake, configurable: true, writable: true });
+    trace.installed = md.getUserMedia === fake;
   }, pngDataUrl);
   const ok = await page.evaluate(() => !!navigator.mediaDevices && typeof HTMLCanvasElement.prototype.captureStream === "function");
   return ok ? null : "ce moteur ne sait pas filmer un canvas (navigator.mediaDevices ou captureStream absent) : à vérifier sur un appareil réel";
