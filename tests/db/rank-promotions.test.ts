@@ -161,3 +161,103 @@ describe("effacement et droit d'accès", () => {
     expect(await rowsOf(b.person)).toHaveLength(0);
   });
 });
+
+describe("historique : anciens grades, correction et suppression (migration 20261017000500)", () => {
+  type Full = Row & { id: string };
+  const fullRows = async (person: string) =>
+    adminSql()<Full[]>`select id, belt, stripes, promoted_on::text, date_confirmed, source from public.rank_promotions where person_id = ${person} order by promoted_on, created_at`;
+  const current = async (person: string) => (await adminSql()<{ belt: string | null; belt_stripes: number }[]>`select belt, belt_stripes from public.people where id = ${person}`)[0];
+
+  it("un ancien grade s'ajoute sans changer le grade actuel ; il doit être daté avant lui", async () => {
+    const c = await club("rp10");
+    const m = await c.member("hist");
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'purple', 1, ${inDays(-200)})`);
+    await asUser(c.coach, (tx) => tx`select public.add_past_grade(${m.person}, 'blue', 0, ${inDays(-1200)})`);
+    await asUser(c.coach, (tx) => tx`select public.add_past_grade(${m.person}, 'white', 0, ${inDays(-2000)})`);
+    expect(await current(m.person)).toEqual({ belt: "purple", belt_stripes: 1 });
+    expect((await fullRows(m.person)).map((r) => [r.belt, r.date_confirmed])).toEqual([["white", true], ["blue", true], ["purple", true]]);
+    for (const on of [inDays(-200), inDays(-10)]) {
+      expect((await failing(() => asUser(c.coach, (tx) => tx`select public.add_past_grade(${m.person}, 'blue', 2, ${on})`))).message).toContain("coachos:past_grade_after_current");
+    }
+    // Un nouveau grade actuel daté avant le dernier grade est refusé (c'est un ancien grade).
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'brown', 0, ${inDays(-300)})`))).message).toContain("coachos:promotion_before_history");
+  });
+
+  it("fiche dont le grade précède l'historique : ce grade est inscrit (date à confirmer) avant l'ancien grade", async () => {
+    const c = await club("rp11");
+    const m = await c.member("legacy");
+    await adminSql()`update public.people set belt = 'brown', belt_stripes = 0 where id = ${m.person}`;
+    await adminSql()`delete from public.rank_promotions where person_id = ${m.person}`;
+    await asUser(c.coach, (tx) => tx`select public.add_past_grade(${m.person}, 'purple', 0, ${inDays(-700)})`);
+    expect((await fullRows(m.person)).map((r) => [r.belt, r.date_confirmed])).toEqual([["purple", true], ["brown", false]]);
+    expect(await current(m.person)).toEqual({ belt: "brown", belt_stripes: 0 });
+  });
+
+  it("corriger une ligne : l'ancienne reste ancienne ; corriger la ligne actuelle met la fiche à jour sans nouvelle ligne", async () => {
+    const c = await club("rp12");
+    const m = await c.member("edit");
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'blue', 0, ${inDays(-900)})`);
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'purple', 0, ${inDays(-100)})`);
+    const [old, cur] = await fullRows(m.person);
+    await asUser(c.coach, (tx) => tx`select public.update_grade(${old!.id}, 'blue', 3, ${inDays(-950)})`);
+    expect((await fullRows(m.person))[0]).toMatchObject({ belt: "blue", stripes: 3, promoted_on: inDays(-950) });
+    expect(await current(m.person)).toEqual({ belt: "purple", belt_stripes: 0 });
+    // L'ancienne ligne ne peut pas passer après la ligne actuelle, ni l'actuelle avant l'ancienne.
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.update_grade(${old!.id}, 'blue', 3, ${inDays(-50)})`))).message).toContain("coachos:grade_order");
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.update_grade(${cur!.id}, 'purple', 0, ${inDays(-1000)})`))).message).toContain("coachos:grade_order");
+    // Erreur de saisie sur le grade actuel : marron 1 barrette au lieu de violette.
+    await asUser(c.coach, (tx) => tx`select public.update_grade(${cur!.id}, 'brown', 1, ${inDays(-90)})`);
+    expect(await current(m.person)).toEqual({ belt: "brown", belt_stripes: 1 });
+    expect(await fullRows(m.person)).toHaveLength(2);
+  });
+
+  it("supprimer une ligne : l'historique seul ; supprimer le grade actuel ramène la fiche au grade précédent", async () => {
+    const c = await club("rp13");
+    const m = await c.member("del");
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'white', 4, ${inDays(-900)})`);
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'blue', 0, ${inDays(-500)})`);
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'purple', 0, ${inDays(-10)})`);
+    const [first, , last] = await fullRows(m.person);
+    await asUser(c.coach, (tx) => tx`select public.delete_grade(${first!.id})`);
+    expect(await current(m.person)).toEqual({ belt: "purple", belt_stripes: 0 });
+    await asUser(c.coach, (tx) => tx`select public.delete_grade(${last!.id})`);
+    expect(await current(m.person)).toEqual({ belt: "blue", belt_stripes: 0 });
+    expect((await fullRows(m.person)).map((r) => r.belt)).toEqual(["blue"]);
+  });
+
+  it("réservé au staff du club, fiche active, module actif : adhérent, autre club, fiche archivée, module coupé refusés", async () => {
+    const c = await club("rp14");
+    const m = await c.member("guard");
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'blue', 0, ${inDays(-300)})`);
+    const [row] = await fullRows(m.person);
+    const other = await club("rp14b");
+    for (const [who, call] of [
+      [m.user, (tx: Parameters<Parameters<typeof asUser>[1]>[0]) => tx`select public.add_past_grade(${m.person}, 'white', 0, ${inDays(-900)})`],
+      [m.user, (tx: Parameters<Parameters<typeof asUser>[1]>[0]) => tx`select public.update_grade(${row!.id}, 'black', 0, ${inDays(-300)})`],
+      [other.coach, (tx: Parameters<Parameters<typeof asUser>[1]>[0]) => tx`select public.delete_grade(${row!.id})`],
+      [other.owner, (tx: Parameters<Parameters<typeof asUser>[1]>[0]) => tx`select public.add_past_grade(${m.person}, 'white', 0, ${inDays(-900)})`],
+    ] as const) {
+      expect((await failing(() => asUser(who, call))).message).toContain("coachos:not_found");
+    }
+    await adminSql()`insert into public.club_features (academy_id, feature, enabled) values (${c.academy}, 'reports', false)`;
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.delete_grade(${row!.id})`))).message).toContain("coachos:feature_disabled");
+    await adminSql()`delete from public.club_features where academy_id = ${c.academy}`;
+    await adminSql()`update public.people set archived_at = now() where id = ${m.person}`;
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.delete_grade(${row!.id})`))).message).toContain("coachos:not_found");
+    expect(await fullRows(m.person)).toHaveLength(1);
+  });
+});
+
+describe("date de la ceinture actuelle et historique ordonné", () => {
+  it("la date de la ceinture actuelle ne peut pas précéder un grade d'une autre couleur", async () => {
+    const c = await club("rp15");
+    const m = await c.member("since");
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'blue', 0, ${inDays(-800)})`);
+    await asUser(c.coach, (tx) => tx`select public.record_promotion(${m.person}, 'purple', 0, ${inDays(-1)})`);
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.set_belt_since(${m.person}, ${inDays(-900)})`))).message).toContain("coachos:grade_order");
+    expect((await failing(() => asUser(c.coach, (tx) => tx`select public.set_belt_since(${m.person}, ${inDays(-800)})`))).message).toContain("coachos:grade_order");
+    await asUser(c.coach, (tx) => tx`select public.set_belt_since(${m.person}, ${inDays(-600)})`);
+    const [p] = await adminSql()<{ belt: string }[]>`select belt from public.people where id = ${m.person}`;
+    expect(p?.belt).toBe("purple");
+  });
+});

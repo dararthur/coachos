@@ -3,6 +3,7 @@ import { GROUP_LABELS, type Eligibility } from "@/domain/graduation";
 import { BELT_LABELS, MAX_STRIPES, type Belt } from "@/domain/profile";
 import { ActionForm, SelectField, SubmitButton, TextField } from "@/components/ui/form";
 import { BeltLabel, BeltOptions } from "@/components/ui/belt";
+import { ConfirmAction } from "@/components/ui/confirm";
 import { Badge } from "@/components/ui/ui";
 import type { ActionResult } from "@/domain/errors";
 
@@ -43,6 +44,7 @@ export function GradeCard({
   today,
   recordAction,
   sinceAction,
+  rowActions,
   editable,
 }: {
   history: GradeRow[];
@@ -51,6 +53,8 @@ export function GradeCard({
   today: string;
   recordAction: FormAction;
   sinceAction: FormAction;
+  /** Correction et suppression d'une ligne de l'historique. */
+  rowActions?: (gradeId: string) => { update: FormAction; remove: FormAction };
   /** Faux pour une fiche archivée : l'historique reste lisible. */
   editable: boolean;
 }) {
@@ -81,18 +85,24 @@ export function GradeCard({
               <th scope="col">Date</th>
               <th scope="col">Grade</th>
               <th scope="col">Saisi par</th>
+              {editable && rowActions && <th scope="col">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {shown.map((r) => (
+            {shown.map((r, i) => (
               <tr key={r.id}>
                 <td className="whitespace-nowrap py-2 pr-3 align-top text-ink-soft">{formatCalendarDate(r.promotedOn)}</td>
                 <td className="py-2 pr-3 align-top">
                   <BeltLabel belt={r.belt} stripes={r.stripes} size="sm" />
                 </td>
                 <td className="py-2 text-right align-top">
-                  {!r.confirmed ? <Badge tone="warning">Date à confirmer</Badge> : r.source === "member" ? <Badge>Adhérent</Badge> : null}
+                  {i === 0 && <Badge tone="success">Actuel</Badge>} {!r.confirmed ? <Badge tone="warning">Date à confirmer</Badge> : r.source === "member" ? <Badge>Adhérent</Badge> : null}
                 </td>
+                {editable && rowActions && (
+                  <td className="py-2 pl-2 text-right align-top">
+                    <GradeRowActions row={r} today={today} actions={rowActions(r.id)} current={i === 0} previous={shown[1] ?? null} />
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -102,9 +112,26 @@ export function GradeCard({
       {editable && (
         <>
           <ActionForm action={recordAction} className="space-y-3 border-t border-line pt-4">
-            <p className="text-sm font-semibold">Enregistrer un passage</p>
+            <p className="text-sm font-semibold">Enregistrer un grade</p>
+            <fieldset className="space-y-2">
+              <legend className="sr-only">Type de grade</legend>
+              <label className="flex min-h-11 items-start gap-3 text-sm">
+                <input type="radio" name="kind" value="current" defaultChecked className="mt-0.5 size-5 shrink-0 accent-ink" />
+                <span>
+                  <span className="font-medium">Nouveau grade actuel</span>
+                  <span className="block text-ink-soft">Un passage : la fiche prend ce grade.</span>
+                </span>
+              </label>
+              <label className="flex min-h-11 items-start gap-3 text-sm">
+                <input type="radio" name="kind" value="past" className="mt-0.5 size-5 shrink-0 accent-ink" />
+                <span>
+                  <span className="font-medium">Ancien grade</span>
+                  <span className="block text-ink-soft">Pour compléter l&apos;historique : le grade actuel ne change pas.</span>
+                </span>
+              </label>
+            </fieldset>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              <SelectField label="Nouveau grade" name="belt" required defaultValue={belt ?? ""}>
+              <SelectField label="Grade obtenu" name="belt" required defaultValue={belt ?? ""}>
                 <BeltOptions />
               </SelectField>
               <SelectField label="Nombre de barrettes" name="stripes" defaultValue="0">
@@ -114,9 +141,9 @@ export function GradeCard({
                   </option>
                 ))}
               </SelectField>
-              <TextField label="Date du passage" name="on" type="date" required max={today} defaultValue={today} className="sm:col-span-2 lg:col-span-1 xl:col-span-2" />
+              <TextField label="Date d'obtention" name="on" type="date" required max={today} defaultValue={today} className="sm:col-span-2 lg:col-span-1 xl:col-span-2" />
             </div>
-            <SubmitButton pendingLabel="Enregistrement…">Enregistrer le passage</SubmitButton>
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer le grade</SubmitButton>
           </ActionForm>
 
           {belt && (
@@ -139,6 +166,54 @@ export function GradeCard({
       <p className="text-sm text-ink-soft">
         Visible de l&apos;équipe du club seulement, jamais de l&apos;adhérent. Minimums de durée et d&apos;âge du système de graduation de l&apos;IBJJF (juin 2026), à titre indicatif : le passage reste votre décision.
       </p>
+    </div>
+  );
+}
+
+/** Corriger ou supprimer une ligne de l'historique. Supprimer le grade actuel ramène la fiche au grade précédent (annoncé avant confirmation). */
+function GradeRowActions({ row, today, actions, current, previous }: { row: GradeRow; today: string; actions: { update: FormAction; remove: FormAction }; current: boolean; previous: GradeRow | null }) {
+  const what = `${BELT_LABELS[row.belt].toLowerCase()}${row.stripes > 0 ? `, ${row.stripes} barrette${row.stripes > 1 ? "s" : ""}` : ""} du ${formatCalendarDate(row.promotedOn)}`;
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <details className="group text-left">
+        <summary className="flex min-h-11 cursor-pointer items-center justify-end text-sm font-semibold underline underline-offset-[3px]">
+          Corriger<span className="sr-only"> le grade {what}</span>
+        </summary>
+        <ActionForm action={actions.update} className="mt-2 w-64 max-w-[calc(100vw-4rem)] space-y-3 rounded-sm border border-line bg-surface p-3">
+          <SelectField label="Ceinture" name="belt" required defaultValue={row.belt}>
+            <BeltOptions />
+          </SelectField>
+          <SelectField label="Barrettes" name="stripes" defaultValue={String(row.stripes)}>
+            {Array.from({ length: MAX_STRIPES + 1 }, (_, n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </SelectField>
+          <TextField label="Date" name="on" type="date" required max={today} defaultValue={row.promotedOn} />
+          <SubmitButton pendingLabel="Enregistrement…">Enregistrer la correction</SubmitButton>
+        </ActionForm>
+      </details>
+      <ConfirmAction
+        action={actions.remove}
+        trigger={
+          <>
+            Supprimer<span className="sr-only"> le grade {what}</span>
+          </>
+        }
+        triggerClassName="min-h-11 border-0! bg-transparent! px-0! text-sm underline underline-offset-[3px]"
+        title="Supprimer ce grade de l'historique ?"
+        description={
+          <p>
+            {current
+              ? previous
+                ? `C'est le grade actuel : la fiche reviendra au grade précédent (${BELT_LABELS[previous.belt].toLowerCase()}${previous.stripes > 0 ? `, ${previous.stripes} barrette${previous.stripes > 1 ? "s" : ""}` : ""}).`
+                : "C'est le seul grade enregistré : la fiche garde ce grade, seul l'historique est vidé."
+              : "Ancien grade : le grade actuel ne change pas."}
+          </p>
+        }
+        confirmLabel="Supprimer"
+      />
     </div>
   );
 }

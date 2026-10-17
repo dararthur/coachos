@@ -20,6 +20,19 @@ Mis en place le 16/10/2026 (migration `20261016000700_rank_promotions.sql`, règ
 
 La table n'est lisible que par le staff (RLS). La date d'éligibilité n'est **stockée nulle part** : elle est recalculée à chaque affichage pour le staff. Un adhérent, même en interrogeant l'API, ne peut ni lire l'historique ni appeler `record_promotion` / `set_belt_since` (testé dans `tests/db/rank-promotions.test.ts`).
 
+## Historique : anciens grades, correction, suppression (2026-10-17)
+
+Migration `20261017000500_grade_history_edit.sql`. **Le grade actuel est la ligne la plus récente de l'historique.**
+
+- **Enregistrer un grade**, au choix :
+  - *Nouveau grade actuel* : un passage, la fiche prend ce grade. Refusé s'il est daté avant le dernier grade enregistré.
+  - *Ancien grade* : complète l'historique (ex. la blanche et la bleue d'un adhérent arrivé violette) sans changer le grade actuel. Il doit être daté avant le grade actuel.
+- **Corriger** une ligne (ceinture, barrettes, date ; la date devient confirmée). Corriger la ligne du grade actuel met la fiche à jour. Une correction qui inverserait l'ordre (un ancien grade daté après le grade actuel) est refusée.
+- **Supprimer** une ligne. Supprimer le grade actuel ramène la fiche au grade précédent (la fenêtre de confirmation l'annonce) ; s'il ne reste aucune ligne, la fiche garde son grade.
+- « Date de la ceinture actuelle » ne peut plus précéder un grade d'une autre couleur déjà enregistré.
+
+Équipe du club seulement (propriétaire, administrateur, coach), module « Grades et rapports » actif, fiche active. Chaque opération est journalisée sans détail. Tests : `tests/db/rank-promotions.test.ts`, `tests/e2e/grades.spec.ts`.
+
 ## D'où viennent les dates (et pourquoi certaines sont « à confirmer »)
 
 - Passage enregistré par l'équipe : date choisie, **confirmée**.

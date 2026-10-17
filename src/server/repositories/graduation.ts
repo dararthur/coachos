@@ -24,6 +24,21 @@ export async function recordPromotion(tx: Tx, personId: string, belt: Belt, stri
   await tx`select public.record_promotion(${personId}, ${belt}, ${stripes}, ${on}::date)`;
 }
 
+/** Ancien grade : inscrit dans l'historique, daté avant le grade actuel, sans changer la fiche. */
+export async function addPastGrade(tx: Tx, personId: string, belt: Belt, stripes: number, on: string): Promise<void> {
+  await tx`select public.add_past_grade(${personId}, ${belt}, ${stripes}, ${on}::date)`;
+}
+
+/** Corrige une ligne de l'historique (la fiche suit si c'est le grade actuel). */
+export async function updateGrade(tx: Tx, gradeId: string, belt: Belt, stripes: number, on: string): Promise<void> {
+  await tx`select public.update_grade(${gradeId}, ${belt}, ${stripes}, ${on}::date)`;
+}
+
+/** Supprime une ligne de l'historique (supprimer le grade actuel ramène la fiche au grade précédent). */
+export async function deleteGrade(tx: Tx, gradeId: string): Promise<void> {
+  await tx`select public.delete_grade(${gradeId})`;
+}
+
 export async function setBeltSince(tx: Tx, personId: string, on: string): Promise<void> {
   await tx`select public.set_belt_since(${personId}, ${on}::date)`;
 }

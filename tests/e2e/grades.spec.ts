@@ -20,25 +20,65 @@ test("grades : le coach enregistre un passage, voit l'éligibilité et la liste 
   });
 
   await test.step("passage à la ceinture bleue il y a plus de deux ans : éligible à la violette", async () => {
-    await page.getByLabel("Nouveau grade").selectOption("blue");
-    await page.getByLabel("Date du passage").fill(parisToday(-800));
-    await page.getByRole("button", { name: "Enregistrer le passage" }).click();
+    await page.getByLabel("Grade obtenu").selectOption("blue");
+    await page.getByLabel("Date d'obtention").fill(parisToday(-800));
+    await page.getByRole("button", { name: "Enregistrer le grade" }).click();
     await expect(page.getByText("Passage enregistré.")).toBeVisible();
     await expect(page.getByText(/Éligible à la ceinture violette depuis le/)).toBeVisible();
     await expect(page.getByRole("table", { name: "Historique des passages de ceinture" })).toBeVisible();
   });
 
   await test.step("une date future est refusée ; un passage à la violette hier n'ouvre l'éligibilité à la marron que dans dix-huit mois", async () => {
-    await page.getByLabel("Nouveau grade").selectOption("purple");
-    await page.getByLabel("Date du passage").evaluate((el: HTMLInputElement) => el.removeAttribute("max"));
-    await page.getByLabel("Date du passage").fill(parisToday(3));
-    await page.getByRole("button", { name: "Enregistrer le passage" }).click();
+    await page.getByLabel("Grade obtenu").selectOption("purple");
+    await page.getByLabel("Date d'obtention").evaluate((el: HTMLInputElement) => el.removeAttribute("max"));
+    await page.getByLabel("Date d'obtention").fill(parisToday(3));
+    await page.getByRole("button", { name: "Enregistrer le grade" }).click();
     await expect(page.getByText(/Passage invalide/)).toBeVisible();
 
-    await page.getByLabel("Date du passage").fill(parisToday(-1));
-    await page.getByRole("button", { name: "Enregistrer le passage" }).click();
+    await page.getByLabel("Date d'obtention").fill(parisToday(-1));
+    await page.getByRole("button", { name: "Enregistrer le grade" }).click();
     await expect(page.getByText("Passage enregistré.")).toBeVisible();
     await expect(page.getByText(/Éligible à la ceinture marron à partir du/)).toBeVisible();
+  });
+
+  const history = () => page.getByRole("table", { name: "Historique des passages de ceinture" });
+  const current = () => history().getByRole("row").filter({ has: page.getByText("Actuel", { exact: true }) });
+
+  await test.step("un ancien grade complète l'historique sans changer le grade actuel ; daté après lui, il est refusé", async () => {
+    await page.getByRole("radio", { name: /Ancien grade/ }).check();
+    await page.getByLabel("Grade obtenu").selectOption("white");
+    await page.getByLabel("Date d'obtention").fill(parisToday(-1800));
+    await page.getByRole("button", { name: "Enregistrer le grade" }).click();
+    await expect(page.getByText("Ancien grade ajouté à l'historique : le grade actuel ne change pas.")).toBeVisible();
+    await expect(history().getByRole("row")).toHaveCount(4); // en-tête + 3 grades
+    await expect(current()).toContainText("violette");
+
+    await page.getByRole("radio", { name: /Ancien grade/ }).check();
+    await page.getByLabel("Date d'obtention").fill(parisToday());
+    await page.getByRole("button", { name: "Enregistrer le grade" }).click();
+    await expect(page.getByText(/Un ancien grade doit être daté avant le grade actuel/)).toBeVisible();
+  });
+
+  await test.step("une ligne se corrige ; supprimer le grade actuel ramène la fiche au grade précédent", async () => {
+    const white = history().getByRole("row").filter({ hasText: "Corriger le grade blanche" });
+    await white.locator("summary").click();
+    await white.getByLabel("Barrettes").selectOption("2");
+    await white.getByRole("button", { name: "Enregistrer la correction" }).click();
+    await expect(page.getByText("Grade corrigé.")).toBeVisible();
+    await expect(history().getByRole("row").filter({ hasText: "Corriger le grade blanche, 2 barrettes" })).toHaveCount(1);
+
+    await current().getByRole("button", { name: /Supprimer le grade violette/ }).click();
+    await expect(page.getByRole("dialog")).toContainText("la fiche reviendra au grade précédent (bleue)");
+    await page.getByRole("dialog").getByRole("button", { name: "Supprimer" }).click();
+    await expect(history().getByRole("row")).toHaveCount(3);
+    await expect(current()).toContainText("bleue");
+    await expect(page.getByText(/Éligible à la ceinture violette depuis le/)).toBeVisible();
+
+    // On remet la violette d'hier pour la suite du parcours.
+    await page.getByLabel("Grade obtenu").selectOption("purple");
+    await page.getByLabel("Date d'obtention").fill(parisToday(-1));
+    await page.getByRole("button", { name: "Enregistrer le grade" }).click();
+    await expect(page.getByText("Passage enregistré.")).toBeVisible();
   });
 
   await test.step("la date de la ceinture actuelle se corrige ; le tableau de bord liste alors Alice (équipe seulement)", async () => {

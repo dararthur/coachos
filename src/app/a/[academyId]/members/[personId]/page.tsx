@@ -16,7 +16,7 @@ import { GradeCard } from "@/components/ui/grade-card";
 import { assessEligibility } from "@/domain/graduation";
 import { listPromotions } from "@/server/repositories/graduation";
 import { DEPARTURE_REASONS } from "@/domain/lifecycle";
-import { clearMemberPauseAction, eraseMemberAction, mergeDuplicateAction, recordPromotionAction, resendGuardianConsentAction, setBeltSinceAction, setMemberArchivedAction, setMemberPauseAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
+import { clearMemberPauseAction, eraseMemberAction, mergeDuplicateAction, deleteGradeAction, recordPromotionAction, resendGuardianConsentAction, setBeltSinceAction, setMemberArchivedAction, setMemberPauseAction, updateGradeAction, updateGuardianAction, updateMemberAction, withdrawGuardianConsentAction } from "@/server/actions/members";
 import { ageOn } from "@/domain/minors";
 import { inAcademy, requireAcademy } from "@/server/auth/guards";
 import { personHistory, personTotals } from "@/server/repositories/attendance";
@@ -239,6 +239,7 @@ export default async function MemberPage({ params, searchParams }: { params: Pro
                 today={todayInZone(tz)}
                 recordAction={recordPromotionAction.bind(null, academyId, personId)}
                 sinceAction={setBeltSinceAction.bind(null, academyId, personId)}
+                rowActions={(gradeId) => ({ update: updateGradeAction.bind(null, academyId, personId, gradeId), remove: deleteGradeAction.bind(null, academyId, personId, gradeId) })}
                 editable={!person.archivedAt}
               />
             </Card>

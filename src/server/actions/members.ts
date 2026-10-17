@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { MAX_IMPORT_BYTES, analyzeImport, planImport, type ImportRow, type RowIssue } from "@/domain/csv-import";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
-import { archiveSchema, beltSinceSchema, guardianUpdateSchema, myProfileSchema, pauseSchema, promotionSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
+import { archiveSchema, beltSinceSchema, gradeEditSchema, guardianUpdateSchema, myProfileSchema, pauseSchema, promotionSchema, personCreateSchema, personUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import { newConsentToken, sendGuardianConsent } from "@/server/guardian-consent";
@@ -166,10 +166,39 @@ export async function recordPromotionAction(academyId: string, personId: string,
     const id = uuidField.safeParse(personId);
     if (!id.success) throw new AppError("not_found");
     const input = parseForm(promotionSchema, formData);
-    await inAcademy(ctx, (tx) => graduation.recordPromotion(tx, id.data, input.belt, input.stripes, input.on));
+    await inAcademy(ctx, (tx) =>
+      input.kind === "past" ? graduation.addPastGrade(tx, id.data, input.belt, input.stripes, input.on) : graduation.recordPromotion(tx, id.data, input.belt, input.stripes, input.on),
+    );
     revalidatePath(`/a/${academyId}/members/${personId}`);
     revalidatePath(`/a/${academyId}/dashboard`);
-    return { ok: true, data: null, message: "Passage enregistré." };
+    return { ok: true, data: null, message: input.kind === "past" ? "Ancien grade ajouté à l'historique : le grade actuel ne change pas." : "Passage enregistré." };
+  });
+}
+
+/** Corrige une ligne de l'historique des grades (ceinture, barrettes, date). */
+export async function updateGradeAction(academyId: string, personId: string, gradeId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("updateGrade", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.grade", "reports");
+    const id = uuidField.safeParse(gradeId);
+    if (!id.success) throw new AppError("not_found");
+    const input = parseForm(gradeEditSchema, formData);
+    await inAcademy(ctx, (tx) => graduation.updateGrade(tx, id.data, input.belt, input.stripes, input.on));
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    revalidatePath(`/a/${academyId}/dashboard`);
+    return { ok: true, data: null, message: "Grade corrigé." };
+  });
+}
+
+/** Supprime une ligne de l'historique des grades. */
+export async function deleteGradeAction(academyId: string, personId: string, gradeId: string, _prev: FormState, _formData: FormData): Promise<FormState> {
+  return runAction("deleteGrade", async () => {
+    const ctx = await authorizeAcademy(academyId, "members.grade", "reports");
+    const id = uuidField.safeParse(gradeId);
+    if (!id.success) throw new AppError("not_found");
+    await inAcademy(ctx, (tx) => graduation.deleteGrade(tx, id.data));
+    revalidatePath(`/a/${academyId}/members/${personId}`);
+    revalidatePath(`/a/${academyId}/dashboard`);
+    return { ok: true, data: null, message: "Grade supprimé de l'historique." };
   });
 }
 

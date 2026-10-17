@@ -234,6 +234,15 @@ export const promotionSchema = z.object({
   belt: z.enum(BELTS, { error: "Choisissez une ceinture." }),
   stripes: intField("Barrettes", 0, MAX_STRIPES),
   on: dateField,
+  /** « current » : le grade devient le grade actuel ; « past » : ancien grade, inscrit dans l'historique seulement. */
+  kind: z.enum(["current", "past"], { error: "Choisissez le type de grade." }).default("current"),
+});
+
+/** Correction d'une ligne de l'historique des grades. */
+export const gradeEditSchema = z.object({
+  belt: z.enum(BELTS, { error: "Choisissez une ceinture." }),
+  stripes: intField("Barrettes", 0, MAX_STRIPES),
+  on: dateField,
 });
 
 export const beltSinceSchema = z.object({ on: dateField });
