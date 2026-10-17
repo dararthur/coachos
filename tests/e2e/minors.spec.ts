@@ -134,7 +134,8 @@ test("le responsable retrouve ses enfants sur sa page d'accueil, avec le compte 
   // Le parent réserve puis annule le cours de son enfant.
   await parent.waitForLoadState("networkidle");
   await expect(parent.getByText("Inès n'est inscrit(e) à aucun cours")).toBeVisible();
-  await parent.getByText("Réserver un cours pour Inès").click();
+  // Aucun cours réservé : la liste des cours est dépliée d'emblée (action principale du parent).
+  await expect(parent.getByText("Inès n'y apparaît pas.", { exact: false })).toBeVisible();
   await parent.getByRole("button", { name: /Réserver pour Inès/ }).click();
   // Le cours réservé remonte dans la liste toujours visible des cours de l'enfant.
   await expect(parent.getByText("Inscrit", { exact: true })).toBeVisible();

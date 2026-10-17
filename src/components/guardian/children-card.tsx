@@ -31,7 +31,8 @@ function ChildSessions({ child: c, sessions }: { child: ChildRow; sessions: Chil
         </ul>
       )}
       {others.length > 0 && (
-        <details className="group border-t border-line">
+        // Aucun cours réservé : la réservation est l'action attendue, la liste est donc dépliée d'emblée.
+        <details className="group border-t border-line" open={mine.length === 0}>
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-3 text-sm font-semibold [&::-webkit-details-marker]:hidden">
             <Icon name="next" size={16} className="shrink-0 transition-transform duration-150 group-open:rotate-90 motion-reduce:transition-none" />
             Réserver un cours pour {c.firstName}
@@ -103,6 +104,9 @@ export function ChildrenCard({ childrenRows, showClub = true }: { childrenRows: 
             {c.sessions && <ChildSessions child={c} sessions={c.sessions} />}
             {c.consentConfirmedAt && !c.consentWithdrawnAt && (
               <div className="flex flex-wrap items-start gap-2">
+                <p className="basis-full text-sm">
+                  Classement du club : {c.rankingOptIn ? `${c.firstName} y apparaît (prénom, nom et nombre de venues).` : `${c.firstName} n'y apparaît pas.`}
+                </p>
                 <ActionForm action={setChildRankingAction.bind(null, c.childId, !c.rankingOptIn)}>
                   <SubmitButton variant="secondary">{c.rankingOptIn ? "Retirer du classement" : "Afficher au classement"}</SubmitButton>
                 </ActionForm>
