@@ -78,35 +78,21 @@ export function GradeCard({
       {shown.length === 0 ? (
         <p className="text-sm text-ink-soft">Aucun passage enregistré.</p>
       ) : (
-        <table className="w-full text-sm">
-          <caption className="sr-only">Historique des passages de ceinture</caption>
-          <thead className="sr-only">
-            <tr>
-              <th scope="col">Date</th>
-              <th scope="col">Grade</th>
-              <th scope="col">Saisi par</th>
-              {editable && rowActions && <th scope="col">Actions</th>}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {shown.map((r, i) => (
-              <tr key={r.id}>
-                <td className="whitespace-nowrap py-2 pr-3 align-top text-ink-soft">{formatCalendarDate(r.promotedOn)}</td>
-                <td className="py-2 pr-3 align-top">
-                  <BeltLabel belt={r.belt} stripes={r.stripes} size="sm" />
-                </td>
-                <td className="py-2 text-right align-top">
-                  {i === 0 && <Badge tone="success">Actuel</Badge>} {!r.confirmed ? <Badge tone="warning">Date à confirmer</Badge> : r.source === "member" ? <Badge>Adhérent</Badge> : null}
-                </td>
-                {editable && rowActions && (
-                  <td className="py-2 pl-2 text-right align-top">
-                    <GradeRowActions row={r} today={today} actions={rowActions(r.id)} current={i === 0} previous={shown[1] ?? null} />
-                  </td>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ul aria-label="Historique des passages de ceinture" className="divide-y divide-line text-sm">
+          {shown.map((r, i) => (
+            <li key={r.id} className="py-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <span className="whitespace-nowrap text-ink-soft">{formatCalendarDate(r.promotedOn)}</span>
+                <BeltLabel belt={r.belt} stripes={r.stripes} size="sm" />
+                <span className="flex flex-wrap gap-1.5">
+                  {i === 0 && <Badge tone="success">Actuel</Badge>}
+                  {!r.confirmed ? <Badge tone="warning">Date à confirmer</Badge> : r.source === "member" ? <Badge>Adhérent</Badge> : null}
+                </span>
+              </div>
+              {editable && rowActions && <GradeRowActions row={r} today={today} actions={rowActions(r.id)} current={i === 0} previous={shown[1] ?? null} />}
+            </li>
+          ))}
+        </ul>
       )}
 
       {editable && (
@@ -174,12 +160,12 @@ export function GradeCard({
 function GradeRowActions({ row, today, actions, current, previous }: { row: GradeRow; today: string; actions: { update: FormAction; remove: FormAction }; current: boolean; previous: GradeRow | null }) {
   const what = `${BELT_LABELS[row.belt].toLowerCase()}${row.stripes > 0 ? `, ${row.stripes} barrette${row.stripes > 1 ? "s" : ""}` : ""} du ${formatCalendarDate(row.promotedOn)}`;
   return (
-    <div className="flex flex-col items-end gap-1">
-      <details className="group text-left">
-        <summary className="flex min-h-11 cursor-pointer items-center justify-end text-sm font-semibold underline underline-offset-[3px]">
+    <div className="flex flex-wrap items-center gap-x-5">
+      <details className="text-left open:basis-full">
+        <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold underline underline-offset-[3px]">
           Corriger<span className="sr-only"> le grade {what}</span>
         </summary>
-        <ActionForm action={actions.update} className="mt-2 w-64 max-w-[calc(100vw-4rem)] space-y-3 rounded-sm border border-line bg-surface p-3">
+        <ActionForm action={actions.update} className="mb-2 grid max-w-md gap-3 rounded-sm border border-line bg-surface p-3 sm:grid-cols-2">
           <SelectField label="Ceinture" name="belt" required defaultValue={row.belt}>
             <BeltOptions />
           </SelectField>
@@ -190,8 +176,10 @@ function GradeRowActions({ row, today, actions, current, previous }: { row: Grad
               </option>
             ))}
           </SelectField>
-          <TextField label="Date" name="on" type="date" required max={today} defaultValue={row.promotedOn} />
-          <SubmitButton pendingLabel="Enregistrement…">Enregistrer la correction</SubmitButton>
+          <TextField label="Date" name="on" type="date" required max={today} defaultValue={row.promotedOn} className="sm:col-span-2" />
+          <div className="sm:col-span-2">
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer la correction</SubmitButton>
+          </div>
         </ActionForm>
       </details>
       <ConfirmAction

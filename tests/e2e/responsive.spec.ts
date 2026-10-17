@@ -34,6 +34,10 @@ async function seed(club: string) {
                 ${`adresse.electronique.vraiment.tres.longue.${i}@sous-domaine.exemple-de-club-tres-long.invalid`}, '+33612345678', now()) returning id`;
       people.push(p!.id);
     }
+    // Historique de grades sur la fiche contrôlée (la carte « Grade et passages » et ses actions par ligne débordaient du téléphone).
+    await sql`update public.people set belt = 'blue', belt_stripes = 1 where id = ${people[0]!}`;
+    await sql`insert into public.rank_promotions (academy_id, person_id, belt, stripes, promoted_on, date_confirmed, source)
+      values (${club}, ${people[0]!}, 'white', 4, current_date - 900, true, 'staff')`;
     const sessions: string[] = [];
     for (const minutes of [20, 26 * 60, 50 * 60, -26 * 60]) {
       const [s] = await sql<{ id: string }[]>`insert into public.sessions (academy_id, class_type_id, starts_at, ends_at, capacity)
