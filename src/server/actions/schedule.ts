@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { AppError, failure, type ActionResult } from "@/domain/errors";
 import { expandOccurrences } from "@/domain/schedule";
-import { ATTENDANCE_STATUSES, MAX_OCCURRENCES, attendanceSchema, sessionCreateSchema, sessionUpdateSchema, uuidField } from "@/domain/validation";
+import { ATTENDANCE_STATUSES, MAX_OCCURRENCES, attendanceSchema, sessionCreateSchema, sessionRemoveSchema, sessionUpdateSchema, uuidField } from "@/domain/validation";
 import { authorizeAcademy, inAcademy, runAction } from "@/server/auth/guards";
 import { deliverBookingPromotionsAfterResponse } from "@/server/booking-notifications";
 import * as attendance from "@/server/repositories/attendance";
@@ -49,41 +49,38 @@ export async function updateSessionAction(academyId: string, sessionId: string, 
     const id = uuidField.safeParse(sessionId);
     if (!id.success) throw new AppError("not_found");
     const input = parseForm(sessionUpdateSchema, formData);
-    const ok = await inAcademy(ctx, (tx) =>
-      schedule.updateSession(tx, academyId, id.data, {
-        instructorId: input.instructorId ?? null,
-        date: input.date,
-        time: input.time,
-        durationMinutes: input.durationMinutes,
-        capacity: input.capacity ?? null,
-        notes: input.notes ?? null,
-      }),
-    );
-    if (!ok) throw new AppError("not_found");
+    const fields = { instructorId: input.instructorId ?? null, time: input.time, durationMinutes: input.durationMinutes, capacity: input.capacity ?? null, notes: input.notes ?? null };
+    let changed = 1;
+    try {
+      changed = await inAcademy(ctx, async (tx) => {
+        if (input.scope === "this") return (await schedule.updateSession(tx, academyId, id.data, { ...fields, date: input.date })) ? 1 : 0;
+        // Plusieurs séances : chacune garde son jour (la date saisie ne concerne que la séance seule).
+        return schedule.updateSessionSeries(tx, academyId, id.data, input.scope, fields);
+      });
+    } catch (e) {
+      if (e instanceof AppError && e.code === "duplicate") return failure("duplicate", undefined, "Une autre séance du même cours existe déjà à cet horaire : rien n'a été modifié.");
+      throw e;
+    }
+    if (changed === 0) throw new AppError("not_found", { message: input.scope === "this" ? undefined : "Aucune séance à venir dans cette série : rien n'a été modifié." });
     // Une capacité augmentée ou retirée fait avancer la liste d'attente : les adhérents promus sont prévenus par e-mail.
     deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/schedule`);
     // Retour au planning, sur la semaine de la séance, avec un bandeau de confirmation.
-    redirect(`/a/${academyId}/schedule?updated=1&week=${input.date}`);
+    redirect(`/a/${academyId}/schedule?updated=${changed}&week=${input.date}`);
   });
 }
 
-async function changeSessionState(academyId: string, sessionId: string, op: "cancel" | "reactivate" | "delete"): Promise<FormState> {
+async function changeSessionState(academyId: string, sessionId: string, op: "cancel" | "reactivate"): Promise<FormState> {
   return runAction(`session.${op}`, async () => {
     const ctx = await authorizeAcademy(academyId, "schedule.manage");
     const id = uuidField.safeParse(sessionId);
     if (!id.success) throw new AppError("not_found");
-    const ok = await inAcademy(ctx, (tx) =>
-      op === "delete"
-        ? schedule.deleteSession(tx, academyId, id.data)
-        : schedule.setSessionStatus(tx, academyId, id.data, op === "cancel" ? "cancelled" : "scheduled"),
-    );
+    const ok = await inAcademy(ctx, (tx) => schedule.setSessionStatus(tx, academyId, id.data, op === "cancel" ? "cancelled" : "scheduled"));
     if (!ok) throw new AppError("not_found");
     // Une séance annulée prévient ses inscrits (e-mail et notification).
     if (op === "cancel") deliverBookingPromotionsAfterResponse();
     revalidatePath(`/a/${academyId}/schedule`);
     revalidatePath(`/a/${academyId}/attendance`);
-    if (op === "delete") redirect(`/a/${academyId}/schedule?deleted=1`);
     return { ok: true, data: null, message: op === "cancel" ? "Séance annulée." : "Séance réactivée." };
   });
 }
@@ -94,8 +91,25 @@ export async function cancelSessionAction(academyId: string, sessionId: string, 
 export async function reactivateSessionAction(academyId: string, sessionId: string, _prev: FormState, _fd: FormData): Promise<FormState> {
   return changeSessionState(academyId, sessionId, "reactivate");
 }
-export async function deleteSessionAction(academyId: string, sessionId: string, _prev: FormState, _fd: FormData): Promise<FormState> {
-  return changeSessionState(academyId, sessionId, "delete");
+/**
+ * Suppression d'une séance, ou de plusieurs séances de sa série (portée choisie). Une séance programmée qui a des inscrits est ANNULÉE
+ * (ses inscrits sont prévenus) au lieu d'être supprimée en silence ; une séance avec des présences n'est jamais supprimée.
+ */
+export async function deleteSessionAction(academyId: string, sessionId: string, _prev: FormState, formData: FormData): Promise<FormState> {
+  return runAction("session.delete", async () => {
+    const ctx = await authorizeAcademy(academyId, "schedule.manage");
+    const id = uuidField.safeParse(sessionId);
+    if (!id.success) throw new AppError("not_found");
+    const { scope } = parseForm(sessionRemoveSchema, formData);
+    const r = await inAcademy(ctx, (tx) => schedule.removeSessions(tx, academyId, id.data, scope));
+    if (r.deleted === 0 && r.cancelled === 0) {
+      return failure("not_found", undefined, scope === "this" ? "Cette séance ne peut pas être supprimée (présences enregistrées) : elle reste au planning." : "Aucune séance à venir à retirer dans cette série.");
+    }
+    if (r.cancelled > 0) deliverBookingPromotionsAfterResponse(); // annulations : les inscrits sont prévenus
+    revalidatePath(`/a/${academyId}/schedule`);
+    revalidatePath(`/a/${academyId}/attendance`);
+    redirect(`/a/${academyId}/schedule?removed=${r.deleted}&cancelledInstead=${r.cancelled}`);
+  });
 }
 
 // --- Présences ----------------------------------------------------------------------------------

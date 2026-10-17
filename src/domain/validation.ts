@@ -287,6 +287,8 @@ export const sessionCreateSchema = z
       ctx.addIssue({ code: "custom", path: ["until"], message: `La répétition s'arrête au plus tard le 31 décembre ${v.date.slice(0, 4)} (fin de l'année de la première séance).` });
   });
 
+export const SERIES_SCOPES = ["this", "following", "upcoming"] as const;
+
 export const sessionUpdateSchema = z.object({
   instructorId: optional(uuidField),
   date: dateField,
@@ -294,7 +296,11 @@ export const sessionUpdateSchema = z.object({
   durationMinutes: intField("Durée", 15, 360),
   capacity: optional(intField("Capacité", 1, 500)),
   notes: optional(z.string().trim().max(500, "500 caractères maximum.")),
+  /** Portée : la séance seule, elle et les suivantes de sa série, ou toutes les séances à venir de la série. */
+  scope: z.enum(SERIES_SCOPES, { error: "Portée inconnue." }).default("this"),
 });
+
+export const sessionRemoveSchema = z.object({ scope: z.enum(SERIES_SCOPES, { error: "Portée inconnue." }).default("this") });
 
 // --- Présences ----------------------------------------------------------------------------------
 export const ATTENDANCE_STATUSES = ["present", "late", "absent"] as const;

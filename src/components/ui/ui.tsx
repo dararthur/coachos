@@ -263,7 +263,19 @@ export function Notice({ searchParams }: { searchParams: Record<string, string |
       </Alert>
     );
   }
-  if (one("updated")) return <Alert tone="success" title="Séance enregistrée">Vos modifications sont prises en compte dans le planning ci-dessous.</Alert>;
+  if (one("updated")) {
+    const n = Number(one("updated")) || 1;
+    return <Alert tone="success" title={n > 1 ? `${n} séances modifiées` : "Séance enregistrée"}>Vos modifications sont prises en compte dans le planning ci-dessous.</Alert>;
+  }
+  if (one("removed") !== undefined) {
+    const removed = Number(one("removed")) || 0;
+    const cancelled = Number(one("cancelledInstead")) || 0;
+    const parts = [
+      removed > 0 ? `${removed} séance${removed > 1 ? "s" : ""} supprimée${removed > 1 ? "s" : ""}` : null,
+      cancelled > 0 ? `${cancelled} séance${cancelled > 1 ? "s" : ""} annulée${cancelled > 1 ? "s" : ""} au lieu d'être supprimée${cancelled > 1 ? "s" : ""}, car elle${cancelled > 1 ? "s avaient" : " avait"} des inscrits : ils sont prévenus par e-mail` : null,
+    ].filter(Boolean);
+    return <Alert tone="success">{parts.join(" ; ")}.</Alert>;
+  }
   if (one("erased")) return <Alert tone="success">{one("erased") === "delete" ? "Membre supprimé définitivement." : "Membre anonymisé : ses présences sont conservées sous forme de statistiques non identifiantes."}</Alert>;
   if (one("deleted")) return <Alert tone="success">Élément supprimé.</Alert>;
   return null;

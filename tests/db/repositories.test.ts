@@ -128,10 +128,10 @@ describe("catalogue, planning, présences", () => {
     expect(await asUser(w.alice, (tx) => schedule.setSessionStatus(tx, w.academyA, s.id, "cancelled"))).toBe(true);
     expect((await asUser(w.alice, (tx) => schedule.getSession(tx, w.academyA, s.id)))?.status).toBe("cancelled");
     expect(await asUser(w.alice, (tx) => schedule.updateSession(tx, w.academyA, s.id, { instructorId: null, date: "2027-05-04", time: "20:00", durationMinutes: 60, capacity: null, notes: "Salle 2" }))).toBe(true);
-    expect(await asUser(w.alice, (tx) => schedule.deleteSession(tx, w.academyA, s.id))).toBe(true);
+    expect(await asUser(w.alice, (tx) => schedule.removeSessions(tx, w.academyA, s.id, "this"))).toEqual({ deleted: 1, cancelled: 0 });
     // un coach ne peut ni créer ni supprimer
     await expect(asUser(w.carl, (tx) => schedule.createSessions(tx, w.academyA, { ...input, dates: ["2027-06-01"] }))).rejects.toMatchObject({ code: "forbidden" });
-    expect(await asUser(w.carl, (tx) => schedule.deleteSession(tx, w.academyA, list[1]!.id))).toBe(false);
+    expect(await asUser(w.carl, (tx) => schedule.removeSessions(tx, w.academyA, list[1]!.id, "this"))).toEqual({ deleted: 0, cancelled: 0 });
     // les séances de B sont invisibles
     expect(await asUser(w.alice, (tx) => schedule.getSession(tx, w.academyA, w.sessionB))).toBeNull();
     expect(await asUser(w.alice, (tx) => schedule.listInstructors(tx, w.academyA))).toEqual(expect.arrayContaining([expect.objectContaining({ id: w.carl.id })]));

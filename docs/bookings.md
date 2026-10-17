@@ -85,3 +85,24 @@ La file `booking_notifications` (migration `20261016000400`) porte un **type** :
 - **Texte neutre sur l'écran verrouillé** : « *Club* : séance annulée » / « *Club* : place confirmée », corps générique, sans nom de cours, horaire, nom d'adhérent ni autre inscrit ; un toucher ouvre le planning ou « Mon espace ». Le détail (cours, jour, heure) est dans l'e-mail et l'application.
 - Envoi après la réponse de l'annulation (`after()`), filet de sécurité par la purge quotidienne (bail de 10 minutes, 5 tentatives).
 - Mesure du pilote : réservations non honorées (absences après réservation) avant et après l'activation, à lire dans `attendance` (`absent` avec réservation).
+
+## Séances récurrentes : modifier ou supprimer une série (2026-10-17)
+
+Les séances créées ensemble par une récurrence partagent un identifiant de série (`sessions.series_id`). Sur la page d'une séance de
+série, l'administrateur choisit la portée :
+
+- **Cette séance seulement** (comportement habituel, la date se change ici) ;
+- **Cette séance et les suivantes de la série** (proposé quand il reste des séances avant elle) ;
+- **Toutes les séances à venir de la série**.
+
+Règles (code : `src/server/repositories/schedule.ts`, tests : `tests/db/session-series.test.ts`, `tests/e2e/session-series.spec.ts`) :
+
+- Une séance **déjà commencée** n'est jamais touchée par une opération de série (historique intact).
+- **Modifier** plusieurs séances : chacune **garde son jour** ; l'heure, la durée, le coach, les places et la note sont appliqués, dans le
+  fuseau du club (changements d'heure compris). Si un horaire entre en collision avec une autre séance du même cours, **rien** n'est
+  modifié et l'écran le dit.
+- **Supprimer** : une séance programmée qui a des **inscrits** (réservation ou liste d'attente, hors coach affecté) n'est **jamais
+  supprimée en silence** : elle est **annulée** et ses inscrits sont prévenus (e-mail et notification d'annulation). Une séance avec des
+  **présences** n'est jamais touchée (ni supprimée ni annulée : elle sortirait des statistiques). Les autres sont supprimées. La même
+  règle vaut pour une séance seule ; une séance déjà annulée (inscrits déjà prévenus) peut ensuite être supprimée.
+- Réservé aux propriétaires et administrateurs (RLS : un coach ne modifie ni ne supprime aucune séance).

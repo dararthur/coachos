@@ -107,11 +107,6 @@ export async function setSessionStatus(tx: Tx, academyId: string, sessionId: str
   return r.count === 1;
 }
 
-export async function deleteSession(tx: Tx, academyId: string, sessionId: string): Promise<boolean> {
-  const r = await tx`delete from public.sessions where id = ${sessionId} and academy_id = ${academyId}`;
-  return r.count === 1;
-}
-
 export interface InstructorOption {
   id: string;
   name: string;
@@ -123,4 +118,88 @@ export async function listInstructors(tx: Tx, academyId: string): Promise<Instru
     from public.academy_memberships m join public.profiles p on p.id = m.user_id
     where m.academy_id = ${academyId} and m.role in ('owner', 'admin', 'coach')
     order by lower(coalesce(nullif(p.display_name, ''), p.email))`;
+}
+
+/**
+ * Portée d'une modification ou d'une suppression : la séance seule, elle et les suivantes de sa série, ou toutes les séances à venir de
+ * sa série. Une séance déjà commencée n'est jamais touchée par une opération de série (l'historique reste tel quel).
+ */
+export type SeriesScope = "this" | "following" | "upcoming";
+
+export interface SeriesInfo {
+  seriesId: string | null;
+  /** Séances non commencées de la série à partir de celle-ci (elle comprise si elle est à venir). */
+  following: number;
+  /** Toutes les séances non commencées de la série. */
+  upcoming: number;
+}
+
+export async function seriesInfo(tx: Tx, academyId: string, sessionId: string): Promise<SeriesInfo> {
+  const [row] = await tx<SeriesInfo[]>`
+    select s.series_id as "seriesId",
+      (select count(*)::int from public.sessions o where o.academy_id = s.academy_id and o.series_id = s.series_id
+         and o.starts_at > now() and o.starts_at >= s.starts_at) as following,
+      (select count(*)::int from public.sessions o where o.academy_id = s.academy_id and o.series_id = s.series_id
+         and o.starts_at > now()) as upcoming
+    from public.sessions s where s.id = ${sessionId} and s.academy_id = ${academyId}`;
+  return row ?? { seriesId: null, following: 0, upcoming: 0 };
+}
+
+/** Séances visées par une opération de série (jamais une séance commencée). */
+const seriesTargets = (tx: Tx, academyId: string, sessionId: string, scope: Exclude<SeriesScope, "this">) => tx`
+  o.academy_id = ${academyId}
+  and o.series_id = (select a.series_id from public.sessions a where a.id = ${sessionId} and a.academy_id = ${academyId})
+  and o.starts_at > now()
+  ${scope === "following" ? tx`and o.starts_at >= (select a.starts_at from public.sessions a where a.id = ${sessionId} and a.academy_id = ${academyId})` : tx``}`;
+
+/**
+ * Modifie plusieurs séances d'une série : chacune GARDE SON JOUR ; l'heure, la durée, le coach, les places et la note sont appliqués
+ * (conversion par PostgreSQL dans le fuseau du club, changements d'heure compris). Renvoie le nombre de séances modifiées.
+ */
+export async function updateSessionSeries(
+  tx: Tx,
+  academyId: string,
+  sessionId: string,
+  scope: Exclude<SeriesScope, "this">,
+  input: { instructorId: string | null; time: string; durationMinutes: number; capacity: number | null; notes: string | null },
+): Promise<number> {
+  const r = await tx`
+    update public.sessions o
+    set instructor_id = ${input.instructorId}::uuid,
+        starts_at = ((o.starts_at at time zone a.timezone)::date + ${input.time}::time) at time zone a.timezone,
+        ends_at = ((o.starts_at at time zone a.timezone)::date + ${input.time}::time) at time zone a.timezone + make_interval(mins => ${input.durationMinutes}::int),
+        capacity = ${input.capacity}::int, notes = ${input.notes}::text
+    from public.academies a
+    where a.id = o.academy_id and ${seriesTargets(tx, academyId, sessionId, scope)}`;
+  return r.count;
+}
+
+/**
+ * Retire une ou plusieurs séances. Une séance programmée qui a des inscrits (réservation d'un adhérent, liste d'attente comprise)
+ * n'est JAMAIS supprimée : elle est annulée, ce qui prévient ses inscrits (déclencheur d'annulation). Une séance avec des présences
+ * n'est jamais touchée (historique et statistiques). Les autres sont supprimées. Renvoie les deux nombres.
+ */
+export async function removeSessions(tx: Tx, academyId: string, sessionId: string, scope: SeriesScope): Promise<{ deleted: number; cancelled: number }> {
+  const targets = scope === "this" ? tx`o.academy_id = ${academyId} and o.id = ${sessionId}` : seriesTargets(tx, academyId, sessionId, scope);
+  const rows = await tx<{ id: string; booked: boolean; attended: boolean; status: string }[]>`
+    select o.id, o.status,
+      exists (select 1 from public.session_bookings b where b.session_id = o.id and b.academy_id = o.academy_id and not b.is_instructor) as booked,
+      exists (select 1 from public.attendance x where x.session_id = o.id and x.academy_id = o.academy_id) as attended
+    from public.sessions o where ${targets}
+    for update of o`;
+  // Présences : historique d'un cours qui a eu lieu, jamais touché (ni supprimé, ni annulé : il sortirait des statistiques).
+  // Inscrits d'une séance programmée : annulée, ils sont prévenus. Séance déjà annulée (inscrits déjà prévenus) ou sans inscrit : supprimée.
+  const keep = rows.filter((r) => !r.attended && r.booked && r.status === "scheduled").map((r) => r.id);
+  const drop = rows.filter((r) => !r.attended && !(r.booked && r.status === "scheduled")).map((r) => r.id);
+  // Nombres réellement écrits (la RLS peut refuser sans erreur : un coach ne supprime rien).
+  const cancelled = keep.length > 0 ? (await tx`update public.sessions set status = 'cancelled' where academy_id = ${academyId} and id = any(${tx.array(keep)}::uuid[])`).count : 0;
+  const deleted = drop.length > 0 ? (await tx`delete from public.sessions where academy_id = ${academyId} and id = any(${tx.array(drop)}::uuid[])`).count : 0;
+  return { deleted, cancelled };
+}
+
+/** Adhérents inscrits (réservation confirmée ou liste d'attente, hors coach affecté) : pour prévenir avant une suppression. */
+export async function memberBookings(tx: Tx, academyId: string, sessionId: string): Promise<number> {
+  const [row] = await tx<{ n: number }[]>`
+    select count(*)::int as n from public.session_bookings where academy_id = ${academyId} and session_id = ${sessionId} and not is_instructor`;
+  return row?.n ?? 0;
 }
